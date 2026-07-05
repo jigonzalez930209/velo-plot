@@ -8,8 +8,28 @@ import type {
   SeriesUpdateData,
 } from "../../../types";
 import { updateSeriesBuffer } from "./SeriesBuffer";
+import { buildIndicatorSeries } from "../../indicator/buildIndicatorSeries";
+import type { IndicatorSeriesOptions } from "../../indicator/types";
+
+function expandSeriesOptions(
+  options: SeriesOptions | HeatmapOptions,
+): Array<SeriesOptions | HeatmapOptions> {
+  if ((options as SeriesOptions).type === "indicator") {
+    return buildIndicatorSeries(options as IndicatorSeriesOptions);
+  }
+  return [options];
+}
 
 export function addSeries(
+  ctx: any,
+  options: SeriesOptions | HeatmapOptions
+): void {
+  for (const item of expandSeriesOptions(options)) {
+    addSeriesOne(ctx, item);
+  }
+}
+
+function addSeriesOne(
   ctx: any,
   options: SeriesOptions | HeatmapOptions
 ): void {
