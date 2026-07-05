@@ -84,7 +84,6 @@ function buildPaneChartOptions(
   index: number,
   total: number,
   alignedMargins: { left: number; right: number; top: number; bottom: number },
-  isMaster: boolean,
   showXAxis: boolean,
 ): Parameters<typeof createChart>[0] {
   const isFirst = index === 0;
@@ -342,7 +341,6 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     const isLast = i === panes.length - 1;
     const showXAxis =
       pane.showXAxis ?? (sharedXAxis === "bottom" ? isLast : true);
-    const isMaster = pane.id === masterPaneId;
 
     const wrapper = document.createElement("div");
     wrapper.dataset.paneId = pane.id;
@@ -368,7 +366,6 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
           top: baseTop,
           bottom: MARGINS.bottom,
         },
-        isMaster,
         showXAxis,
       ),
     );
