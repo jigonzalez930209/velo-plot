@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0] - Unreleased
+
+### Added
+- **`createStackedChart`**: Native multi-pane vertical stacks (1–5 charts) with aligned margins, shared bottom X axis, master-slave sync, and mixed series types per pane.
+- **`useStackedPlot`**: React hook for stacked pane layouts.
+- **`chart.fit()`**: Safe fit API that skips empty series (no ±1e-5 bounds corruption).
+- **`chart.getId()`**: Stable chart identifier for sync groups.
+- **`ChartGroup.fitAll()`**, **`ChartGroup.batch()`**: Coordinated fit and sync suppression.
+
+### Improved
+- **`ChartGroup` pan sync**: Slaves receive master view bounds instead of raw pixel deltas.
+- **`resetZoom()`**: Delegates to `fit()` instead of unconditional `autoScale()`.
+- **HiDPI rendering**: Integer canvas backing-store pixels, `setTransform` DPR scaling, DPR refresh on resize, high-quality overlay text.
+
+### Documentation
+- New [Stacked Pane API](/api/stacked-chart), [Multi-Pane Guide](/guide/multi-pane), [Pane Stack Example](/examples/pane-stack).
+- Updated [Chart Sync](/api/chart-sync), [createChart](/api/chart), and [React Hooks](/api/react-hook) docs.
+
 ## [1.11.0]
 
 ### Added
