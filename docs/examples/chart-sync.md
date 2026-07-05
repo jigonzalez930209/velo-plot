@@ -1,6 +1,6 @@
 ---
 title: Chart Synchronization Demo
-description: Link multiple charts for synchronized zoom, pan, and cursor tracking
+description: Link multiple charts with ChartGroup — X, Y, XY, or no sync with live mode switching.
 ---
 
 <script setup>
@@ -9,7 +9,7 @@ import ChartSyncDemo from '../.vitepress/theme/demos/ChartSyncDemo.vue'
 
 # Chart Synchronization Demo
 
-Link multiple charts together so they share the same view. Try zooming or panning one chart - the other follows!
+Link two charts with `linkCharts` / `ChartGroup`. Zoom or pan one chart — the other follows based on the selected sync mode.
 
 <ChartSyncDemo />
 
@@ -17,71 +17,71 @@ Link multiple charts together so they share the same view. Try zooming or pannin
 
 | Mode | Description |
 |------|-------------|
-| **X-Axis Sync** | Charts share the same X range (time axis) |
-| **Y-Axis Sync** | Charts share the same Y range (value axis) |
-| **Both Axes** | Full viewport synchronization |
-| **No Sync** | Charts are independent |
+| **X-Axis Sync** | Shared time/index range; Y independent per chart |
+| **Y-Axis Sync** | Shared value range; X independent |
+| **Both Axes** | Full viewport lock |
+| **No Sync** | Independent charts |
 
-## Cursor Sync
+Toggle modes with the buttons above the demo. Cursor sync can be toggled separately.
 
-When enabled, hovering over one chart shows the cursor position on all linked charts. This is useful for comparing values at the same time point across different datasets.
-
-## Usage
+## Using ChartGroup
 
 ```typescript
-import { createChart, createChartGroup, linkCharts } from 'velo-plot';
+import { createChart, linkCharts } from 'velo-plot';
 
-// Create two charts
-const chart1 = createChart({ container: document.getElementById('chart1') });
-const chart2 = createChart({ container: document.getElementById('chart2') });
+const chart1 = createChart({ container: el1, id: 'temp' });
+const chart2 = createChart({ container: el2, id: 'humidity' });
 
-// Simple linking (X-axis sync with cursor)
-const group = linkCharts(chart1, chart2);
-
-// Or with full options
-const group = createChartGroup([chart1, chart2], {
-  axis: 'x',           // 'x', 'y', 'xy', or 'none'
-  syncCursor: true,    // Share cursor position
-  syncZoom: true,      // Share zoom state
-  syncPan: true,       // Share pan movements
-  debounce: 16,        // Optional debounce (ms)
+const group = linkCharts(chart1, chart2, {
+  axis: 'x',
+  bidirectional: true,
+  syncCursor: true,
+  syncZoom: true,
+  syncPan: true,
 });
 
-// Sync all charts to specific view
-group.syncTo({ xMin: 0, xMax: 100 });
+// Runtime
+group.syncAxis('xy');
+group.syncCursor(false);
+group.updateOptions({ syncZoom: false });
+```
 
-// Reset all to auto-scale
+## Master-Slave
+
+When only one chart should drive sync:
+
+```typescript
+import { createMasterSlave } from 'velo-plot';
+
+createMasterSlave(priceChart, volumeChart, 'x');
+```
+
+## Coordinated Fit
+
+```typescript
+group.fitAll();
 group.resetAll();
 
-// Cleanup when done
-group.destroy();
-```
-
-## Use Cases
-
-### Multi-Timeframe Analysis
-```typescript
-const overview = createChart({ ... });  // Full dataset
-const detail = createChart({ ... });    // Zoomed view
-createMasterSlave(overview, detail, 'x');
-```
-
-### Multi-Sensor Dashboard
-```typescript
-// Multiple sensors sharing the same time window
-createChartGroup([temp, pressure, humidity, flow], {
-  axis: 'x',
-  syncCursor: true,
+group.batch(() => {
+  chart1.zoom({ x: [t0, t1], animate: false });
+  chart2.fit({ x: [t0, t1] });
 });
 ```
 
-### Price + Indicators
+## Stacked Alternative
+
+For **vertical** price / volume / RSI layouts, prefer [`createStackedChart`](/examples/pane-stack):
+
 ```typescript
-// Stock price with separate RSI/MACD panels
-createChartGroup([priceChart, rsiChart, macdChart], {
-  axis: 'x',
-  syncCursor: true,
+createStackedChart({
+  masterPaneId: 'price',
+  sync: { axis: 'x', bidirectional: true },
+  resizable: true,
+  panes: [price, volume, wave, rsi],
 });
 ```
 
-See [API Reference](/api/chart-sync) for complete documentation.
+## See Also
+
+- [API Reference](/api/chart-sync)
+- [Pane Stack Example](/examples/pane-stack)

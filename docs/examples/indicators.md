@@ -74,4 +74,4 @@ const macdResult = macd(prices, 12, 26, 9);
 | **Volume** | VWAP, OBV |
 | **Trend** | ADX, Aroon |
 
-See [API Reference](/api/indicators) for complete documentation.
+See [API Reference](/api/indicators), [Indicator Panes](/api/indicator-panes), and [Pane Stack](/examples/pane-stack).
