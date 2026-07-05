@@ -12,8 +12,15 @@ import type {
   StackedChartOptions,
   StackedPaneConfig,
   StackedSyncOptions,
+  StackSnapshotOptions,
+  StackDirection,
 } from "./types";
-import { STACKED_MAX_PANES, STACKED_COMPACT_MARGIN, STACKED_FULL_X_MARGIN } from "./types";
+import {
+  STACKED_MAX_PANES,
+  STACKED_COMPACT_MARGIN,
+  STACKED_FULL_X_MARGIN,
+} from "./types";
+import { exportStackImage } from "./stackExport";
 import { getInitQueueStatus } from "../ChartInitQueue";
 import {
   attachPaneResize,
@@ -57,11 +64,12 @@ function computeAlignedRightMargin(panes: StackedPaneConfig[], baseRight: number
   return baseRight + maxExtra;
 }
 
-function paneFlexStyle(height: number | string): string {
-  if (typeof height === "number") {
-    return `flex:${height} 1 0;min-height:0;`;
+function paneFlexStyle(ratio: number | string, direction: StackDirection): string {
+  const minDim = direction === "horizontal" ? "min-width:0;" : "min-height:0;";
+  if (typeof ratio === "number") {
+    return `flex:${ratio} 1 0;${minDim}`;
   }
-  return `flex:1 1 ${height};min-height:0;`;
+  return `flex:1 1 ${ratio};${minDim}`;
 }
 
 function expandPaneSeries(series?: SeriesOptions[]): SeriesOptions[] {
@@ -85,24 +93,36 @@ function buildPaneChartOptions(
   total: number,
   alignedMargins: { left: number; right: number; top: number; bottom: number },
   showXAxis: boolean,
+  showYAxis: boolean,
+  direction: StackDirection,
 ): Parameters<typeof createChart>[0] {
   const isFirst = index === 0;
   const isLast = index === total - 1;
-  const sharedBottom = stack.sharedXAxis !== "none";
+  const isHorizontal = direction === "horizontal";
+  const sharedBottom = !isHorizontal && stack.sharedXAxis !== "none";
   const compactX = sharedBottom && !showXAxis;
+  const sharedLeft = isHorizontal && (stack.sharedYAxis ?? "left") !== "none";
+  const compactY = sharedLeft && !showYAxis;
   const paneGap = stack.gap ?? 0;
-  const compactMargin = paneGap > 0 ? STACKED_COMPACT_MARGIN : { top: 0, bottom: 0 };
+  const compactMargin = paneGap > 0 ? STACKED_COMPACT_MARGIN : { top: 0, bottom: 0, left: 0 };
 
-  const margins = {
-    top: isFirst ? alignedMargins.top : compactMargin.top,
-    right: alignedMargins.right,
-    left: alignedMargins.left,
-    bottom: compactX
-      ? compactMargin.bottom
-      : isLast
-        ? (stack.layout?.margins?.bottom ?? STACKED_FULL_X_MARGIN.bottom)
-        : alignedMargins.bottom,
-  };
+  const margins = isHorizontal
+    ? {
+        top: alignedMargins.top,
+        right: isLast ? alignedMargins.right : compactMargin.left ?? 0,
+        left: compactY ? (compactMargin.left ?? 4) : alignedMargins.left,
+        bottom: alignedMargins.bottom,
+      }
+    : {
+        top: isFirst ? alignedMargins.top : compactMargin.top,
+        right: alignedMargins.right,
+        left: alignedMargins.left,
+        bottom: compactX
+          ? compactMargin.bottom
+          : isLast
+            ? (stack.layout?.margins?.bottom ?? STACKED_FULL_X_MARGIN.bottom)
+            : alignedMargins.bottom,
+      };
 
   const baseX = pane.chart?.xAxis ?? {};
   const xAxis = {
@@ -111,6 +131,16 @@ function buildPaneChartOptions(
     showTicks: showXAxis ? baseX.showTicks ?? true : false,
     showLabels: showXAxis ? baseX.showLabels ?? true : false,
   };
+
+  const baseY = pane.chart?.yAxis ?? {};
+  const yAxisRaw = Array.isArray(baseY) ? baseY : [baseY];
+  const yAxis = yAxisRaw.map((axis) => ({
+    ...axis,
+    showLine: showYAxis ? axis.showLine ?? true : false,
+    showTicks: showYAxis ? axis.showTicks ?? true : false,
+    showLabels: showYAxis ? axis.showLabels ?? true : false,
+  }));
+  const yAxisOption = Array.isArray(pane.chart?.yAxis) ? yAxis : yAxis[0];
 
   const isInteractive = pane.interactive ?? true;
   if (!isInteractive) {
@@ -126,6 +156,7 @@ function buildPaneChartOptions(
     devicePixelRatio: stack.devicePixelRatio ?? pane.chart?.devicePixelRatio,
     loading: pane.chart?.loading ?? false,
     xAxis,
+    yAxis: yAxisOption,
     layout: mergeLayoutOptions({
       ...stack.layout,
       ...pane.chart?.layout,
@@ -134,14 +165,20 @@ function buildPaneChartOptions(
   };
 }
 
-function wrapperStyle(ratio: number, gap: number, index: number): string {
-  const marginTop = gap > 0 && index > 0 ? `margin-top:${gap}px;` : "";
-  return `${paneFlexStyle(ratio)}position:relative;overflow:hidden;${marginTop}`;
+function wrapperStyle(ratio: number, gap: number, index: number, direction: StackDirection): string {
+  const gapStyle =
+    gap > 0 && index > 0
+      ? direction === "horizontal"
+        ? `margin-left:${gap}px;`
+        : `margin-top:${gap}px;`
+      : "";
+  return `${paneFlexStyle(ratio, direction)}position:relative;overflow:hidden;${gapStyle}`;
 }
 
 function resolveStackSyncOptions(
   sync: StackedChartOptions["sync"],
   masterPaneId: string,
+  direction: StackDirection,
 ): SyncOptions {
   if (sync === false) {
     return {
@@ -154,8 +191,10 @@ function resolveStackSyncOptions(
     };
   }
 
+  const defaultAxis: SyncOptions["axis"] = direction === "horizontal" ? "y" : "x";
+
   return {
-    axis: "x",
+    axis: defaultAxis,
     bidirectional: true,
     masterId: masterPaneId,
     syncCursor: true,
@@ -173,7 +212,10 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
   }
 
   const masterPaneId = options.masterPaneId ?? panes[0].id;
+  const direction: StackDirection = options.direction ?? "vertical";
+  const isHorizontal = direction === "horizontal";
   const sharedXAxis = options.sharedXAxis ?? "bottom";
+  const sharedYAxis = options.sharedYAxis ?? "left";
   const gap = options.gap ?? 0;
   const resizableOpt = options.resizable;
   const resizable = !!resizableOpt;
@@ -189,14 +231,26 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
 
   container.replaceChildren();
   container.style.display = "flex";
-  container.style.flexDirection = "column";
+  container.style.flexDirection = isHorizontal ? "row" : "column";
   container.style.width = "100%";
   const existingHeight = container.offsetHeight || parseInt(getComputedStyle(container).height, 10);
-  if (existingHeight > 0) {
-    container.style.height = `${existingHeight}px`;
-    container.style.minHeight = `${existingHeight}px`;
-  } else if (!container.style.height) {
-    container.style.minHeight = "320px";
+  const existingWidth = container.offsetWidth || parseInt(getComputedStyle(container).width, 10);
+  if (isHorizontal) {
+    if (existingWidth > 0) {
+      container.style.width = `${existingWidth}px`;
+      container.style.minWidth = `${existingWidth}px`;
+    } else if (!container.style.width) {
+      container.style.minWidth = "480px";
+    }
+    container.style.height = existingHeight > 0 ? `${existingHeight}px` : "320px";
+    container.style.minHeight = container.style.height;
+  } else {
+    if (existingHeight > 0) {
+      container.style.height = `${existingHeight}px`;
+      container.style.minHeight = `${existingHeight}px`;
+    } else if (!container.style.height) {
+      container.style.minHeight = "320px";
+    }
   }
   container.style.overflow = "hidden";
   container.style.position = "relative";
@@ -211,9 +265,9 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
   let resizeRaf = 0;
   let dragLayoutRaf = 0;
   let pendingDragLayout: {
-    heights: number[];
-    topIdx: number;
-    bottomIdx: number;
+    sizes: number[];
+    leadingIdx: number;
+    trailingIdx: number;
   } | null = null;
 
   const commitPaneLayout = (affected?: number[]) => {
@@ -249,13 +303,15 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
 
   const applyFlexCss = () => {
     for (let i = 0; i < paneWrappers.length; i++) {
-      const marginTop = gap > 0 && i > 0 ? `margin-top:${gap}px;` : "";
-      paneWrappers[i].style.cssText = `${paneFlexStyle(paneRatios[i])}position:relative;overflow:hidden;${marginTop}`;
+      paneWrappers[i].style.cssText = wrapperStyle(paneRatios[i], gap, i, direction);
     }
   };
 
-  const stackAvailHeight = () => {
+  const stackAvailSize = () => {
     const dividerTotal = (paneWrappers.length - 1) * resizeDividerSize;
+    if (isHorizontal) {
+      return Math.max(1, container.clientWidth - dividerTotal);
+    }
     return Math.max(1, container.clientHeight - dividerTotal);
   };
 
@@ -268,18 +324,26 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     }
   };
 
-  const initDragHeights = (): number[] => {
-    const avail = stackAvailHeight();
-    const measured = paneWrappers.map((w) => w.getBoundingClientRect().height);
+  const initDragSizes = (): number[] => {
+    const avail = stackAvailSize();
+    const measured = paneWrappers.map((w) =>
+      isHorizontal ? w.getBoundingClientRect().width : w.getBoundingClientRect().height,
+    );
     const sum = measured.reduce((s, h) => s + h, 0);
     return sum > 0 ? measured.map((h) => h * (avail / sum)) : measured;
   };
 
-  const applyDragPaneHeights = (heightsPx: number[]) => {
+  const applyDragPaneSizes = (sizesPx: number[]) => {
     for (let i = 0; i < paneWrappers.length; i++) {
-      const h = Math.max(1, Math.round(heightsPx[i]));
-      const marginTop = gap > 0 && i > 0 ? `margin-top:${gap}px;` : "";
-      paneWrappers[i].style.cssText = `height:${h}px;flex:0 0 auto;min-height:0;position:relative;overflow:hidden;${marginTop}`;
+      const size = Math.max(1, Math.round(sizesPx[i]));
+      const gapStyle =
+        gap > 0 && i > 0
+          ? isHorizontal
+            ? `margin-left:${gap}px;`
+            : `margin-top:${gap}px;`
+          : "";
+      const dim = isHorizontal ? "width" : "height";
+      paneWrappers[i].style.cssText = `${dim}:${size}px;flex:0 0 auto;min-height:0;min-width:0;position:relative;overflow:hidden;${gapStyle}`;
     }
   };
 
@@ -287,10 +351,10 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     dragLayoutRaf = 0;
     if (!isPaneDragging || !pendingDragLayout) return;
 
-    const { heights, topIdx, bottomIdx } = pendingDragLayout;
-    applyDragPaneHeights(heights);
+    const { sizes, leadingIdx, trailingIdx } = pendingDragLayout;
+    applyDragPaneSizes(sizes);
 
-    for (const i of [topIdx, bottomIdx]) {
+    for (const i of [leadingIdx, trailingIdx]) {
       const chart = paneCharts.get(paneIds[i]);
       if (chart) {
         chart.resize();
@@ -300,21 +364,21 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
   };
 
   const scheduleDragLayout = (
-    heightsPx: number[],
-    topIdx: number,
-    bottomIdx: number,
+    sizesPx: number[],
+    leadingIdx: number,
+    trailingIdx: number,
   ) => {
-    pendingDragLayout = { heights: heightsPx, topIdx, bottomIdx };
+    pendingDragLayout = { sizes: sizesPx, leadingIdx, trailingIdx };
     if (dragLayoutRaf) return;
     dragLayoutRaf = requestAnimationFrame(flushDragLayout);
   };
 
-  const syncRatiosFromHeights = (heightsPx: number[]) => {
-    const totalH = heightsPx.reduce((s, h) => s + h, 0);
-    if (totalH <= 0) return;
+  const syncRatiosFromSizes = (sizesPx: number[]) => {
+    const total = sizesPx.reduce((s, h) => s + h, 0);
+    if (total <= 0) return;
     const totalR = paneRatios.reduce((s, r) => s + r, 0);
     for (let i = 0; i < paneRatios.length; i++) {
-      paneRatios[i] = (heightsPx[i] / totalH) * totalR;
+      paneRatios[i] = (sizesPx[i] / total) * totalR;
     }
   };
 
@@ -336,15 +400,26 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     paneCharts.get(paneIds[bottomIdx])?.setResizeSuspended?.(false);
   };
 
+  const alignedBottom = isHorizontal
+    ? (options.layout?.margins?.bottom ?? STACKED_FULL_X_MARGIN.bottom)
+    : MARGINS.bottom;
+
   for (let i = 0; i < panes.length; i++) {
     const pane = panes[i];
+    const isFirst = i === 0;
     const isLast = i === panes.length - 1;
-    const showXAxis =
-      pane.showXAxis ?? (sharedXAxis === "bottom" ? isLast : true);
+
+    const showXAxis = isHorizontal
+      ? (pane.showXAxis ?? true)
+      : (pane.showXAxis ?? (sharedXAxis === "bottom" ? isLast : true));
+
+    const showYAxis = isHorizontal
+      ? (pane.showYAxis ?? (sharedYAxis === "left" ? isFirst : true))
+      : (pane.showYAxis ?? true);
 
     const wrapper = document.createElement("div");
     wrapper.dataset.paneId = pane.id;
-    wrapper.style.cssText = wrapperStyle(paneRatios[i], gap, i);
+    wrapper.style.cssText = wrapperStyle(paneRatios[i], gap, i, direction);
 
     const chartDiv = document.createElement("div");
     chartDiv.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
@@ -361,12 +436,14 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
         i,
         panes.length,
         {
-          left: alignedLeft,
+          left: isHorizontal && !showYAxis ? MARGINS.left : alignedLeft,
           right: alignedRight,
           top: baseTop,
-          bottom: MARGINS.bottom,
+          bottom: alignedBottom,
         },
         showXAxis,
+        showYAxis,
+        direction,
       ),
     );
 
@@ -405,25 +482,26 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
       paneIds,
       paneRatios,
       {
+        direction,
         ...resizeOpts,
-        onDragStart: (topIdx, bottomIdx) => {
+        onDragStart: (leadingIdx, trailingIdx) => {
           isPaneDragging = true;
           setAllChartsResizeSuspended(true);
-          setInactiveChartsResizeSuspended(topIdx, bottomIdx);
-          return initDragHeights();
+          setInactiveChartsResizeSuspended(leadingIdx, trailingIdx);
+          return initDragSizes();
         },
-        onDragMove: (heights, topIdx, bottomIdx) => {
-          scheduleDragLayout(heights, topIdx, bottomIdx);
+        onDragMove: (sizes, leadingIdx, trailingIdx) => {
+          scheduleDragLayout(sizes, leadingIdx, trailingIdx);
         },
-        onDragEnd: (finalHeights) => {
+        onDragEnd: (finalSizes) => {
           if (dragLayoutRaf) {
             cancelAnimationFrame(dragLayoutRaf);
             dragLayoutRaf = 0;
           }
           pendingDragLayout = null;
           isPaneDragging = false;
-          const normalized = normalizePaneHeights(finalHeights, stackAvailHeight());
-          syncRatiosFromHeights(normalized);
+          const normalized = normalizePaneHeights(finalSizes, stackAvailSize());
+          syncRatiosFromSizes(normalized);
           restorePaneChartDivs();
           applyFlexCss();
           setAllChartsResizeSuspended(false);
@@ -440,8 +518,67 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
 
   const group = createChartGroup(
     Array.from(paneCharts.values()),
-    resolveStackSyncOptions(options.sync, masterPaneId),
+    resolveStackSyncOptions(options.sync, masterPaneId, direction),
   );
+
+  const getBackgroundColor = (): string => {
+    const theme = master.theme ?? master.baseTheme;
+    return theme?.backgroundColor ?? "#ffffff";
+  };
+
+  const waitForStackReady = (): Promise<void> => {
+    const maxWait = 8000;
+    const started = Date.now();
+
+    const waitForInitQueue = (): Promise<void> =>
+      new Promise((resolve) => {
+        const poll = () => {
+          const q = getInitQueueStatus();
+          if ((q.pending === 0 && !q.isProcessing) || Date.now() - started > maxWait) {
+            resolve();
+            return;
+          }
+          setTimeout(poll, 50);
+        };
+        poll();
+      });
+
+    return waitForInitQueue().then(() => {
+      return new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          commitPaneLayout();
+          resolve();
+        });
+      });
+    });
+  };
+
+  const runStackExport = async (opts: StackSnapshotOptions = {}): Promise<string> => {
+    await waitForStackReady();
+    for (const c of paneCharts.values()) c.render();
+    await new Promise((r) => requestAnimationFrame(r));
+
+    const dataUrl = await exportStackImage(
+      container,
+      paneWrappers,
+      Array.from(paneCharts.values()),
+      paneResizeCtrl?.dividers ?? [],
+      getBackgroundColor(),
+      opts,
+    );
+
+    if (opts.download) {
+      const ext = opts.format === "jpeg" ? "jpg" : opts.format ?? "png";
+      const link = document.createElement("a");
+      link.download = `${opts.fileName ?? "velo-plot-stack"}.${ext}`;
+      link.href = dataUrl;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    return dataUrl;
+  };
 
   const stack: StackedChart = {
     container,
@@ -478,7 +615,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
         const id = paneIds[i];
         if (ratios[id] !== undefined) paneRatios[i] = ratios[id];
       }
-      applyPaneFlexRatios(paneWrappers, paneRatios);
+      applyPaneFlexRatios(paneWrappers, paneRatios, direction);
       commitPaneLayout();
     },
     setSyncAxis(axis) {
@@ -491,30 +628,13 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
       group.updateOptions(syncOpts);
     },
     whenReady() {
-      const maxWait = 8000;
-      const started = Date.now();
-
-      const waitForInitQueue = (): Promise<void> =>
-        new Promise((resolve) => {
-          const poll = () => {
-            const q = getInitQueueStatus();
-            if ((q.pending === 0 && !q.isProcessing) || Date.now() - started > maxWait) {
-              resolve();
-              return;
-            }
-            setTimeout(poll, 50);
-          };
-          poll();
-        });
-
-      return waitForInitQueue().then(() => {
-        return new Promise<void>((resolve) => {
-          requestAnimationFrame(() => {
-            commitPaneLayout();
-            resolve();
-          });
-        });
-      });
+      return waitForStackReady();
+    },
+    exportImage(opts) {
+      return runStackExport(opts);
+    },
+    snapshot(opts) {
+      return runStackExport(opts);
     },
     destroy() {
       if (resizeRaf) cancelAnimationFrame(resizeRaf);

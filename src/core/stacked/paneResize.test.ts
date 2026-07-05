@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   normalizePaneHeights,
   resolveMinPaneHeightPx,
+  resolveMinPaneWidthPx,
+  initialPaneRatio,
+  applyPaneFlexRatios,
+  paneFlexStyle,
 } from "./paneResize";
 import { STACKED_DEFAULT_MIN_PANE_RATIO } from "./types";
 
@@ -26,5 +30,32 @@ describe("paneResize helpers", () => {
   it("normalizePaneHeights preserves proportions approximately", () => {
     const out = normalizePaneHeights([200, 100], 300);
     expect(out).toEqual([200, 100]);
+  });
+
+  it("normalizePaneHeights distributes evenly when input sum is zero", () => {
+    const out = normalizePaneHeights([0, 0, 0], 300);
+    expect(out.reduce((s, h) => s + h, 0)).toBe(300);
+    expect(out.every((h) => h >= 1)).toBe(true);
+  });
+
+  it("resolveMinPaneWidthPx mirrors height logic on width", () => {
+    expect(resolveMinPaneWidthPx(800, 4)).toBeCloseTo(800 / 6);
+  });
+
+  it("initialPaneRatio returns numeric ratio or 1 for strings", () => {
+    expect(initialPaneRatio(0.4)).toBe(0.4);
+    expect(initialPaneRatio("30%")).toBe(1);
+  });
+
+  it("paneFlexStyle uses width min for horizontal layout", () => {
+    expect(paneFlexStyle(0.5, "horizontal")).toContain("min-width:0");
+    expect(paneFlexStyle("40%", "vertical")).toContain("flex:1 1 40%");
+  });
+
+  it("applyPaneFlexRatios sets flex styles on wrappers", () => {
+    const wrappers = [{ style: { cssText: "" } }, { style: { cssText: "" } }] as HTMLDivElement[];
+    applyPaneFlexRatios(wrappers, [0.6, 0.4], "vertical");
+    expect(wrappers[0].style.cssText).toContain("flex:0.6");
+    expect(wrappers[1].style.cssText).toContain("flex:0.4");
   });
 });
