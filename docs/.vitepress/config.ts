@@ -163,6 +163,7 @@ export default defineConfig({
             { text: "React Components", link: "/api/react-velo-plot" },
             { text: "React Hooks", link: "/api/react-hook" },
             { text: "Stacked Pane Charts", link: "/api/stacked-chart" },
+            { text: "Indicator Panes", link: "/api/indicator-panes" },
             { text: "Theming API", link: "/api/themes" },
             { text: "Chart Sync", link: "/api/chart-sync" },
           ],
