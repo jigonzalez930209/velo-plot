@@ -10,7 +10,7 @@ Status key: **complete** = production-ready and tested | **partial** = usable wi
 | PluginTools | complete | Delta, peak, tooltips |
 | PluginAnnotations | complete | Lines, shapes, text |
 | PluginStreaming | complete | WebSocket + backpressure |
-| PluginSnapshot | complete | PNG/JPEG/WebP/SVG per chart; stack PNG via `stack.exportImage()` |
+| PluginSnapshot | complete | PNG/JPEG/WebP/SVG per chart (**SVG partial** — see [Stage 6](./roadmap/06-svg-vector-parity.md)); stack PNG via `stack.exportImage()` |
 | PluginDataExport | complete | CSV, JSON, etc. |
 | PluginContextMenu | complete | |
 | PluginRegression | complete | 8 fitting methods |

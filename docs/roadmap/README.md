@@ -61,12 +61,16 @@ flowchart LR
   subgraph v3 [v3.0.0]
     S5[Stage 5: Stable Platform]
   end
+  subgraph v4 [v3.1 to v4.0]
+    S6[Stage 6: SVG Vector Parity]
+  end
   S0 --> S1
   S1 --> S2
   S1 --> S3
   S2 --> S4
   S3 --> S4
   S4 --> S5
+  S5 --> S6
 ```
 
 | Stage | File | Version target | Theme |
@@ -77,8 +81,15 @@ flowchart LR
 | 3 | [03-scientific-depth.md](./03-scientific-depth.md) | v2.1.0 – v2.2.0 | Forecasting, ML, LaTeX, 3D polish |
 | 4 | [04-react-dx-ecosystem.md](./04-react-dx-ecosystem.md) | v2.2.0 – v2.9.0 | React components, a11y, touch, CLI |
 | 5 | [05-v3-stable-platform.md](./05-v3-stable-platform.md) | **v3.0.0** | Bundles, migration guide, release criteria |
+| 6 | [06-svg-vector-parity.md](./06-svg-vector-parity.md) | v3.1.0 – **v4.0.0** | Full SVG homolog of every v3 feature — zero skipped export |
 
 ---
+
+## Stage 6 — SVG vector parity (summary)
+
+After v3.0.0 freezes the canvas/WebGL feature set, **Stage 6** builds a complete **vector SVG homolog** for every user-visible capability: all `SeriesType` values, overlays, indicators, plugins, stacked layouts, and (when shipped) trading/scientific overlays. Nothing stays raster-only without an explicit documented exception.
+
+See the full [parity matrix](./06-svg-vector-parity.md#parity-matrix-v3--svg) and exit checklist for v4.0.0.
 
 ## Known gaps at v1.12.0 (audit summary)
 

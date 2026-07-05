@@ -100,6 +100,9 @@ quadrantChart
 | 5.21 | "What's new in v3" guide | P0 | Medium | Highlights trading + scientific + DX |
 | 5.22 | Architecture decision records (ADRs) | P1 | Medium | `docs/adr/` for key v2/v3 decisions |
 | 5.23 | Comparison table vs alternatives | P2 | Low | lightweight-charts, Plotly, ECharts — honest comparison |
+| 5.27 | Link to Stage 6 SVG parity roadmap | P1 | Low | v3 docs state raster export today; SVG full homolog is Stage 6 → v4 |
+
+> **Post-v3:** Full SVG homolog of all v3 features is **[Stage 6](./06-svg-vector-parity.md)** (target v4.0.0). v3.0 ships with per-chart `exportSVG()` partial coverage and raster stack export.
 
 ### P1 — Ecosystem
 
