@@ -5,15 +5,13 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Permisos necesarios para GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Permite solo una implementación en curso
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: true
 
 jobs:
@@ -23,20 +21,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necesario para que VitePress obtenga la última fecha de actualización
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
+          node-version: 24
+          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       - name: Build documentation
         run: pnpm run docs:build
