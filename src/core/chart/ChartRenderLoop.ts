@@ -101,6 +101,18 @@ export class ChartRenderLoop {
   }
 
   /**
+   * Perform an immediate full render (used after resize to avoid flicker).
+   */
+  flushRender(): void {
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+    this.needsFullRender = true;
+    this.performRender();
+  }
+
+  /**
    * Cancel any pending render
    */
   cancelPendingRender(): void {
