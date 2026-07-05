@@ -11,9 +11,10 @@
  * @module tooltip/TooltipManager
  */
 
-import type { PlotArea, Bounds } from "../../../types";
+import type { PlotArea, Bounds, AxisOptions } from "../../../types";
 import type { Scale } from "../../../scales";
 import type { Series } from "../../../core/Series";
+import type { TooltipAxisFormat } from "../../../core/format/axisFormat";
 import type {
   TooltipData,
   DataPointTooltip,
@@ -69,6 +70,10 @@ export interface TooltipManagerConfig {
   getYScales: () => Map<string, Scale>;
   /** Function to get view bounds */
   getViewBounds: () => Bounds;
+  /** Function to get X axis options */
+  getXAxisOptions?: () => AxisOptions;
+  /** Function to get Y axis options for a series axis id */
+  getYAxisOptions?: (axisId?: string) => AxisOptions | undefined;
   /** Initial options */
   options?: TooltipOptions;
 }
@@ -133,6 +138,9 @@ export class TooltipManager {
   private pixelToDataY: (py: number) => number;
   private getXScale: () => Scale;
   private getYScales: () => Map<string, Scale>;
+  private getViewBounds: () => Bounds;
+  private getXAxisOptions?: () => AxisOptions;
+  private getYAxisOptions?: (axisId?: string) => AxisOptions | undefined;
 
   private options: FullTooltipOptions;
   private theme: TooltipTheme;
@@ -169,6 +177,9 @@ export class TooltipManager {
     this.pixelToDataY = config.pixelToDataY;
     this.getXScale = config.getXScale;
     this.getYScales = config.getYScales;
+    this.getViewBounds = config.getViewBounds;
+    this.getXAxisOptions = config.getXAxisOptions;
+    this.getYAxisOptions = config.getYAxisOptions;
 
     // Default options
     this.options = {
@@ -575,6 +586,23 @@ export class TooltipManager {
     this.scheduleHide();
   }
 
+  private buildAxisFormat(yAxisId?: string): TooltipAxisFormat | undefined {
+    const bounds = this.getViewBounds();
+    const xSpan = bounds.xMax - bounds.xMin;
+    const x = this.getXAxisOptions?.();
+    const y = this.getYAxisOptions?.(yAxisId);
+
+    if (!x && !y && !Number.isFinite(xSpan)) {
+      return undefined;
+    }
+
+    return {
+      x,
+      y,
+      xSpan: Number.isFinite(xSpan) ? xSpan : undefined,
+    };
+  }
+
   /**
    * Find data point by X coordinate only (O(log n) - fastest method)
    * Best for very large datasets where precision is less important than speed
@@ -622,6 +650,7 @@ export class TooltipManager {
           pixelX: px,
           pixelY: py,
           cycle: (s as any).getCycle?.(),
+          axisFormat: this.buildAxisFormat(s.getYAxisId?.()),
         };
 
         const yError = s.getYError(idx);
@@ -690,6 +719,7 @@ export class TooltipManager {
             pixelX: px,
             pixelY: py,
             cycle: (s as any).getCycle?.(),
+            axisFormat: this.buildAxisFormat(s.getYAxisId?.()),
           };
 
           const yError = s.getYError(i);
@@ -849,6 +879,7 @@ export class TooltipManager {
       cursorY: pixelY,
       dataX,
       interpolatedValues,
+      axisFormat: this.buildAxisFormat(),
     };
   }
 

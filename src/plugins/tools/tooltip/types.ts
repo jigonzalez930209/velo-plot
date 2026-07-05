@@ -7,6 +7,8 @@
  * @module tooltip/types
  */
 
+import type { TooltipAxisFormat } from "../../../core/format/axisFormat";
+
 // ============================================
 // Tooltip Data Types
 // ============================================
@@ -56,6 +58,8 @@ export interface DataPointTooltip {
   xError?: [number, number];
   /** Cycle number (for CV data) */
   cycle?: number;
+  /** Axis formatting context aligned with chart tick formatters */
+  axisFormat?: TooltipAxisFormat;
   /** Custom metadata from series */
   metadata?: Record<string, unknown>;
 }
@@ -73,6 +77,8 @@ export interface CrosshairTooltip {
   dataX: number;
   /** Interpolated values for each visible series */
   interpolatedValues: CrosshairSeriesValue[];
+  /** Axis formatting context aligned with chart tick formatters */
+  axisFormat?: TooltipAxisFormat;
 }
 
 export interface CrosshairSeriesValue {
