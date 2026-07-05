@@ -129,6 +129,13 @@ export class Series {
         close: d?.close ? ensureTypedArray(d.close) : undefined,
         median: d?.median ? ensureTypedArray(d.median) : undefined,
       };
+      if (
+        this.type === "candlestick" &&
+        this.data.close &&
+        this.data.y.length !== this.data.x.length
+      ) {
+        this.data.y = this.data.close;
+      }
     }
     this.style = { ...DEFAULT_STYLE, ...options.style };
     // Legacy support for top-level style props
@@ -189,7 +196,7 @@ export class Series {
         this.type !== "polar" && 
         this.type !== "gauge" && 
         this.type !== "sankey") return null;
-    if (this.boundsNeedsUpdate || !this.cachedBounds) {
+    if (this.boundsNeedsUpdate) {
       this.cachedBounds = calculateSeriesBounds(this.type, this.data, this.heatmapData, this.polarData);
       this.boundsNeedsUpdate = false;
     }

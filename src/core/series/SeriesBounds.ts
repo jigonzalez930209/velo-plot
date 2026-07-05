@@ -9,7 +9,7 @@ export function calculateSeriesBounds(
   data: SeriesData,
   heatmapData?: HeatmapData,
   polarData?: PolarData
-): Bounds {
+): Bounds | null {
   if (type === "heatmap" && heatmapData) {
     const { xValues, yValues } = heatmapData;
     let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity;
@@ -23,6 +23,7 @@ export function calculateSeriesBounds(
       if (v < yMin) yMin = v;
       if (v > yMax) yMax = v;
     }
+    if (xMin === Infinity || yMin === Infinity) return null;
     return { xMin, xMax, yMin, yMax };
   }
 
@@ -30,8 +31,8 @@ export function calculateSeriesBounds(
     return calculatePolarBounds(polarData);
   }
 
-  const { x, y, y2, high, low } = data;
-  if (x.length === 0) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1 };
+  const { x, y, y2, open, high, low, close } = data;
+  if (x.length === 0) return null;
 
   let xMin = Infinity;
   let xMax = -Infinity;
@@ -45,20 +46,20 @@ export function calculateSeriesBounds(
     if (xVal < xMin) xMin = xVal;
     if (xVal > xMax) xMax = xVal;
 
-    // Check all possible Y values for this point
-    const yValues = [y[i]];
+    const yValues: number[] = [];
+    if (y.length > i && isFinite(y[i])) yValues.push(y[i]);
     if (y2 && isFinite(y2[i])) yValues.push(y2[i]);
+    if (open && isFinite(open[i])) yValues.push(open[i]);
     if (high && isFinite(high[i])) yValues.push(high[i]);
     if (low && isFinite(low[i])) yValues.push(low[i]);
+    if (close && isFinite(close[i])) yValues.push(close[i]);
 
     for (const v of yValues) {
-      if (isFinite(v)) {
-        if (v < yMin) yMin = v;
-        if (v > yMax) yMax = v;
-      }
+      if (v < yMin) yMin = v;
+      if (v > yMax) yMax = v;
     }
   }
 
-  if (xMin === Infinity) return { xMin: 0, xMax: 1, yMin: 0, yMax: 1 };
+  if (xMin === Infinity || yMin === Infinity) return null;
   return { xMin, xMax, yMin, yMax };
 }
