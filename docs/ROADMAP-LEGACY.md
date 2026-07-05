@@ -1,3 +1,7 @@
+> **ARCHIVED — Legacy document.** This roadmap is frozen at v1.6.2 (2026-01-13) and is no longer maintained. Many items marked "COMPLETED" are stubs or partial implementations. For the current development plan toward **v3.0.0**, see [Development Roadmap](./roadmap/README.md).
+
+---
+
 # Sci Plot - Roadmap de Desarrollo
 
 > **Versión Actual:** 1.6.2  
