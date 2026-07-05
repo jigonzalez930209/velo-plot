@@ -147,8 +147,8 @@ await stack.snapshot({
 | `download` | `boolean` | `false` | Auto-download |
 | `fileName` | `string` | `'velo-plot-stack'` | Download filename |
 
-::: info Stack SVG
-Full-stack **SVG** export is not yet available. Export each pane with `chart.exportSVG()` or use raster stack export for WYSIWYG layouts.
+::: info Stack SVG (Stage 6)
+Full-stack **SVG** export is planned for **v4.0.0** ([Stage 6 roadmap](/roadmap/06-svg-vector-parity)). Until then, export each pane with `chart.exportSVG()` or use raster stack export for WYSIWYG layouts.
 :::
 
 Works for **vertical** and **horizontal** (`direction: 'horizontal'`) stacks.
