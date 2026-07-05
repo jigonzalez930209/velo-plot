@@ -39,6 +39,7 @@ export default defineConfig({
       { text: "Guide", link: "/guide/" },
       { text: "API", link: "/api/" },
       { text: "Examples", link: "/examples/" },
+      { text: "Roadmap", link: "/roadmap/" },
       {
         text: "Contributing",
         link: "https://github.com/jigonzalez930209/velo-plot/blob/main/CONTRIBUTING.md",
@@ -293,6 +294,21 @@ export default defineConfig({
             { text: "Lazy Loading", link: "/examples/lazy-load" },
             { text: "ROI Tools", link: "/examples/roi-tools" },
             { text: "Offscreen Rendering", link: "/examples/offscreen" },
+          ],
+        },
+      ],
+      "/roadmap/": [
+        {
+          text: "Development Roadmap",
+          items: [
+            { text: "Overview", link: "/roadmap/" },
+            { text: "Stage 0: Foundation Audit", link: "/roadmap/00-foundation-audit" },
+            { text: "Stage 1: Render Engine", link: "/roadmap/01-render-engine-performance" },
+            { text: "Stage 2: Trading Experience", link: "/roadmap/02-trading-experience" },
+            { text: "Stage 3: Scientific Depth", link: "/roadmap/03-scientific-depth" },
+            { text: "Stage 4: React & DX", link: "/roadmap/04-react-dx-ecosystem" },
+            { text: "Stage 5: v3.0.0 Release", link: "/roadmap/05-v3-stable-platform" },
+            { text: "Legacy Roadmap (archived)", link: "/ROADMAP-LEGACY" },
           ],
         },
       ],
