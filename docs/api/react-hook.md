@@ -178,3 +178,82 @@ Use `<SciPlot>` component when you want:
 - Simpler declarative API
 - Automatic series management
 - Less boilerplate code
+
+## useStackedPlot Hook
+
+Multi-pane TradingView-style layouts in React.
+
+### Import
+
+```tsx
+import { useStackedPlot } from 'velo-plot/react'
+```
+
+### Signature
+
+```typescript
+function useStackedPlot(options: UseStackedPlotOptions): UseStackedPlotReturn
+```
+
+### Returns
+
+```typescript
+interface UseStackedPlotReturn {
+  containerRef: React.RefObject<HTMLDivElement>
+  stack: StackedChart | null
+  isReady: boolean
+  fitAll: (options?: { x?: Range; padding?: number }) => void
+  resetAll: () => void
+}
+```
+
+### Example
+
+```tsx
+import { useEffect } from 'react'
+import { useStackedPlot } from 'velo-plot/react'
+
+function MarketCharts() {
+  const { containerRef, stack, isReady, fitAll } = useStackedPlot({
+    masterPaneId: 'price',
+    sharedXAxis: 'bottom',
+    resizable: true,
+    sync: true,
+    theme: 'midnight',
+    panes: [
+      {
+        id: 'price',
+        height: 0.55,
+        chart: { xAxis: { type: 'time' }, yAxis: { label: 'Price' } },
+        series: [{ id: 'ohlc', type: 'candlestick', data: ohlcv }],
+      },
+      {
+        id: 'volume',
+        height: 0.22,
+        chart: { yAxis: { label: 'Volume', prefix: 'M' } },
+        series: [{ id: 'vol', type: 'bar', data: volumeData }],
+      },
+      {
+        id: 'rsi',
+        height: 0.23,
+        yRange: [0, 100],
+        series: [{ id: 'rsi', type: 'line', data: rsiData }],
+      },
+    ],
+  })
+
+  useEffect(() => {
+    if (isReady) fitAll()
+  }, [isReady, fitAll])
+
+  useEffect(() => {
+    if (!stack) return
+    stack.setSyncAxis('x')
+    // stack.getPane('volume')?.updateSeries(...)
+  }, [stack])
+
+  return <div ref={containerRef} style={{ width: '100%', height: 480 }} />
+}
+```
+
+See [Multi-Pane Example](/examples/pane-stack) and [Stacked Chart API](/api/stacked-chart).
