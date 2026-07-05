@@ -132,20 +132,16 @@ Step charts display data as "stair-step" patterns - ideal for discrete data.
 | [`chart.exportCSV(options?)`](/api/export#csv-export) | Export data to CSV format |
 | [`chart.exportJSON(options?)`](/api/export#json-export) | Export data to JSON format |
 
-```typescript
-// Quick export
-const csv = chart.exportCSV();
-const json = chart.exportJSON();
+### Image & Vector Export
 
-// With options
-const csv = chart.exportCSV({
-  seriesIds: ['current'],
-  precision: 4,
-  delimiter: '\t'
-});
-```
+| Method | Description |
+|--------|-------------|
+| [`chart.exportImage(type?)`](/api/image-export#single-chart--built-in-raster) | PNG/JPEG data URL (built-in) |
+| [`chart.exportSVG()`](/api/image-export#single-chart--svg-vector) | SVG string (vector paths + ticks) |
+| [`chart.snapshot.takeSnapshot()`](/api/image-export#single-chart--snapshot-plugin-high-res) | PNG/JPEG/WebP/SVG via `PluginSnapshot` |
+| [`stack.exportImage()`](/api/image-export#multi-pane-stack-export) | Full multi-pane composite (PNG/JPEG/WebP) |
 
-[View Data Export documentation →](/api/export)
+[View Image & Vector Export guide →](/api/image-export)
 
 ### Error Bars
 

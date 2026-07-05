@@ -5,7 +5,13 @@ description: Export chart data to CSV, JSON and PNG formats
 
 # Data Export
 
-Sci Plot provides built-in methods to export your chart data to CSV, JSON, and PNG/JPEG formats. This is useful for saving experiment results, generating reports, or sharing chart snapshots.
+Sci Plot provides built-in methods to export chart **data** (CSV, JSON) and **images** (PNG, JPEG, WebP, SVG). This page covers data export; for raster, vector, and multi-pane stack images see **[Image & Vector Export](/api/image-export)**.
+
+::: tip Image & SVG export
+- Single chart: `chart.exportImage()`, `chart.exportSVG()`, or `PluginSnapshot`
+- Multi-pane stack: `stack.exportImage()` / `stack.snapshot()`
+- [Full image export guide →](/api/image-export)
+:::
 
 ## Quick Example
 
@@ -165,6 +171,8 @@ function downloadJSON(chart, filename = 'chart-data.json') {
 
 ## Image Export (Raster)
 
+> For SVG, WebP, high-resolution presets, and stack export, see **[Image & Vector Export](/api/image-export)**.
+
 Export the current chart view as a PNG or JPEG image. The export includes all visible elements including series, axes, grid, and legend.
 
 ### Basic Usage
@@ -178,6 +186,14 @@ const dataUrl = chart.exportImage('png');
 ```typescript
 const dataUrl = chart.exportImage('jpeg'); 
 ```
+
+### SVG (vector)
+
+```typescript
+const svg = chart.exportSVG();
+```
+
+See [Image & Vector Export](/api/image-export#single-chart--svg-vector) for download helpers and `PluginSnapshot` integration.
 
 ### Why use Image Export?
 - **Universal compatibility**: PNG/JPEG files can be viewed anywhere.

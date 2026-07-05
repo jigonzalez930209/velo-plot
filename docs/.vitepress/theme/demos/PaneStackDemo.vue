@@ -36,6 +36,16 @@
       </label>
       <button class="btn" @click="fitAll">Fit All</button>
       <button class="btn" @click="resetAll">Reset</button>
+      <span class="export-divider">Export stack:</span>
+      <button class="btn export-btn" :disabled="!stack || isExporting" @click="exportStack('png')">
+        PNG
+      </button>
+      <button class="btn export-btn" :disabled="!stack || isExporting" @click="exportStack('jpeg')">
+        JPEG
+      </button>
+      <button class="btn export-btn" :disabled="!stack || isExporting" @click="exportStack('webp')">
+        WebP
+      </button>
     </div>
 
     <div
@@ -67,6 +77,7 @@ const runtimeSyncAxis = ref<'x' | 'y' | 'xy' | 'none'>('x')
 const runtimeCursor = ref(true)
 
 let stack: any = null
+const isExporting = ref(false)
 
 const presets = [
   {
@@ -429,6 +440,24 @@ function resetAll() {
   stack?.resetAll()
 }
 
+async function exportStack(format: 'png' | 'jpeg' | 'webp') {
+  if (!stack || isExporting.value) return
+  isExporting.value = true
+  try {
+    await stack.exportImage({
+      format,
+      resolution: '2k',
+      download: true,
+      fileName: `velo-stack-${activePreset.value}`,
+      includeDividers: true,
+    })
+  } catch (err) {
+    console.error('[PaneStackDemo] export failed', err)
+  } finally {
+    isExporting.value = false
+  }
+}
+
 function applyRuntimeSync() {
   if (!stack || activePreset.value !== 'tradingview') return
   const enabled = runtimeSyncAxis.value !== 'none'
@@ -673,6 +702,22 @@ watch(chartTheme, (theme) => {
 
 .btn:hover {
   border-color: #00f2ff;
+}
+
+.export-divider {
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+  margin-left: 4px;
+}
+
+.export-btn {
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .stack-container {

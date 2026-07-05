@@ -134,7 +134,8 @@ export default defineConfig({
           items: [
             { text: "Responsive Design", link: "/api/responsive" },
             { text: "State Persistence", link: "/api/persistence" },
-            { text: "Data Export", link: "/api/export" },
+            { text: "Image & Vector Export", link: "/api/image-export" },
+            { text: "Data Export (CSV/JSON)", link: "/api/export" },
           ],
         },
         {

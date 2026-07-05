@@ -239,11 +239,15 @@ chart.resize(800, 600)
 // Force a render
 chart.render()
 
-// Export as image
+// Export as image (built-in raster)
 const dataUrl = chart.exportImage('png')  // or 'jpeg'
 
-// Export as SVG string
+// Export as SVG string (vector)
 const svg = chart.exportSVG()
+
+// High-res / WebP / SVG download via plugin:
+// chart.use(PluginSnapshot())
+// await chart.snapshot.downloadSnapshot({ format: 'svg' })
 
 // Use a plugin
 chart.use(myPlugin)

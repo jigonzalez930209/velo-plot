@@ -1,8 +1,6 @@
-# Export & Media Plugins
+# Snapshot Plugin (`PluginSnapshot`)
 
-This suite provides tools for high-resolution image generation, real-time video capture, and multi-format data extraction.
-
-## Snapshot Plugin (`PluginSnapshot`)
+> **See also:** [Image & Vector Export](/api/image-export) — unified guide for PNG, JPEG, WebP, SVG, and stack export.
 
 The `PluginSnapshot` allows capturing the current state of the chart as a high-resolution image, respecting device pixel ratios and including all layers (WebGL, SVG, Canvas).
 
