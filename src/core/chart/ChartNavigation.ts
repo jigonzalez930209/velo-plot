@@ -8,6 +8,7 @@ import type { Bounds, ZoomOptions, AxisOptions } from "../../types";
 import type { Scale } from "../../scales";
 import type { EventEmitter } from "../EventEmitter";
 import type { ChartEventMap } from "../../types";
+import { usesVolumeBarPinning } from "./NavigationUtils";
 
 export interface NavigationContext {
   viewBounds: Bounds;
@@ -38,10 +39,10 @@ export function applyZoom(
     ctx.viewBounds.xMax = options.x[1];
   }
   
-  const hasBars = Array.from(ctx.series.values()).some(s => s.isVisible() && s.getType() === 'bar');
+  const pinBarBaseline = usesVolumeBarPinning(ctx.series.values());
   const finalY = options.y ? [...options.y] : null;
 
-  if (finalY && hasBars) {
+  if (finalY && pinBarBaseline) {
     // Pin baseline to 0 for bar charts during zoom
     finalY[0] = 0;
   }
@@ -70,8 +71,8 @@ export function applyZoom(
       ctx.yScales.forEach((scale, id) => {
         if (id === ctx.primaryYAxisId) return; // Will sync with viewBounds later
         const sRange = scale.domain[1] - scale.domain[0];
-        const sNewMin = hasBars ? 0 : (scale.domain[0] + offsetPct * sRange);
-        const sNewMax = hasBars 
+        const sNewMin = pinBarBaseline ? 0 : (scale.domain[0] + offsetPct * sRange);
+        const sNewMax = pinBarBaseline
           ? (scale.domain[0] + (finalY[1] / (ctx.viewBounds.yMax || 1)) * sRange) // Roughly proportional
           : (sNewMin + factor * sRange);
         scale.setDomain(sNewMin, sNewMax);
@@ -109,14 +110,14 @@ export function applyPan(
     // Pan targeted axis only
     const scale = ctx.yScales.get(axisId);
     if (scale) {
-      const hasBars = Array.from(ctx.series.values()).some(s => s.isVisible() && s.getType() === 'bar');
+      const pinBarBaseline = usesVolumeBarPinning(ctx.series.values());
       const range = scale.domain[1] - scale.domain[0];
       const moveY = (deltaY / pa.height) * range;
       
       let nextMin = scale.domain[0] + moveY;
       let nextMax = scale.domain[1] + moveY;
       
-      if (hasBars) {
+      if (pinBarBaseline) {
         nextMin = 0; // Lock bottom
         // Panning up/down only affects the top bound for bars
         nextMax = scale.domain[1] + moveY; 
@@ -132,7 +133,7 @@ export function applyPan(
     }
   } else {
     // Global pan: apply to all Y axes proportionally
-    const hasBars = Array.from(ctx.series.values()).some(s => s.isVisible() && s.getType() === 'bar');
+    const pinBarBaseline = usesVolumeBarPinning(ctx.series.values());
     ctx.yScales.forEach((scale, id) => {
       const range = scale.domain[1] - scale.domain[0];
       const moveY = (deltaY / pa.height) * range;
@@ -140,7 +141,7 @@ export function applyPan(
       let nextMin = scale.domain[0] + moveY;
       let nextMax = scale.domain[1] + moveY;
 
-      if (hasBars) {
+      if (pinBarBaseline) {
         nextMin = 0;
       }
 

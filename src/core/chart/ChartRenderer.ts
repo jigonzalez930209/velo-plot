@@ -439,7 +439,14 @@ export function renderOverlay(
       polarAngleMode
     );
   } else if (!hasGaugeSeries && !hasSankeySeries) {
-    ctx.overlay.drawGrid(plotArea, ctx.xScale, primaryYScale);
+    const primaryYOpts = ctx.yAxisOptionsMap.get(ctx.primaryYAxisId);
+    ctx.overlay.drawGrid(
+      plotArea,
+      ctx.xScale,
+      primaryYScale,
+      ctx.xAxisOptions,
+      primaryYOpts,
+    );
   }
 
   // Draw series-specific overlay elements (Gauge, Sankey)
