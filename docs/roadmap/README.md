@@ -1,6 +1,6 @@
 # velo-plot Development Roadmap → v3.0.0
 
-> **Current version:** 1.12.0  
+> **Current version:** 1.13.0  
 > **Last updated:** 2026-07-05  
 > **Status:** Active planning document
 
@@ -110,6 +110,7 @@ All releases require an updated `CHANGELOG.md` entry following [Keep a Changelog
 
 ## Related documents
 
+- [Plugin status registry](../PLUGIN-STATUS.md) — plugin audit (Stage 0)
 - [CHANGELOG.md](../../CHANGELOG.md) — release history
 - [ROADMAP-LEGACY.md](../ROADMAP-LEGACY.md) — archived v1.6.2 plan (historical reference only)
 - [Multi-Pane Guide](../guide/multi-pane.md) — current stacked chart docs
