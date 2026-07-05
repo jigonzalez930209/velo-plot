@@ -75,7 +75,23 @@ export function PluginSnapshot(
     const originalDPR = chart.getDPR();
     
     try {
-        // 2. High-res re-render if scale > 1
+        if (opt.format === 'svg') {
+          const svg = chart.exportSVG();
+          if (opt.download) {
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = `${opt.fileName}.svg`;
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }
+          return svg;
+        }
+
+        // High-res re-render if scale > 1
         // We temporarily boost the device pixel ratio to force a higher resolution render
         if (scale > 1) {
             chart.setDPR(originalDPR * scale);
