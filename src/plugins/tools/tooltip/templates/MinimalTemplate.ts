@@ -15,30 +15,7 @@ import type {
   TooltipTheme,
   TooltipType
 } from '../types';
-
-/**
- * Format a number compactly
- */
-function formatCompact(value: number | null | undefined): string {
-  if (value === null || value === undefined || isNaN(value)) {
-    return "N/A";
-  }
-
-  const absVal = Math.abs(value);
-
-  if (absVal === 0) return "0";
-
-  // Use SI prefixes for large/small numbers
-  if (absVal >= 1e9) return (value / 1e9).toFixed(1) + "G";
-  if (absVal >= 1e6) return (value / 1e6).toFixed(1) + "M";
-  if (absVal >= 1e3) return (value / 1e3).toFixed(1) + "k";
-  if (absVal >= 1) return value.toFixed(2);
-  if (absVal >= 1e-3) return (value * 1e3).toFixed(1) + "m";
-  if (absVal >= 1e-6) return (value * 1e6).toFixed(1) + "µ";
-  if (absVal >= 1e-9) return (value * 1e9).toFixed(1) + "n";
-
-  return value.toExponential(1);
-}
+import { formatCompactValue } from '../format';
 
 /**
  * Minimal Template
@@ -75,7 +52,7 @@ export class MinimalTooltipTemplate implements TooltipTemplate<DataPointTooltip>
     ctx.font = `${theme.contentFontSize}px ${theme.fontFamily}`;
     
     // Create compact text
-    const text = `${formatCompact(data.dataX)} ▪ ${formatCompact(data.dataY)}`;
+    const text = `${formatCompactValue(data, 'x')} ▪ ${formatCompactValue(data, 'y')}`;
     const textWidth = ctx.measureText(text).width;
     
     this.cachedMeasurement = {
@@ -108,8 +85,8 @@ export class MinimalTooltipTemplate implements TooltipTemplate<DataPointTooltip>
     const y = position.y + padding.top;
     
     // Create compact text
-    const xValue = formatCompact(data.dataX);
-    const yValue = formatCompact(data.dataY);
+    const xValue = formatCompactValue(data, 'x');
+    const yValue = formatCompactValue(data, 'y');
     
     ctx.save();
     ctx.font = `${theme.contentFontSize}px ${theme.fontFamily}`;

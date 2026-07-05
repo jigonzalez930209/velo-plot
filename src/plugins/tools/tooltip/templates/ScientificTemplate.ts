@@ -18,6 +18,17 @@ import type {
   TooltipTheme,
   TooltipType
 } from '../types';
+import { formatDataPointX, formatDataPointY } from '../format';
+
+function formatXValue(data: DataPointTooltip): string {
+  if (data.axisFormat?.x?.type === 'time') return formatDataPointX(data);
+  return toScientificUnicode(data.dataX);
+}
+
+function formatYValue(data: DataPointTooltip): string {
+  if (data.axisFormat?.y?.scientific === false) return formatDataPointY(data);
+  return toScientificUnicode(data.dataY);
+}
 
 /**
  * Convert number to scientific notation with Unicode superscripts
@@ -143,11 +154,11 @@ export class ScientificTooltipTemplate implements TooltipTemplate<DataPointToolt
     const labelWidth = 28; // Fixed width used in render
     
     // X value
-    const xVal = toScientificUnicode(data.dataX);
+    const xVal = formatXValue(data);
     let maxWidth = Math.max(titleWidth, labelWidth + ctx.measureText(xVal).width);
     
     // Y value with optional error
-    const yVal = toScientificUnicode(data.dataY);
+    const yVal = formatYValue(data);
     let yWidth = labelWidth + ctx.measureText(yVal).width;
     if (data.yError) {
       yWidth += ctx.measureText(` ± ${toScientificUnicode(data.yError[0])}`).width;
@@ -243,7 +254,7 @@ export class ScientificTooltipTemplate implements TooltipTemplate<DataPointToolt
     ctx.fillStyle = theme.textSecondaryColor;
     ctx.fillText('X:', currentX, currentY);
     ctx.fillStyle = theme.textColor;
-    ctx.fillText(toScientificUnicode(data.dataX), currentX + labelWidth, currentY);
+    ctx.fillText(formatXValue(data), currentX + labelWidth, currentY);
     currentY += theme.contentFontSize * theme.lineHeight + 2;
     
     // Y value with error
@@ -251,7 +262,7 @@ export class ScientificTooltipTemplate implements TooltipTemplate<DataPointToolt
     ctx.fillText('Y:', currentX, currentY);
     ctx.fillStyle = theme.textColor;
     
-    let yText = toScientificUnicode(data.dataY);
+    let yText = formatYValue(data);
     ctx.fillText(yText, currentX + labelWidth, currentY);
     
     if (data.yError) {
