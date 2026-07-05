@@ -255,3 +255,26 @@ All indicator functions:
 - Return `Float32Array` for memory efficiency
 - Use `NaN` for insufficient data periods
 - Are optimized for large datasets (100k+ points)
+
+## Composite Indicator Panes (Stacked Charts)
+
+For multi-layer trading indicators (histogram + buy/sell colored lines + fills), use the composite pane API instead of manual series wiring:
+
+```typescript
+import { buildIndicatorPane, buildIndicatorSeries } from 'velo-plot';
+
+const pane = buildIndicatorPane({
+  id: 'wave',
+  data: {
+    x,
+    histogram: { y: hist },
+    lines: [{
+      id: 'fast',
+      y: fastLine,
+      colorZones: { ref: 'zero', aboveColor: '#26a69a', belowColor: '#ef5350' },
+    }],
+  },
+});
+```
+
+See [Indicator Panes API](/api/indicator-panes) and [Pane Stack Example](/examples/pane-stack).
