@@ -36,6 +36,8 @@ export interface AxisOptions {
   position?: "left" | "right" | "top" | "bottom";
   /** Scale type */
   scale?: ScaleType;
+  /** Tick display type — affects label formatting, not the mathematical scale */
+  type?: "linear" | "time";
   /** Axis label (e.g., 'E / V') */
   label?: string;
   /** Unit for formatting (e.g., 'V', 'A') */
@@ -83,6 +85,8 @@ export interface AxisOptions {
   labelFontSize?: number;
   /** Label rotation in degrees (useful for crowded X-axis) */
   labelRotation?: number;
+  /** Target number of tick divisions on this axis (default: 8 for X, 6 for Y) */
+  tickCount?: number;
 }
 
 // ============================================
@@ -106,7 +110,8 @@ export type SeriesType =
   | "waterfall"
   | "gauge"
   | "sankey"
-  | "ternary";
+  | "ternary"
+  | "indicator";
 
 /** Step mode defines where the step occurs */
 export type StepMode = "before" | "after" | "center";
@@ -628,6 +633,8 @@ export interface TernaryOptions extends Omit<SeriesOptions, "data" | "style"> {
 export interface ChartOptions {
   /** Target container element */
   container: HTMLDivElement;
+  /** Stable chart id (used by sync groups; auto-generated if omitted) */
+  id?: string;
   /** Renderer backend selection (default: 'webgl') */
   renderer?: "webgl" | "webgpu";
   /** X-axis configuration */
@@ -740,6 +747,18 @@ export interface ZoomOptions {
   y?: Range;
   /** ID of the specific Y axis to zoom (if applicable) */
   axisId?: string;
+  /** Animate the transition */
+  animate?: boolean;
+}
+
+/** Options for {@link Chart.fit} — safe fit that skips empty series */
+export interface FitOptions {
+  /** Explicit X range (otherwise derived from visible series) */
+  x?: Range;
+  /** Explicit Y range for the primary Y axis (otherwise derived per axis) */
+  y?: Range;
+  /** Padding fraction applied to computed ranges (default: 0.02 for X, 0.05 for Y) */
+  padding?: number | { x?: number; y?: number };
   /** Animate the transition */
   animate?: boolean;
 }

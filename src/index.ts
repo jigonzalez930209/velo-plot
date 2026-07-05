@@ -506,6 +506,35 @@ export {
 } from "./core/sync";
 
 // ============================================
+// Stacked multi-pane charts
+// ============================================
+export {
+  createStackedChart,
+  STACKED_MAX_PANES,
+  STACKED_DEFAULT_MIN_PANE_RATIO,
+  type StackedChart,
+  type StackedChartOptions,
+  type StackedPaneConfig,
+  type StackedSyncOptions,
+} from "./core/stacked";
+
+// ============================================
+// Trading indicator panes (histogram + lines + fills)
+// ============================================
+export {
+  buildIndicatorSeries,
+  createIndicatorSeries,
+  buildIndicatorPane,
+  detectIndicatorMarkers,
+  type IndicatorData,
+  type IndicatorSeriesOptions,
+  type IndicatorStyle,
+  type IndicatorLineLayer,
+  type IndicatorLineColorZones,
+  type BuildIndicatorPaneOptions,
+} from "./core/indicator";
+
+// ============================================
 // Theme Editor
 // ============================================
 export {
