@@ -99,6 +99,8 @@ export function PluginTools(_config: PluginToolsConfig = {}): ChartPlugin<Plugin
                         getXScale: () => chart.xScale,
                         getYScales: () => chart.yScales,
                         getViewBounds: () => ctx.data.getViewBounds(),
+                        getXAxisOptions: () => ctx.chart.getXAxis(),
+                        getYAxisOptions: (id) => ctx.chart.getYAxis(id || ctx.chart.getPrimaryYAxisId()),
                         options: chart.initialOptions?.tooltip,
                     });
                 }
