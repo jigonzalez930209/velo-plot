@@ -13,6 +13,7 @@ import type {
   ChartEventMap,
   Bounds,
   AxisOptions,
+  FitOptions,
 } from "../../types";
 import type { Series } from "../Series";
 import type { Annotation } from "../annotations";
@@ -43,12 +44,20 @@ export interface Chart {
   setMaxPoints(id: string, maxPoints: number): void;
   addFitLine(seriesId: string, type: any, options?: any): string;
   zoom(options: ZoomOptions & { animate?: boolean }): void;
+  /** Fit view to data; no-op when series have no valid bounds */
+  fit(options?: FitOptions): void;
+  /** Stable chart id for sync groups */
+  getId(): string;
   pan(deltaX: number, deltaY: number): void;
   resetZoom(): void;
   getViewBounds(): Bounds;
   enableCursor(options: CursorOptions): void;
   disableCursor(): void;
   resize(width?: number, height?: number): void;
+  /** Pause backing-store resize — canvases scale via CSS until cleared */
+  setResizeSuspended?(suspended: boolean): void;
+  /** Re-apply CSS canvas fill after pane flex changes during drag */
+  syncDragLayout?(width?: number, height?: number): void;
   /** Get current device pixel ratio used for rendering */
   getDPR(): number;
   /** Set device pixel ratio and trigger re-render */
@@ -137,6 +146,8 @@ export interface Chart {
   updateXAxis(options: Partial<AxisOptions>): void;
   /** Get Y axis configuration by ID */
   getYAxis(id: string): AxisOptions | undefined;
+  /** Get X axis configuration */
+  getXAxis(): AxisOptions;
   /** Get all Y axes configurations */
   getAllYAxes(): AxisOptions[];
   /** Get the primary Y axis ID */
