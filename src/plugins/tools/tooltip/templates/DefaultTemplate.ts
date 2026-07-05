@@ -18,35 +18,18 @@ import type {
   TooltipTheme,
   TooltipType
 } from '../types';
+import { formatDataPointX, formatDataPointY } from '../format';
 
-/**
- * Format a number for display
- */
-function formatValue(
-  value: number | null | undefined,
-  precision: number = 4
-): string {
-  if (value === null || value === undefined || isNaN(value)) {
-    return "N/A";
-  }
-
+function formatValue(value: number | null | undefined, data?: DataPointTooltip, axis?: 'x' | 'y'): string {
+  if (data && axis === 'x') return formatDataPointX(data);
+  if (data && axis === 'y') return formatDataPointY(data);
+  if (value === null || value === undefined || isNaN(value)) return "N/A";
   const absVal = Math.abs(value);
-
-  // Use scientific notation for very large/small numbers
-  if (absVal !== 0 && (absVal < 0.0001 || absVal >= 10000)) {
-    return value.toExponential(2);
-  }
-
-  // Smart precision based on magnitude
-  if (absVal < 0.01) {
-    return value.toPrecision(precision);
-  } else if (absVal < 1) {
-    return value.toFixed(4);
-  } else if (absVal < 100) {
-    return value.toFixed(3);
-  } else {
-    return value.toFixed(1);
-  }
+  if (absVal !== 0 && (absVal < 0.0001 || absVal >= 10000)) return value.toExponential(2);
+  if (absVal < 0.01) return value.toPrecision(4);
+  if (absVal < 1) return value.toFixed(4);
+  if (absVal < 100) return value.toFixed(3);
+  return value.toFixed(1);
 }
 
 /**
@@ -95,8 +78,8 @@ export class DefaultTooltipTemplate implements TooltipTemplate<DataPointTooltip>
     
     // Format values
     const labelWidth = 35;
-    const xValWidth = ctx.measureText(formatValue(data.dataX)).width;
-    const yValWidth = ctx.measureText(formatValue(data.dataY)).width;
+    const xValWidth = ctx.measureText(formatValue(data.dataX, data, 'x')).width;
+    const yValWidth = ctx.measureText(formatValue(data.dataY, data, 'y')).width;
     
     // Measure content lines
     let contentWidth = labelWidth + Math.max(xValWidth, yValWidth);
@@ -207,14 +190,14 @@ export class DefaultTooltipTemplate implements TooltipTemplate<DataPointTooltip>
     ctx.fillText('X:', currentX, currentY);
     ctx.fillStyle = theme.textColor;
     const labelWidth = 35; // Fixed label width for better alignment
-    ctx.fillText(formatValue(data.dataX), currentX + labelWidth, currentY);
+    ctx.fillText(formatValue(data.dataX, data, 'x'), currentX + labelWidth, currentY);
     currentY += theme.contentFontSize * theme.lineHeight + 2;
     
     // Y value
     ctx.fillStyle = theme.textSecondaryColor;
     ctx.fillText('Y:', currentX, currentY);
     ctx.fillStyle = theme.textColor;
-    ctx.fillText(formatValue(data.dataY), currentX + labelWidth, currentY);
+    ctx.fillText(formatValue(data.dataY, data, 'y'), currentX + labelWidth, currentY);
     currentY += theme.contentFontSize * theme.lineHeight + 2;
     
     // Error if present

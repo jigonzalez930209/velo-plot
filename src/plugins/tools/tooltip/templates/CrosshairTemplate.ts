@@ -15,6 +15,7 @@ import type {
   TooltipTheme,
   TooltipType,
 } from "../types";
+import { formatCrosshairX, formatCrosshairY } from "../format";
 
 // Constants for spacing and layout
 const SPACING = {
@@ -25,26 +26,6 @@ const SPACING = {
   HEADER_SPACING: 2,
   GAP_SPACING: 2,
 } as const;
-
-/**
- * Format a number for display
- */
-function formatValue(value: number | null | undefined): string {
-  if (value === null || value === undefined || isNaN(value)) {
-    return "N/A";
-  }
-
-  const absVal = Math.abs(value);
-
-  if (absVal === 0) return "0";
-  if (absVal < 0.0001 || absVal >= 10000) {
-    return value.toExponential(2);
-  }
-  if (absVal < 0.01) return value.toPrecision(3);
-  if (absVal < 1) return value.toFixed(4);
-  if (absVal < 100) return value.toFixed(3);
-  return value.toFixed(1);
-}
 
 /**
  * Formatted series data for caching
@@ -109,10 +90,10 @@ export class CrosshairTooltipTemplate implements TooltipTemplate<CrosshairToolti
     series: FormattedSeriesData[];
   } {
     return {
-      header: `⌖ X = ${formatValue(data.dataX)}`,
+      header: `⌖ X = ${formatCrosshairX(data)}`,
       series: data.interpolatedValues.map((s) => ({
         name: s.seriesName,
-        value: formatValue(s.y),
+        value: formatCrosshairY(s.y, data),
         color: s.seriesColor,
         isInterpolated: s.isInterpolated,
       })),
