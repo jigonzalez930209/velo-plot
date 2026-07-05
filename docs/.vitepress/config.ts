@@ -58,6 +58,7 @@ export default defineConfig({
           text: "Core Architecture",
           items: [
             { text: "Chart Architecture", link: "/guide/concepts" },
+            { text: "Multi-Pane Layouts", link: "/guide/multi-pane" },
             { text: "Series & Data", link: "/guide/series" },
             { text: "Integration Guide", link: "/guide/react" },
           ],
@@ -161,6 +162,7 @@ export default defineConfig({
           items: [
             { text: "React Components", link: "/api/react-velo-plot" },
             { text: "React Hooks", link: "/api/react-hook" },
+            { text: "Stacked Pane Charts", link: "/api/stacked-chart" },
             { text: "Theming API", link: "/api/themes" },
             { text: "Chart Sync", link: "/api/chart-sync" },
           ],
@@ -208,6 +210,7 @@ export default defineConfig({
           items: [
             { text: "Heatmaps", link: "/examples/heatmap" },
             { text: "Candlestick", link: "/examples/candlestick" },
+            { text: "Multi-Pane Stack", link: "/examples/pane-stack" },
             { text: "Error Bars", link: "/examples/error-bars" },
             { text: "Scatter Symbols", link: "/examples/scatter-symbols" },
             { text: "Crosshair Cursor", link: "/examples/crosshair" },
@@ -275,7 +278,7 @@ export default defineConfig({
           text: "Developer Experience",
           items: [
             { text: "Financial Indicators", link: "/examples/indicators" },
-            // { text: "Chart Synchronization", link: "/examples/chart-sync" },
+            { text: "Chart Synchronization", link: "/examples/chart-sync" },
             { text: "Theme Editor", link: "/examples/theme-editor" },
             { text: "Waveform Generators", link: "/examples/waveforms" },
             { text: "Backpressure Demo", link: "/examples/backpressure" },

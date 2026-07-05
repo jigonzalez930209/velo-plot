@@ -2,7 +2,7 @@
   <div class="sync-demo">
     <div class="info-bar">
       <span class="badge">{{ syncMode }}</span>
-      <span class="description">Zoom or pan one chart - the other follows!</span>
+      <span class="description">Zoom or pan one chart — the other follows via ChartGroup</span>
     </div>
     
     <div class="sync-controls">
@@ -31,7 +31,7 @@
     <div class="status-bar">
       <span>Cursor Sync: <strong>{{ cursorSync ? 'ON' : 'OFF' }}</strong></span>
       <label class="toggle">
-        <input type="checkbox" v-model="cursorSync">
+        <input type="checkbox" v-model="cursorSync" @change="applyCursorSync">
         <span class="slider"></span>
       </label>
     </div>
@@ -48,7 +48,7 @@ const cursorSync = ref(true)
 
 let chart1: any = null
 let chart2: any = null
-let isUpdating = false
+let group: any = null
 
 const modes = [
   { value: 'x' as const, label: 'X-Axis Sync' },
@@ -73,63 +73,35 @@ function generateData(points: number, baseValue: number, variance: number) {
 
 function setSyncMode(mode: 'x' | 'y' | 'xy' | 'none') {
   syncMode.value = mode
+  group?.syncAxis(mode)
+  const enabled = mode !== 'none'
+  group?.syncZoom(enabled)
+  group?.syncPan(enabled)
+}
+
+function applyCursorSync() {
+  group?.syncCursor(cursorSync.value)
 }
 
 function resetCharts() {
-  // Reset without animation
-  chart1?.autoScale(false)
-  chart2?.autoScale(false)
-}
-
-function syncZoom(source: any, target: any) {
-  if (isUpdating || syncMode.value === 'none') return
-  
-  isUpdating = true
-  
-  try {
-    const bounds = source.getViewBounds()
-    
-    const zoomOpts: any = {
-      animate: false, // Disable animation for instant sync
-    }
-    
-    if (syncMode.value === 'x' || syncMode.value === 'xy') {
-      zoomOpts.x = [bounds.xMin, bounds.xMax]
-    }
-    if (syncMode.value === 'y' || syncMode.value === 'xy') {
-      zoomOpts.y = [bounds.yMin, bounds.yMax]
-    }
-    
-    if (zoomOpts.x || zoomOpts.y) {
-      target.zoom(zoomOpts)
-      // Force immediate render without animation queue
-      target.render()
-    }
-  } finally {
-    // Use requestAnimationFrame to reset the flag after the render cycle
-    requestAnimationFrame(() => {
-      isUpdating = false
-    })
-  }
+  group?.resetAll()
 }
 
 onMounted(async () => {
   if (typeof window === 'undefined') return
   if (!chart1Container.value || !chart2Container.value) return
   
-  const { createChart } = await import('@src/index')
+  const { createChart, linkCharts } = await import('@src/index')
   
-  // Create first chart with animations disabled
   chart1 = createChart({
     container: chart1Container.value,
     xAxis: { label: 'Time (s)' },
     yAxis: { label: 'Temperature (°C)' },
     theme: 'midnight',
     showControls: false,
-    animation: { enabled: false }, // Disable animations
+    animation: { enabled: false },
   })
   
-  // Disable animation config if method exists
   if (chart1.setAnimationConfig) {
     chart1.setAnimationConfig({ enabled: false })
   }
@@ -144,17 +116,15 @@ onMounted(async () => {
   
   chart1.autoScale(false)
   
-  // Create second chart with animations disabled
   chart2 = createChart({
     container: chart2Container.value,
     xAxis: { label: 'Time (s)' },
     yAxis: { label: 'Humidity (%)' },
     theme: 'midnight',
     showControls: false,
-    animation: { enabled: false }, // Disable animations
+    animation: { enabled: false },
   })
   
-  // Disable animation config if method exists
   if (chart2.setAnimationConfig) {
     chart2.setAnimationConfig({ enabled: false })
   }
@@ -169,20 +139,17 @@ onMounted(async () => {
   
   chart2.autoScale(false)
   
-  // Set up synchronization using zoom events
-  // Use 'boundsChanged' or 'zoom' event - checking both for compatibility
-  const zoomEvent = 'zoom'
-  
-  chart1.on(zoomEvent, () => {
-    syncZoom(chart1, chart2)
-  })
-  
-  chart2.on(zoomEvent, () => {
-    syncZoom(chart2, chart1)
+  group = linkCharts(chart1, chart2, {
+    axis: syncMode.value,
+    syncCursor: cursorSync.value,
+    syncZoom: true,
+    syncPan: true,
+    bidirectional: true,
   })
 })
 
 onUnmounted(() => {
+  group?.destroy()
   chart1?.destroy()
   chart2?.destroy()
 })
@@ -219,28 +186,29 @@ onUnmounted(() => {
 
 .sync-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 16px;
-  flex-wrap: wrap;
 }
 
 .sync-controls button {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a0aec0;
   padding: 8px 16px;
   border-radius: 6px;
-  border: 1px solid #444;
-  background: #16213e;
-  color: #a0aec0;
   cursor: pointer;
+  font-size: 13px;
   transition: all 0.2s;
 }
 
 .sync-controls button:hover {
-  border-color: #00f2ff;
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
 
 .sync-controls button.active {
-  background: linear-gradient(135deg, #00f2ff20, #4ecdc420);
+  background: rgba(0, 242, 255, 0.15);
   border-color: #00f2ff;
   color: #00f2ff;
 }
@@ -255,38 +223,31 @@ onUnmounted(() => {
   gap: 16px;
 }
 
-@media (max-width: 768px) {
-  .charts-container {
-    grid-template-columns: 1fr;
-  }
-}
-
 .chart-wrapper {
-  background: #16213e;
+  background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
-  overflow: hidden;
+  padding: 12px;
 }
 
 .chart-label {
-  padding: 8px 12px;
+  color: #718096;
   font-size: 12px;
-  color: #a0aec0;
-  border-bottom: 1px solid #2a2a4a;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .chart {
-  width: 100%;
-  height: 200px;
+  height: 250px;
 }
 
 .status-bar {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 12px;
   margin-top: 16px;
-  padding-top: 12px;
-  border-top: 1px solid #2a2a4a;
-  color: #a0aec0;
+  color: #718096;
   font-size: 13px;
 }
 
@@ -296,8 +257,9 @@ onUnmounted(() => {
 
 .toggle {
   position: relative;
-  width: 40px;
-  height: 20px;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
 }
 
 .toggle input {
@@ -313,28 +275,35 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #444;
-  border-radius: 20px;
+  background-color: rgba(255, 255, 255, 0.1);
   transition: 0.3s;
+  border-radius: 24px;
 }
 
 .slider:before {
   position: absolute;
   content: "";
-  height: 14px;
-  width: 14px;
+  height: 18px;
+  width: 18px;
   left: 3px;
   bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
+  background-color: #718096;
   transition: 0.3s;
+  border-radius: 50%;
 }
 
 input:checked + .slider {
-  background: linear-gradient(135deg, #00f2ff, #4ecdc4);
+  background-color: rgba(0, 242, 255, 0.3);
 }
 
 input:checked + .slider:before {
   transform: translateX(20px);
+  background-color: #00f2ff;
+}
+
+@media (max-width: 768px) {
+  .charts-container {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

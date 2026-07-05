@@ -29,6 +29,7 @@ import RoiDemo from "./demos/RoiDemo.vue";
 import OffscreenDemo from "./demos/OffscreenDemo.vue";
 import ForecastingDemo from "./demos/ForecastingDemo.vue";
 import InvertedAxisDemo from "./demos/InvertedAxisDemo.vue";
+import PaneStackDemo from "./demos/PaneStackDemo.vue";
 // import ContextMenu from "./components/ContextMenu.vue";
 import './custom.css'
 
@@ -66,6 +67,7 @@ export default {
     app.component('VirtualizationDemo', VirtualizationDemo)
     app.component('ForecastingDemo', ForecastingDemo)
     app.component('InvertedAxisDemo', InvertedAxisDemo)
+    app.component('PaneStackDemo', PaneStackDemo)
     // app.component('ContextMenu', ContextMenu)
   }
 }
