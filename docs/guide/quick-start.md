@@ -158,8 +158,9 @@ chart.zoom({ x: [0, 5], y: [-1, 1] })
 // Reset view
 chart.resetZoom()
 
-// Export image
+// Export image (PNG/JPEG) or SVG — see /api/image-export
 const dataUrl = chart.exportImage('png')
+const svg = chart.exportSVG()
 ```
 
 ## Multiple Series
