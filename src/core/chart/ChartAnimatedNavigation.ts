@@ -13,6 +13,7 @@ import {
   type ChartAnimationConfig,
   type AnimationHandle,
 } from "../animation";
+import { usesVolumeBarPinning } from "./NavigationUtils";
 
 export interface AnimatedNavigationContext {
   viewBounds: Bounds;
@@ -54,7 +55,7 @@ export function applyAnimatedZoom(
     currentZoomAnimation.cancel();
   }
 
-  const hasBars = Array.from(ctx.series.values()).some(s => s.isVisible() && s.getType() === 'bar');
+  const pinBarBaseline = usesVolumeBarPinning(ctx.series.values());
   
   // Calculate target bounds
   const targetXMin = options.x ? options.x[0] : ctx.viewBounds.xMin;
@@ -62,7 +63,7 @@ export function applyAnimatedZoom(
   let targetYMin = options.y ? options.y[0] : ctx.viewBounds.yMin;
   let targetYMax = options.y ? options.y[1] : ctx.viewBounds.yMax;
 
-  if (hasBars && options.y) {
+  if (pinBarBaseline && options.y) {
     targetYMin = 0;
   }
 
@@ -99,8 +100,8 @@ export function applyAnimatedZoom(
         ctx.yScales.forEach((scale, id) => {
           if (id === ctx.primaryYAxisId) return; // Will sync with viewBounds later
           const sRange = scale.domain[1] - scale.domain[0];
-          const sNewMin = hasBars ? 0 : (scale.domain[0] + offsetPct * sRange);
-          const sNewMax = hasBars 
+          const sNewMin = pinBarBaseline ? 0 : (scale.domain[0] + offsetPct * sRange);
+          const sNewMax = pinBarBaseline 
             ? (scale.domain[0] + factor * sRange)
             : (sNewMin + factor * sRange);
           scale.setDomain(sNewMin, sNewMax);

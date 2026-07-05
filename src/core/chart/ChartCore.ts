@@ -15,6 +15,7 @@ import type {
   CursorOptions,
   ChartEventMap,
   Bounds,
+  FitOptions,
 } from "../../types";
 import { EventEmitter } from "../EventEmitter";
 import { Series } from "../Series";
@@ -57,7 +58,7 @@ import {
 import type { Chart, ExportOptions } from "./types";
 import { exportToCSV, exportToJSON, exportToImage } from "./ChartExporter";
 import { applyZoom, applyPan, type NavigationContext } from "./ChartNavigation";
-import { autoScaleAll, autoScaleYOnly, handleBoxZoom } from "./ChartScaling";
+import { autoScaleAll, autoScaleYOnly, handleBoxZoom, fitToData } from "./ChartScaling";
 import {
   AnimationEngine,
   mergeAnimationConfig,
@@ -144,9 +145,12 @@ export class ChartImpl implements Chart {
   private controls: ChartControls | null = null;
   private layout: import("../layout").LayoutOptions;
   private _isDestroyed = false;
+  /** When true, skip resize (stacked pane drag uses CSS scaling instead). */
+  private resizeSuspended = false;
   private autoScroll = false;
   private showStatistics = false;
   private initQueueId: string | null = null;
+  private readonly chartId: string;
   private commandQueue: Array<{ fn: () => void; name: string }> = [];
   private annotationQueue: any[] = [];
   private annotationIdCounter = 0;
@@ -217,6 +221,9 @@ export class ChartImpl implements Chart {
   constructor(options: ChartOptions) {
     this.initialOptions = options;
     this.container = options.container;
+    this.chartId =
+      options.id ??
+      `chart_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
     // 1. Initialize DOM and Theme so we can show UI (like loading) immediately
     const setup = setupChart(this.container, options);
@@ -561,9 +568,9 @@ export class ChartImpl implements Chart {
       () => getAxesLayout(this.yAxisOptionsMap as any)
     );
 
-    new ResizeObserver(() => !this.isDestroyed && this.resize()).observe(
-      this.container
-    );
+    new ResizeObserver(() => {
+      if (!this.isDestroyed && !this.resizeSuspended) this.resize();
+    }).observe(this.container);
     this.initControls();
     this.initLegend(options);
 
@@ -991,7 +998,29 @@ export class ChartImpl implements Chart {
     });
   }
   resetZoom(): void {
-    this.autoScale();
+    this.fit();
+  }
+  fit(options?: FitOptions): void {
+    this.executeOrQueue("fit", () => {
+      const previous = { ...this.viewBounds };
+      const padding = options?.padding;
+      const fitted = fitToData(this.getNavContext(), {
+        x: options?.x as [number, number] | undefined,
+        y: options?.y as [number, number] | undefined,
+        padding,
+      });
+      if (!fitted) return;
+      this.pluginManager.notifyViewChange({
+        previous,
+        current: { ...this.viewBounds },
+        trigger: "autoScale",
+        animated: false,
+      });
+      this.requestRender();
+    });
+  }
+  getId(): string {
+    return this.chartId;
   }
   getViewBounds(): Bounds {
     return { ...this.viewBounds };
@@ -1256,6 +1285,13 @@ export class ChartImpl implements Chart {
   }
 
   /**
+   * Get X axis configuration
+   */
+  getXAxis(): AxisOptions {
+    return this.axisManager.getXAxis();
+  }
+
+  /**
    * Get all Y axes configurations
    */
   getAllYAxes(): AxisOptions[] {
@@ -1510,8 +1546,50 @@ export class ChartImpl implements Chart {
     this.requestOverlayRender();
   }
 
+  /**
+   * Suspend canvas backing-store resize (inactive panes during stacked drag).
+   */
+  setResizeSuspended(suspended: boolean): void {
+    if (this._isDestroyed) return;
+    if (suspended) {
+      this.resizeSuspended = true;
+      return;
+    }
+    if (!this.resizeSuspended) return;
+    this.resizeSuspended = false;
+  }
+
+  /** @deprecated Use CSS transform on pane wrapper during drag; canvas stays untouched. */
+  syncDragLayout(width?: number, height?: number): void {
+    if (!this.resizeSuspended) return;
+    const parent = this.container.parentElement;
+    const w = Math.max(
+      1,
+      Math.ceil(width ?? parent?.clientWidth ?? this.container.clientWidth),
+    );
+    const h = Math.max(
+      1,
+      Math.ceil(height ?? parent?.clientHeight ?? this.container.clientHeight),
+    );
+    for (const c of [this.webglCanvas, this.overlayCanvas]) {
+      c.style.width = `${w}px`;
+      c.style.height = `${h}px`;
+    }
+  }
+
+  isResizeSuspended(): boolean {
+    return this.resizeSuspended;
+  }
+
   // Rendering
   resize(): void {
+    if (this.resizeSuspended) return;
+    const desiredDpr =
+      this.initialOptions.devicePixelRatio ?? window.devicePixelRatio;
+    if (Math.abs(desiredDpr - this.dpr) > 0.001) {
+      this.dpr = desiredDpr;
+      this.renderer.setDPR(this.dpr);
+    }
     if (
       !resizeCanvases(
         this.container,
@@ -1523,7 +1601,7 @@ export class ChartImpl implements Chart {
     )
       return;
     this.renderer.resize();
-    this.requestRender();
+    this.renderLoop.flushRender();
     this.pluginManager.notifyResize({
       width: this.webglCanvas.width / this.dpr,
       height: this.webglCanvas.height / this.dpr,
