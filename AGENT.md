@@ -1,7 +1,9 @@
 # AGENT Development Log
 
+> **Roadmap (2026-07-05):** The active development plan toward v3.0.0 is in [`docs/roadmap/README.md`](./docs/roadmap/README.md). The legacy roadmap was archived to [`docs/ROADMAP-LEGACY.md`](./docs/ROADMAP-LEGACY.md). Historical references to `docs/ROADMAP.md` below point to the archived document.
+
 ## 2026-01-13
-- **Roadmap Creation**: Created comprehensive `docs/ROADMAP.md` with 25 new feature proposals organized in 6 categories:
+- **Roadmap Creation**: Created comprehensive `docs/ROADMAP-LEGACY.md` (formerly `docs/ROADMAP.md`) with 25 new feature proposals organized in 6 categories:
   1. Data & Export (5 features): PluginDataExport, PluginDataImport, PluginSnapshot, PluginPDF, PluginDataTransform
   2. New Visualizations (5 features): Radar Charts, Waterfall Series, Polar Charts, Gauge Charts, Sankey Diagrams
   3. Interaction & UX (5 features): PluginTouch, PluginVoice, PluginGestures, PluginContextMenu, PluginAccessibility
