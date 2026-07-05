@@ -13,6 +13,9 @@ hero:
       text: View Examples
       link: /examples/
     - theme: alt
+      text: Roadmap
+      link: /roadmap/
+    - theme: alt
       text: GitHub
       link: https://github.com/jigonzalez930209/velo-plot
 

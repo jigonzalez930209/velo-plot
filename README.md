@@ -132,6 +132,11 @@ Visit [Sci Plot Docs](https://jigonzalez930209.github.io/velo-plot/) for:
 -   [Core Concepts](https://jigonzalez930209.github.io/velo-plot/guide/concepts)
 -   [API Reference](https://jigonzalez930209.github.io/velo-plot/api/chart)
 -   [Interactive Examples](https://jigonzalez930209.github.io/velo-plot/examples/)
+-   [Development Roadmap → v3.0.0](https://jigonzalez930209.github.io/velo-plot/roadmap/) — staged plan for trading + scientific features
+
+## 🗺️ Development Roadmap
+
+The library is at **v1.12.0**. The active roadmap toward **v3.0.0** lives in [`docs/roadmap/`](./docs/roadmap/README.md) (6 stages: foundation audit, render engine, trading, scientific depth, React DX, stable release). The older roadmap is archived at [`docs/ROADMAP-LEGACY.md`](./docs/ROADMAP-LEGACY.md).
 
 ## 📄 License
 
