@@ -199,15 +199,32 @@ export function resizeCanvases(
   const rect = container.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) return false;
 
-  const w = rect.width * dpr;
-  const h = rect.height * dpr;
+  // Integer backing-store pixels avoid blurry half-pixel scaling.
+  const w = Math.max(1, Math.round(rect.width * dpr));
+  const h = Math.max(1, Math.round(rect.height * dpr));
+  const cssW = `${Math.round(rect.width)}px`;
+  const cssH = `${Math.round(rect.height)}px`;
+
+  const unchanged =
+    webglCanvas.width === w &&
+    webglCanvas.height === h &&
+    webglCanvas.style.width === cssW &&
+    webglCanvas.style.height === cssH;
+
+  if (unchanged) return false;
 
   [webglCanvas, overlayCanvas].forEach((c) => {
     c.width = w;
     c.height = h;
+    c.style.width = cssW;
+    c.style.height = cssH;
   });
 
-  overlayCtx.scale(dpr, dpr);
+  overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  overlayCtx.imageSmoothingEnabled = true;
+  if ("imageSmoothingQuality" in overlayCtx) {
+    overlayCtx.imageSmoothingQuality = "high";
+  }
   return true;
 }
 

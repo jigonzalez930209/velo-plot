@@ -84,6 +84,108 @@ export function autoScaleAll(ctx: NavigationContext): void {
 }
 
 /**
+ * Fit view to data or explicit ranges. Returns false when there is nothing to fit.
+ */
+export function fitToData(
+  ctx: NavigationContext,
+  options: {
+    x?: [number, number];
+    y?: [number, number];
+    padding?: number | { x?: number; y?: number };
+  } = {},
+): boolean {
+  const padX =
+    typeof options.padding === "object"
+      ? (options.padding.x ?? 0.02)
+      : (options.padding ?? 0.02);
+  const padY =
+    typeof options.padding === "object"
+      ? (options.padding.y ?? 0.05)
+      : (options.padding ?? 0.05);
+
+  let xMin = options.x?.[0];
+  let xMax = options.x?.[1];
+  let hasX = xMin !== undefined && xMax !== undefined;
+
+  const yAxisBounds = new Map<string, { min: number; max: number }>();
+  ctx.yScales.forEach((_, id) => {
+    yAxisBounds.set(id, { min: Infinity, max: -Infinity });
+  });
+
+  if (!hasX || options.y === undefined) {
+    let hasValidData = false;
+    ctx.series.forEach((s) => {
+      if (!s.isVisible()) return;
+      const b = s.getBounds();
+      if (
+        !b ||
+        !isFinite(b.xMin) ||
+        !isFinite(b.xMax) ||
+        !isFinite(b.yMin) ||
+        !isFinite(b.yMax)
+      ) {
+        return;
+      }
+      if (!hasX) {
+        xMin = xMin === undefined ? b.xMin : Math.min(xMin, b.xMin);
+        xMax = xMax === undefined ? b.xMax : Math.max(xMax, b.xMax);
+      }
+      const axisId = s.getYAxisId() || ctx.primaryYAxisId;
+      const yBounds = yAxisBounds.get(axisId);
+      if (yBounds) {
+        yBounds.min = Math.min(yBounds.min, b.yMin);
+        yBounds.max = Math.max(yBounds.max, b.yMax);
+      }
+      hasValidData = true;
+    });
+    if (!hasX && !hasValidData) return false;
+    hasX = xMin !== undefined && xMax !== undefined;
+  }
+
+  if (options.y) {
+    const scale = ctx.yScales.get(ctx.primaryYAxisId);
+    if (scale) scale.setDomain(options.y[0], options.y[1]);
+    ctx.viewBounds.yMin = options.y[0];
+    ctx.viewBounds.yMax = options.y[1];
+  } else {
+    const MAX_VAL = 1e15;
+    const MIN_VAL = -1e15;
+    let hasY = false;
+    yAxisBounds.forEach((bounds, id) => {
+      if (bounds.min === Infinity) return;
+      hasY = true;
+      const opts = ctx.yAxisOptionsMap.get(id);
+      const scale = ctx.yScales.get(id);
+      if (!opts || !scale) return;
+      let yRange = bounds.max - bounds.min;
+      if (yRange <= 0 || !isFinite(yRange)) yRange = Math.abs(bounds.min) * 0.1 || 1;
+      const yPad = yRange * padY;
+      const newMin = Math.max(MIN_VAL, bounds.min - yPad);
+      const newMax = Math.min(MAX_VAL, bounds.max + yPad);
+      scale.setDomain(newMin, newMax);
+      if (id === ctx.primaryYAxisId) {
+        ctx.viewBounds.yMin = newMin;
+        ctx.viewBounds.yMax = newMax;
+      }
+    });
+    if (!options.y && !hasY && !hasX) return false;
+  }
+
+  if (hasX && xMin !== undefined && xMax !== undefined) {
+    const MAX_VAL = 1e15;
+    const MIN_VAL = -1e15;
+    let xRange = xMax - xMin;
+    if (xRange <= 0 || !isFinite(xRange)) xRange = Math.abs(xMin) * 0.1 || 1;
+    const xPad = xRange * padX;
+    ctx.viewBounds.xMin = Math.max(MIN_VAL, xMin - xPad);
+    ctx.viewBounds.xMax = Math.min(MAX_VAL, xMax + xPad);
+  }
+
+  ctx.requestRender();
+  return true;
+}
+
+/**
  * Auto-scale only Y-axes to fit data (keeps X-axis stable)
  * Used during streaming to prevent X-axis shifting
  */
