@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { createMasterSlave, ChartGroup, type ChartLike } from "./index";
+import { createMasterSlave, ChartGroup, createChartGroup, linkCharts, type ChartLike } from "./index";
 import type { Bounds } from "../../types";
 
 function createMockChart(
@@ -325,5 +325,125 @@ describe("ChartGroup fitAll", () => {
 
     expect(master.fit).toHaveBeenCalledTimes(1);
     expect(slave.fit).toHaveBeenCalledWith({ x: [10, 90], padding: undefined });
+  });
+});
+
+describe("ChartGroup selection sync", () => {
+  it("propagates selection from source to other charts when syncSelection is enabled", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const selected = [{ seriesId: "s1", indices: [1, 2] }];
+
+    const chartA = {
+      ...createMockChart("a", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }, handlers),
+      getSelectedPoints: vi.fn(() => selected),
+      selectPoints: vi.fn(),
+      clearSelection: vi.fn(),
+    };
+    const chartB = {
+      ...createMockChart("b", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }, handlers),
+      getSelectedPoints: vi.fn(() => []),
+      selectPoints: vi.fn(),
+      clearSelection: vi.fn(),
+    };
+
+    const group = new ChartGroup({ syncSelection: true, axis: "x" });
+    group.addAll(chartA, chartB);
+
+    chartA.emit("selectionChange", { selected });
+
+    expect(chartB.selectPoints).toHaveBeenCalledWith(selected);
+    expect(chartA.selectPoints).not.toHaveBeenCalled();
+  });
+
+  it("clears selection on slaves when source clears selection", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+
+    const chartA = {
+      ...createMockChart("a", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }, handlers),
+      selectPoints: vi.fn(),
+      clearSelection: vi.fn(),
+    };
+    const chartB = {
+      ...createMockChart("b", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }, handlers),
+      selectPoints: vi.fn(),
+      clearSelection: vi.fn(),
+    };
+
+    const group = new ChartGroup({ syncSelection: true, axis: "x" });
+    group.addAll(chartA, chartB);
+
+    chartA.emit("selectionChange", { selected: [] });
+
+    expect(chartB.clearSelection).toHaveBeenCalled();
+  });
+});
+
+describe("ChartGroup helpers and cursor sync", () => {
+  it("createChartGroup and linkCharts register charts", () => {
+    const a = createMockChart("a", { xMin: 0, xMax: 1, yMin: 0, yMax: 1 });
+    const b = createMockChart("b", { xMin: 0, xMax: 1, yMin: 0, yMax: 1 });
+    expect(createChartGroup([a, b]).size()).toBe(2);
+    expect(linkCharts(a, b).size()).toBe(2);
+  });
+
+  it("syncs external cursor between charts on hover", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }, handlers);
+    const b = {
+      ...createMockChart("b", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }, handlers),
+      setExternalCursor: vi.fn(),
+      clearExternalCursor: vi.fn(),
+    };
+
+    const group = new ChartGroup({ syncCursor: true, axis: "x" });
+    group.addAll(a, b);
+
+    a.emit("hover", { point: { x: 42, y: 7 } });
+    expect(b.setExternalCursor).toHaveBeenCalledWith(42, 7);
+
+    a.emit("hover", null);
+    expect(b.clearExternalCursor).toHaveBeenCalled();
+  });
+
+  it("debounces sync actions when debounce option is set", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", { setTimeout, clearTimeout });
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", { xMin: 0, xMax: 100, yMin: 0, yMax: 50 }, handlers);
+    const b = createMockChart("b", { xMin: 0, xMax: 100, yMin: 0, yMax: 10 }, handlers);
+
+    const group = new ChartGroup({ axis: "x", debounce: 50 });
+    group.addAll(a, b);
+
+    a.emit("zoom", { x: [10, 90] as [number, number], y: [0, 50] as [number, number] });
+    expect(b.zoom).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(50);
+    expect(b.zoom).toHaveBeenCalled();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("remove and destroy clean up group state", () => {
+    const a = createMockChart("a", { xMin: 0, xMax: 1, yMin: 0, yMax: 1 });
+    const b = createMockChart("b", { xMin: 0, xMax: 1, yMin: 0, yMax: 1 });
+    const group = new ChartGroup();
+    group.addAll(a, b);
+    group.remove(a);
+    expect(group.size()).toBe(1);
+    group.destroy();
+    expect(group.size()).toBe(0);
+  });
+
+  it("syncTo propagates partial bounds", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", { xMin: 0, xMax: 100, yMin: 0, yMax: 50 }, handlers);
+    const b = createMockChart("b", { xMin: 0, xMax: 100, yMin: 0, yMax: 10 }, handlers);
+    const group = new ChartGroup({ axis: "xy" });
+    group.addAll(a, b);
+    group.syncTo({ xMin: 5, xMax: 95, yMin: 1, yMax: 9 }, "a");
+    expect(b.zoom).toHaveBeenCalledWith(
+      expect.objectContaining({ x: [5, 95], y: [1, 9], animate: false }),
+    );
   });
 });

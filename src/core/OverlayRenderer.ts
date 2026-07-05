@@ -12,6 +12,7 @@ import type { PlotArea, CursorState, AxisOptions } from "../types";
 import type { ChartTitleOptions } from "./layout/types";
 import type { AxisLayoutOptions } from "./layout/types";
 import { formatXTickValue, formatYTickValue } from "./format/axisFormat";
+import { snapLineCoord, snapLabelCoord } from "./render/pixelSnap";
 
 // ============================================
 // Overlay Renderer Class
@@ -158,7 +159,7 @@ export class OverlayRenderer {
 
     // Vertical lines (X ticks)
     xTicks.forEach((tick) => {
-      const x = xScale.transform(tick);
+      const x = snapLineCoord(xScale.transform(tick));
       if (x >= plotArea.x && x <= plotArea.x + plotArea.width) {
         ctx.beginPath();
         ctx.moveTo(x, plotArea.y);
@@ -169,7 +170,7 @@ export class OverlayRenderer {
 
     // Horizontal lines (Y ticks)
     yTicks.forEach((tick) => {
-      const y = yScale.transform(tick);
+      const y = snapLineCoord(yScale.transform(tick));
       if (y >= plotArea.y && y <= plotArea.y + plotArea.height) {
         ctx.beginPath();
         ctx.moveTo(plotArea.x, y);
@@ -189,7 +190,7 @@ export class OverlayRenderer {
       const minorYTicks = this.generateMinorTicks(yTicks, grid.minorDivisions);
 
       minorXTicks.forEach((tick) => {
-        const x = xScale.transform(tick);
+        const x = snapLineCoord(xScale.transform(tick));
         if (x >= plotArea.x && x <= plotArea.x + plotArea.width) {
           ctx.beginPath();
           ctx.moveTo(x, plotArea.y);
@@ -199,7 +200,7 @@ export class OverlayRenderer {
       });
 
       minorYTicks.forEach((tick) => {
-        const y = yScale.transform(tick);
+        const y = snapLineCoord(yScale.transform(tick));
         if (y >= plotArea.y && y <= plotArea.y + plotArea.height) {
           ctx.beginPath();
           ctx.moveTo(plotArea.x, y);
@@ -299,7 +300,7 @@ export class OverlayRenderer {
     const axis = this.theme.xAxis;
     const xTickCount = options?.tickCount ?? 8;
     const xTicks = xScale.ticks(xTickCount);
-    const axisY = plotArea.y + plotArea.height;
+    const axisY = snapLineCoord(plotArea.y + plotArea.height);
     const label = options?.label;
     const showLine = options?.showLine !== false;
     const showTicks = options?.showTicks !== false;
@@ -322,7 +323,7 @@ export class OverlayRenderer {
       ctx.textBaseline = "top";
 
       xTicks.forEach((tick) => {
-        const x = xScale.transform(tick);
+        const x = snapLabelCoord(xScale.transform(tick));
         if (x >= plotArea.x && x <= plotArea.x + plotArea.width) {
           if (showTicks) {
             ctx.strokeStyle = axis.tickColor;
@@ -380,7 +381,7 @@ export class OverlayRenderer {
     const showLine = options?.showLine !== false;
     const showTicks = options?.showTicks !== false;
     const showLabels = options?.showLabels !== false;
-    const axisX = position === 'left' ? plotArea.x - offset : plotArea.x + plotArea.width + offset;
+    const axisX = snapLineCoord(position === 'left' ? plotArea.x - offset : plotArea.x + plotArea.width + offset);
     const tickDir = position === 'left' ? -1 : 1;
 
     if (showLine) {
@@ -399,7 +400,7 @@ export class OverlayRenderer {
       ctx.textBaseline = "middle";
 
       yTicks.forEach((tick) => {
-        const y = yScale.transform(tick);
+        const y = snapLabelCoord(yScale.transform(tick));
         if (y >= plotArea.y && y <= plotArea.y + plotArea.height) {
           if (showTicks) {
             ctx.strokeStyle = axis.tickColor;

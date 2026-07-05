@@ -324,8 +324,30 @@ export class ChartGroup {
     }
   }
 
-  private handleSelection(_sourceId: string, _event: { selected: unknown[] }): void {
+  private handleSelection(sourceId: string, event: { selected: unknown[] }): void {
     if (this.isUpdating || !this.options.syncSelection) return;
+
+    const sourceChart = this.charts.get(sourceId);
+    if (!sourceChart) return;
+
+    const selected =
+      (event?.selected as { seriesId: string; indices: number[] }[]) ??
+      sourceChart.getSelectedPoints?.() ??
+      [];
+
+    this.isUpdating = true;
+    try {
+      for (const [chartId, chart] of this.charts.entries()) {
+        if (chartId === sourceId) continue;
+        if (selected.length === 0) {
+          chart.clearSelection?.();
+        } else {
+          chart.selectPoints?.(selected);
+        }
+      }
+    } finally {
+      this.isUpdating = false;
+    }
   }
 
   private propagateZoom(sourceId: string, bounds: Partial<Bounds>): void {
