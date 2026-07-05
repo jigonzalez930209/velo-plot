@@ -68,6 +68,36 @@ function CustomChart() {
 }
 ```
 
+### 3. Multi-Pane Stack (`useStackedPlot`)
+
+For TradingView-style dashboards (price + volume + indicators), use the stacked pane hook:
+
+```tsx
+import { useStackedPlot } from 'velo-plot/react'
+import { useEffect } from 'react'
+
+function MarketStack() {
+  const { containerRef, isReady, fitAll } = useStackedPlot({
+    masterPaneId: 'price',
+    sharedXAxis: 'bottom',
+    resizable: true,
+    sync: true,
+    panes: [
+      { id: 'price', height: 0.6, series: [...] },
+      { id: 'volume', height: 0.4, series: [...] },
+    ],
+  })
+
+  useEffect(() => {
+    if (isReady) fitAll()
+  }, [isReady, fitAll])
+
+  return <div ref={containerRef} style={{ height: 480 }} />
+}
+```
+
+See [Multi-Pane Example](/examples/pane-stack) and [Stacked Chart API](/api/stacked-chart).
+
 ## State Management Strategies
 
 ### Local Data Updates
@@ -107,4 +137,5 @@ return (
 
 - Explore the [React API Reference](/api/react-velo-plot)
 - See the [React Hook Reference](/api/react-hook)
+- Build [Multi-Pane Stacks](/examples/pane-stack) with `useStackedPlot`
 - View the [React Integration Example](/examples/react)
