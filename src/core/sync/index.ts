@@ -1,86 +1,56 @@
 /**
  * Sci Plot - Chart Synchronization Module
- * 
- * Provides synchronization between multiple charts:
- * - Synchronized zoom/pan (X, Y, or both)
- * - Shared crosshair cursor
- * - Coordinated selection
- * - Event propagation between linked charts
- * 
+ *
  * @module sync
  */
 
 import type { Bounds, Range } from "../../types";
 
-// ============================================
-// Types
-// ============================================
-
 export type SyncAxis = 'x' | 'y' | 'xy' | 'none';
 
 export interface SyncOptions {
-  /** Synchronize axis (default: 'x') */
   axis?: SyncAxis;
-  /** Synchronize cursor position (default: true) */
   syncCursor?: boolean;
-  /** Synchronize selection state (default: false) */
   syncSelection?: boolean;
-  /** Synchronize zoom level (default: true) */
   syncZoom?: boolean;
-  /** Synchronize pan (default: true) */
   syncPan?: boolean;
-  /** Debounce time for sync events in ms (default: 0) */
   debounce?: number;
-  /** Enable bidirectional sync (default: true) */
   bidirectional?: boolean;
+  /** When set, used for fitAll; with bidirectional sync any pane can drive pan/zoom */
+  masterId?: string;
 }
 
 export interface ChartLike {
-  /** Unique identifier for the chart */
   getId(): string;
-  /** Get current view bounds */
   getViewBounds(): Bounds;
-  /** Set view bounds (zoom) */
   zoom(options: { x?: Range; y?: Range; animate?: boolean }): void;
-  /** Pan the chart */
   pan(dx: number, dy: number): void;
-  /** Get cursor position */
+  fit?(options?: { x?: Range; y?: Range; padding?: number | { x?: number; y?: number } }): void;
   getCursorPosition?(): { x: number; y: number } | null;
-  /** Set external cursor position */
   setExternalCursor?(x: number, y: number): void;
-  /** Clear external cursor */
   clearExternalCursor?(): void;
-  /** Get selected points */
   getSelectedPoints?(): { seriesId: string; indices: number[] }[];
-  /** Set selection */
   selectPoints?(points: { seriesId: string; indices: number[] }[]): void;
-  /** Clear selection */
   clearSelection?(): void;
-  /** Subscribe to events */
   on(event: string, callback: (...args: unknown[]) => void): void;
-  /** Unsubscribe from events */
   off(event: string, callback: (...args: unknown[]) => void): void;
 }
 
 export interface SyncEvent {
-  /** Source chart ID */
   sourceId: string;
-  /** Event type */
   type: 'zoom' | 'pan' | 'cursor' | 'selection' | 'bounds';
-  /** Event data */
   data: unknown;
 }
 
-// ============================================
-// Chart Group Implementation
-// ============================================
+type RequiredSyncOptions = Required<Omit<SyncOptions, 'masterId'>> & Pick<SyncOptions, 'masterId'>;
 
 export class ChartGroup {
   private charts: Map<string, ChartLike> = new Map();
-  private options: Required<SyncOptions>;
+  private options: RequiredSyncOptions;
   private eventHandlers: Map<string, Map<string, (...args: unknown[]) => void>> = new Map();
   private isUpdating: boolean = false;
   private debounceTimers: Map<string, number> = new Map();
+  private rafTimers: Map<string, number> = new Map();
 
   constructor(options?: SyncOptions) {
     this.options = {
@@ -91,183 +61,202 @@ export class ChartGroup {
       syncPan: true,
       debounce: 0,
       bidirectional: true,
+      masterId: undefined,
       ...options,
     };
   }
 
-  /**
-   * Add a chart to the group
-   */
   add(chart: ChartLike): this {
     const chartId = chart.getId();
-    
     if (this.charts.has(chartId)) {
       console.warn(`[ChartGroup] Chart ${chartId} is already in the group`);
       return this;
     }
-
     this.charts.set(chartId, chart);
     this.attachEventHandlers(chart);
-    
     return this;
   }
 
-  /**
-   * Add multiple charts at once
-   */
   addAll(...charts: ChartLike[]): this {
-    for (const chart of charts) {
-      this.add(chart);
-    }
+    for (const chart of charts) this.add(chart);
     return this;
   }
 
-  /**
-   * Remove a chart from the group
-   */
   remove(chart: ChartLike): this {
     const chartId = chart.getId();
-    
-    if (!this.charts.has(chartId)) {
-      return this;
-    }
-
+    if (!this.charts.has(chartId)) return this;
     this.detachEventHandlers(chart);
     this.charts.delete(chartId);
-    
     return this;
   }
 
-  /**
-   * Get all charts in the group
-   */
   getCharts(): ChartLike[] {
     return Array.from(this.charts.values());
   }
 
-  /**
-   * Get chart count
-   */
   size(): number {
     return this.charts.size;
   }
 
-  /**
-   * Check if a chart is in the group
-   */
   has(chart: ChartLike): boolean {
     return this.charts.has(chart.getId());
   }
 
-  /**
-   * Set synchronization axis
-   */
   syncAxis(axis: SyncAxis): this {
     this.options.axis = axis;
     return this;
   }
 
-  /**
-   * Enable/disable cursor synchronization
-   */
+  syncZoom(enabled: boolean): this {
+    if (this.options.syncZoom === enabled) return this;
+    return this.updateOptions({ syncZoom: enabled });
+  }
+
+  syncPan(enabled: boolean): this {
+    if (this.options.syncPan === enabled) return this;
+    return this.updateOptions({ syncPan: enabled });
+  }
+
   syncCursor(enabled: boolean): this {
     this.options.syncCursor = enabled;
     return this;
   }
 
-  /**
-   * Enable/disable selection synchronization
-   */
   syncSelection(enabled: boolean): this {
     this.options.syncSelection = enabled;
     return this;
   }
 
-  /**
-   * Synchronize all charts to a specific view
-   */
+  /** Update sync options and re-bind event handlers on all charts */
+  updateOptions(partial: Partial<SyncOptions>): this {
+    Object.assign(this.options, partial);
+    for (const chart of this.charts.values()) {
+      this.detachEventHandlers(chart);
+      this.attachEventHandlers(chart);
+    }
+    return this;
+  }
+
+  getOptions(): Readonly<SyncOptions> {
+    return { ...this.options };
+  }
+
   syncTo(bounds: Partial<Bounds>, excludeChartId?: string): void {
     this.propagateZoom(excludeChartId || '', bounds);
   }
 
-  /**
-   * Reset all charts to auto-scale
-   */
   resetAll(): void {
-    for (const chart of this.charts.values()) {
-      chart.zoom({ x: undefined, y: undefined });
+    this.batch(() => {
+      for (const chart of this.charts.values()) {
+        if (chart.fit) chart.fit();
+        else chart.zoom({ x: undefined, y: undefined });
+      }
+    });
+  }
+
+  fitAll(options?: { x?: Range; padding?: number }): void {
+    this.batch(() => {
+      let sharedX: Range | undefined = options?.x;
+      const masterId = this.options.masterId;
+      const master = masterId ? this.charts.get(masterId) : this.charts.values().next().value;
+
+      if (!sharedX && master?.fit) {
+        master.fit({ padding: options?.padding });
+        const b = master.getViewBounds();
+        if (this.hasValidViewBounds(b)) sharedX = [b.xMin, b.xMax];
+      }
+
+      for (const [chartId, chart] of this.charts.entries()) {
+        if (!chart.fit) continue;
+        if (chartId === masterId) continue;
+        chart.fit(
+          sharedX
+            ? { x: sharedX, padding: options?.padding }
+            : { padding: options?.padding },
+        );
+      }
+    });
+  }
+
+  batch<T>(fn: () => T): T {
+    const prev = this.isUpdating;
+    this.isUpdating = true;
+    try {
+      return fn();
+    } finally {
+      this.isUpdating = prev;
     }
   }
 
-  /**
-   * Clear all selections in the group
-   */
   clearAllSelections(): void {
     for (const chart of this.charts.values()) {
       chart.clearSelection?.();
     }
   }
 
-  /**
-   * Destroy the group and cleanup
-   */
   destroy(): void {
     for (const chart of this.charts.values()) {
       this.detachEventHandlers(chart);
     }
     this.charts.clear();
     this.eventHandlers.clear();
-    
-    // Clear any pending debounce timers
-    for (const timerId of this.debounceTimers.values()) {
-      clearTimeout(timerId);
-    }
+    for (const timerId of this.debounceTimers.values()) clearTimeout(timerId);
     this.debounceTimers.clear();
+    for (const rafId of this.rafTimers.values()) cancelAnimationFrame(rafId);
+    this.rafTimers.clear();
   }
 
-  // ============================================
-  // Private Methods
-  // ============================================
+  private isSyncSource(chartId: string): boolean {
+    if (this.options.bidirectional) return true;
+    if (this.options.masterId) return chartId === this.options.masterId;
+    return true;
+  }
+
+  private canPropagateFrom(sourceId: string): boolean {
+    if (this.options.bidirectional) return true;
+    if (this.options.masterId) return sourceId === this.options.masterId;
+    return true;
+  }
+
+  private hasValidViewBounds(bounds: Bounds): boolean {
+    const xSpan = bounds.xMax - bounds.xMin;
+    const ySpan = bounds.yMax - bounds.yMin;
+    if (!Number.isFinite(xSpan) || !Number.isFinite(ySpan)) return false;
+    if (xSpan <= 0 && ySpan <= 0) return false;
+    return true;
+  }
 
   private attachEventHandlers(chart: ChartLike): void {
     const chartId = chart.getId();
     const handlers = new Map<string, (...args: unknown[]) => void>();
 
-    // Zoom handler
-    if (this.options.syncZoom) {
+    if (this.options.syncZoom && this.isSyncSource(chartId)) {
       const zoomHandler = (...args: unknown[]) => {
-        const e = args[0] as { x: Range; y: Range };
-        this.handleZoom(chartId, e);
+        this.handleZoom(chartId, args[0] as { x: Range; y: Range });
       };
       chart.on('zoom', zoomHandler);
       handlers.set('zoom', zoomHandler);
     }
 
-    // Pan handler
-    if (this.options.syncPan) {
+    if (this.options.syncPan && this.isSyncSource(chartId)) {
       const panHandler = (...args: unknown[]) => {
-        const e = args[0] as { deltaX: number; deltaY: number };
-        this.handlePan(chartId, e);
+        this.handlePan(chartId, args[0] as { deltaX: number; deltaY: number });
       };
       chart.on('pan', panHandler);
       handlers.set('pan', panHandler);
     }
 
-    // Cursor handler
     if (this.options.syncCursor) {
       const hoverHandler = (...args: unknown[]) => {
-        const e = args[0] as { point?: { x: number; y: number } } | null;
-        this.handleCursor(chartId, e);
+        this.handleCursor(chartId, args[0] as { point?: { x: number; y: number } } | null);
       };
       chart.on('hover', hoverHandler);
       handlers.set('hover', hoverHandler);
     }
 
-    // Selection handler
     if (this.options.syncSelection) {
       const selectionHandler = (...args: unknown[]) => {
-        const e = args[0] as { selected: unknown[] };
-        this.handleSelection(chartId, e);
+        this.handleSelection(chartId, args[0] as { selected: unknown[] });
       };
       chart.on('selectionChange', selectionHandler);
       handlers.set('selectionChange', selectionHandler);
@@ -279,97 +268,79 @@ export class ChartGroup {
   private detachEventHandlers(chart: ChartLike): void {
     const chartId = chart.getId();
     const handlers = this.eventHandlers.get(chartId);
-    
     if (!handlers) return;
-
     for (const [event, handler] of handlers.entries()) {
       chart.off(event, handler);
     }
-
     this.eventHandlers.delete(chartId);
   }
 
   private handleZoom(sourceId: string, event: { x: Range; y: Range }): void {
     if (this.isUpdating) return;
-    
+    if (!this.canPropagateFrom(sourceId)) return;
+
+    const sourceChart = this.charts.get(sourceId);
+    if (sourceChart && !this.hasValidViewBounds(sourceChart.getViewBounds())) return;
+
     const bounds: Partial<Bounds> = {};
-    
     if (this.options.axis === 'x' || this.options.axis === 'xy') {
       bounds.xMin = event.x[0];
       bounds.xMax = event.x[1];
     }
-    
     if (this.options.axis === 'y' || this.options.axis === 'xy') {
       bounds.yMin = event.y[0];
       bounds.yMax = event.y[1];
     }
 
-    this.debounceAction(`zoom-${sourceId}`, () => {
+    if (bounds.xMin !== undefined && bounds.xMax !== undefined) {
+      const xSpan = bounds.xMax - bounds.xMin;
+      if (!Number.isFinite(xSpan) || xSpan <= 0) return;
+    }
+
+    this.scheduleSyncAction(`zoom-${sourceId}`, () => {
       this.propagateZoom(sourceId, bounds);
     });
   }
 
   private handlePan(sourceId: string, event: { deltaX: number; deltaY: number }): void {
     if (this.isUpdating) return;
+    if (!this.canPropagateFrom(sourceId)) return;
 
     const dx = (this.options.axis === 'x' || this.options.axis === 'xy') ? event.deltaX : 0;
     const dy = (this.options.axis === 'y' || this.options.axis === 'xy') ? event.deltaY : 0;
-
     if (dx === 0 && dy === 0) return;
 
-    this.debounceAction(`pan-${sourceId}`, () => {
+    this.scheduleSyncAction(`pan-${sourceId}`, () => {
       this.propagatePan(sourceId, dx, dy);
     });
   }
 
   private handleCursor(sourceId: string, event: { point?: { x: number; y: number } } | null): void {
     if (this.isUpdating) return;
-
     for (const [chartId, chart] of this.charts.entries()) {
       if (chartId === sourceId) continue;
-      
-      if (event?.point) {
-        chart.setExternalCursor?.(event.point.x, event.point.y);
-      } else {
-        chart.clearExternalCursor?.();
-      }
+      if (event?.point) chart.setExternalCursor?.(event.point.x, event.point.y);
+      else chart.clearExternalCursor?.();
     }
   }
 
-  private handleSelection(sourceId: string, _event: { selected: unknown[] }): void {
+  private handleSelection(_sourceId: string, _event: { selected: unknown[] }): void {
     if (this.isUpdating || !this.options.syncSelection) return;
-
-    // Selection sync is more complex - we need to map indices across charts
-    // For now, just clear selection on other charts when one changes
-    for (const [chartId, _chart] of this.charts.entries()) {
-      if (chartId === sourceId) continue;
-      // In a full implementation, you'd map selection by data values
-      // For basic sync, we just notify that selection changed
-    }
   }
 
   private propagateZoom(sourceId: string, bounds: Partial<Bounds>): void {
     if (this.isUpdating) return;
-    
     this.isUpdating = true;
-
     try {
       for (const [chartId, chart] of this.charts.entries()) {
-        if (chartId === sourceId && !this.options.bidirectional) continue;
         if (chartId === sourceId) continue;
-
-        const zoomOptions: { x?: Range; y?: Range; animate?: boolean } = {
-          animate: false,
-        };
-
+        const zoomOptions: { x?: Range; y?: Range; animate?: boolean } = { animate: false };
         if (bounds.xMin !== undefined && bounds.xMax !== undefined) {
           zoomOptions.x = [bounds.xMin, bounds.xMax];
         }
-
         if (bounds.yMin !== undefined && bounds.yMax !== undefined) {
           zoomOptions.y = [bounds.yMin, bounds.yMax];
         }
-
         chart.zoom(zoomOptions);
       }
     } finally {
@@ -377,83 +348,82 @@ export class ChartGroup {
     }
   }
 
-  private propagatePan(sourceId: string, dx: number, dy: number): void {
+  private propagatePan(sourceId: string, _dx: number, _dy: number): void {
     if (this.isUpdating) return;
-    
     this.isUpdating = true;
-
     try {
+      const sourceChart = this.charts.get(sourceId);
+      if (!sourceChart || !this.hasValidViewBounds(sourceChart.getViewBounds())) return;
+
+      const masterBounds = sourceChart.getViewBounds();
+
       for (const [chartId, chart] of this.charts.entries()) {
         if (chartId === sourceId) continue;
-        chart.pan(dx, dy);
+
+        const zoomOptions: { x?: Range; y?: Range; animate?: boolean } = { animate: false };
+
+        if (this.options.axis === 'x' || this.options.axis === 'xy') {
+          zoomOptions.x = [masterBounds.xMin, masterBounds.xMax];
+        }
+
+        if (this.options.axis === 'y' || this.options.axis === 'xy') {
+          zoomOptions.y = [masterBounds.yMin, masterBounds.yMax];
+        }
+
+        if (zoomOptions.x || zoomOptions.y) {
+          chart.zoom(zoomOptions);
+        }
       }
     } finally {
       this.isUpdating = false;
     }
   }
 
-  private debounceAction(key: string, action: () => void): void {
-    if (this.options.debounce <= 0) {
-      action();
+  private scheduleSyncAction(key: string, action: () => void): void {
+    if (this.options.debounce > 0) {
+      this.debounceAction(key, action);
       return;
     }
+    if (this.rafTimers.has(key)) return;
+    const rafId = requestAnimationFrame(() => {
+      this.rafTimers.delete(key);
+      action();
+    });
+    this.rafTimers.set(key, rafId);
+  }
 
-    // Clear existing timer
+  private debounceAction(key: string, action: () => void): void {
     const existingTimer = this.debounceTimers.get(key);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-
-    // Set new timer
+    if (existingTimer) clearTimeout(existingTimer);
     const timerId = window.setTimeout(() => {
       this.debounceTimers.delete(key);
       action();
     }, this.options.debounce);
-
     this.debounceTimers.set(key, timerId);
   }
 }
 
-// ============================================
-// Convenience Functions
-// ============================================
-
-/**
- * Create a chart group with specified charts
- */
-export function createChartGroup(
-  charts: ChartLike[],
-  options?: SyncOptions
-): ChartGroup {
+export function createChartGroup(charts: ChartLike[], options?: SyncOptions): ChartGroup {
   const group = new ChartGroup(options);
   group.addAll(...charts);
   return group;
 }
 
-/**
- * Link two charts for synchronized viewing
- */
-export function linkCharts(
-  chart1: ChartLike,
-  chart2: ChartLike,
-  options?: SyncOptions
-): ChartGroup {
+export function linkCharts(chart1: ChartLike, chart2: ChartLike, options?: SyncOptions): ChartGroup {
   return createChartGroup([chart1, chart2], options);
 }
 
-/**
- * Create a master-slave relationship (master controls slave)
- */
 export function createMasterSlave(
   master: ChartLike,
   slave: ChartLike,
-  axis: SyncAxis = 'x'
+  axis: SyncAxis = 'x',
 ): ChartGroup {
-  return new ChartGroup({
+  return createChartGroup([master, slave], {
     axis,
     bidirectional: false,
+    masterId: master.getId(),
     syncCursor: true,
     syncZoom: true,
     syncPan: true,
-  }).addAll(master, slave);
+  });
 }
