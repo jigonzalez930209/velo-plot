@@ -14,6 +14,9 @@ Sci Plot provides a comprehensive API for creating high-performance scientific c
 | Function | Description |
 |----------|-------------|
 | [`createChart(options)`](/api/chart) | Create a new chart instance |
+| [`createStackedChart(options)`](/api/stacked-chart) | Multi-pane vertical stack (1–5 charts, sync, resize) |
+| [`createChartGroup`](/api/chart-sync) / [`linkCharts`](/api/chart-sync) | Link charts for pan/zoom/cursor sync |
+| [`buildIndicatorPane`](/api/indicator-panes) | Composite indicator pane (histogram + colored lines) |
 
 ### Series Management
 
@@ -31,8 +34,10 @@ Sci Plot provides a comprehensive API for creating high-performance scientific c
 |--------|-------------|
 | `chart.zoom(options)` | Programmatic zoom |
 | `chart.pan(deltaX, deltaY)` | Programmatic pan |
-| `chart.resetZoom()` | Reset to auto-scale |
-| `chart.autoScale()` | Fit view to data |
+| [`chart.fit(options)`](/api/chart#fit) | Safe fit to data (no-op if empty) |
+| `chart.resetZoom()` | Reset via `fit()` |
+| `chart.autoScale()` | Fit view to data (legacy) |
+| `chart.getId()` | Stable chart id for sync |
 | `chart.getViewBounds()` | Get current view bounds |
 
 ### Interactions
@@ -217,6 +222,7 @@ Nuevos tipos de visualización altamente especializados para KPIs y flujos.
 |--------|-------------|
 | [`SciPlot`](/api/react-velo-plot) | React component |
 | [`useSciPlot`](/api/react-hook) | React hook for imperative control |
+| [`useStackedPlot`](/api/react-hook#usestackedplot-hook) | React hook for multi-pane stacks |
 
 ## Data Analysis
 

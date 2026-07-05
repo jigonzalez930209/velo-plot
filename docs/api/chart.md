@@ -18,6 +18,7 @@ function createChart(options: ChartOptions): Chart
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `container` | `HTMLElement` | **required** | Container element for the chart |
+| `id` | `string` | auto-generated | Stable chart id for sync groups (`chart.getId()`) |
 | `xAxis` | `AxisOptions` | `{ auto: true }` | X-axis configuration |
 | `yAxis` | `AxisOptions` | `{ auto: true }` | Y-axis configuration |
 | `theme` | `string \| ChartTheme` | `'dark'` | Theme name or custom theme object |
@@ -124,15 +125,58 @@ chart.zoom({ x: [0, 100], y: [-1, 1] })
 // Pan by pixel delta
 chart.pan(50, 0)  // Pan right 50px
 
-// Reset to auto-scale
+// Safe fit — no-op when series have no valid bounds
+chart.fit({ padding: { x: 0.02, y: 0.05 } })
+chart.fit({ x: [t0, t1], y: [0, 100] })
+
+// Reset to fit from data (calls fit(), not blind autoScale)
 chart.resetZoom()
 
-// Force auto-scale
+// Force auto-scale (legacy; prefer fit() for empty-safe behavior)
 chart.autoScale()
+
+// Stable id for ChartGroup / createMasterSlave
+chart.getId()
+
+// Current device pixel ratio
+chart.getDPR()
+chart.setDPR(window.devicePixelRatio)
 
 // { xMin: 0, xMax: 100, yMin: -1, yMax: 1 }
 
 // NOTE: Auto-scale now uses a 0.5% padding by default for scientific precision.
+```
+
+### fit()
+
+Safe alternative to `autoScale()` that skips empty series:
+
+```typescript
+interface FitOptions {
+  x?: [number, number]     // explicit X range
+  y?: [number, number]     // explicit Y range (primary axis)
+  padding?: number | { x?: number; y?: number }  // default 2% X, 5% Y
+  animate?: boolean
+}
+
+chart.fit()                              // fit from visible series
+chart.fit({ x: [0, 1e6] })               // lock X, auto Y
+chart.resetZoom()                        // equivalent to chart.fit()
+```
+
+### Sharp rendering (HiDPI)
+
+Charts can look blurry on Retina displays when canvas backing-store pixels are fractional. Sci Plot:
+
+- Rounds canvas dimensions to integer device pixels
+- Uses `setTransform(dpr, …)` instead of cumulative `scale()`
+- Re-reads `window.devicePixelRatio` on each resize (unless `devicePixelRatio` is fixed in options)
+
+```typescript
+const chart = createChart({
+  container,
+  devicePixelRatio: window.devicePixelRatio, // recommended on HiDPI
+})
 ```
 
 ### Loading State

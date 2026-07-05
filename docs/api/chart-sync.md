@@ -1,11 +1,11 @@
 ---
 title: Chart Synchronization
-description: Link multiple charts for synchronized zoom, pan, and cursor tracking
+description: Link multiple charts for synchronized zoom, pan, and cursor — configurable per axis with bidirectional or master-slave modes.
 ---
 
 # Chart Synchronization
 
-Link multiple charts together so they share zoom, pan, and cursor states. Perfect for dashboards with related data.
+Link multiple charts so they share zoom, pan, and cursor state. Configure sync per axis: **X only**, **Y only**, **both**, or **none**.
 
 ## Basic Usage
 
@@ -14,12 +14,16 @@ Link multiple charts together so they share zoom, pan, and cursor states. Perfec
 ```typescript
 import { createChart, linkCharts } from 'velo-plot';
 
-const chart1 = createChart({ container: document.getElementById('chart1') });
-const chart2 = createChart({ container: document.getElementById('chart2') });
+const chart1 = createChart({ container: el1, id: 'chart1' });
+const chart2 = createChart({ container: el2, id: 'chart2' });
 
-// Link charts - they now share the same X-axis view
-const group = linkCharts(chart1, chart2);
+// Bidirectional X sync (default)
+const group = linkCharts(chart1, chart2, { axis: 'x' });
 ```
+
+::: tip Chart IDs
+Pass `id` in `createChart` options or use `chart.getId()`. Sync relies on stable chart identifiers.
+:::
 
 ### Create a Chart Group
 
@@ -27,124 +31,117 @@ const group = linkCharts(chart1, chart2);
 import { createChartGroup } from 'velo-plot';
 
 const group = createChartGroup([chart1, chart2, chart3], {
-  axis: 'x',           // Sync X-axis only (default)
-  syncCursor: true,    // Share cursor position
-  syncZoom: true,      // Share zoom state
-  syncPan: true,       // Share pan movements
+  axis: 'x',            // 'x' | 'y' | 'xy' | 'none'
+  syncCursor: true,
+  syncZoom: true,
+  syncPan: true,
+  bidirectional: true,  // any chart can drive sync
+  masterId: 'chart1',   // used by fitAll(); with bidirectional, any chart can still drive pan/zoom
 });
 ```
 
-## Synchronization Options
+## Axis Modes
 
-### Axis Modes
+| Mode | Pan/zoom sync | Typical use |
+|------|---------------|-------------|
+| `'x'` | Time/index only | Price + volume + RSI stacks |
+| `'y'` | Value only | Aligned magnitude comparison |
+| `'xy'` | Both axes | Twin charts with identical viewport |
+| `'none'` | Off | Cursor-only linking |
 
 ```typescript
-createChartGroup([chart1, chart2], {
-  axis: 'x',    // Only X-axis synchronized
-});
-
-createChartGroup([chart1, chart2], {
-  axis: 'y',    // Only Y-axis synchronized  
-});
-
-createChartGroup([chart1, chart2], {
-  axis: 'xy',   // Both axes synchronized
-});
-
-createChartGroup([chart1, chart2], {
-  axis: 'none', // No axis sync (cursor only)
-});
+group.syncAxis('y');
+group.updateOptions({ axis: 'none', syncZoom: false, syncPan: false });
 ```
 
-### Cursor Sync
+## Bidirectional vs Master-Slave
 
-When you hover over one chart, the cursor position appears on all linked charts:
+### Bidirectional (default in `createChartGroup`)
+
+Any chart in the group can drive sync. When `axis: 'x'`, only X bounds propagate — each chart keeps its own Y.
 
 ```typescript
-createChartGroup([chart1, chart2], {
-  syncCursor: true,  // Show cursor on all charts
+createChartGroup([price, volume, rsi], {
+  axis: 'x',
+  bidirectional: true,
+  masterId: 'price', // fitAll() uses price for shared X
 });
 ```
 
-### Master-Slave Relationship
+### Master-Slave (`createMasterSlave`)
 
-One chart controls another, but not vice versa:
+Only the master chart propagates pan/zoom. Slaves follow but cannot push changes back.
 
 ```typescript
 import { createMasterSlave } from 'velo-plot';
 
-// chart1 controls chart2, but chart2 doesn't affect chart1
-const group = createMasterSlave(chart1, chart2, 'x');
+const group = createMasterSlave(priceChart, volumeChart, 'x');
+// bidirectional: false, masterId set automatically
+```
+
+Pan propagation uses the **source chart's current view bounds**, not raw pixel deltas — slaves stay aligned even when pane heights differ.
+
+## Coordinated Fit
+
+```typescript
+group.fitAll({ padding: 0.02 });
+group.resetAll();
+```
+
+- **`fitAll()`** — Master (or first chart) derives X; each chart fits its own Y.
+- **`resetAll()`** — Safe re-fit from data (skips empty charts).
+
+Requires charts to implement `fit()` (all native `Chart` instances do).
+
+## Batch Updates
+
+Suppress sync feedback during programmatic multi-chart updates:
+
+```typescript
+group.batch(() => {
+  priceChart.zoom({ x: [t0, t1], animate: false });
+  volumeChart.fit({ x: [t0, t1] });
+  rsiChart.fit({ x: [t0, t1], y: [0, 100] });
+});
+```
+
+## Cursor Sync
+
+```typescript
+group.syncCursor(true);
+
+// Runtime toggle
+group.updateOptions({ syncCursor: false });
 ```
 
 ## Managing Groups
 
-### Add/Remove Charts
-
 ```typescript
-const group = createChartGroup([chart1, chart2]);
-
-// Add another chart
 group.add(chart3);
-
-// Remove a chart
 group.remove(chart2);
-```
 
-### Sync All Charts to a View
+group.syncTo({ xMin: 0, xMax: 100 });
+group.syncZoom(false);
+group.syncPan(false);
 
-```typescript
-// Set all charts to the same view
-group.syncTo({
-  xMin: 0,
-  xMax: 100,
-  yMin: -1,
-  yMax: 1,
-});
-```
-
-### Reset All Charts
-
-```typescript
-// Reset all charts to auto-scale
-group.resetAll();
-```
-
-### Check Group Status
-
-```typescript
-console.log(group.size());          // Number of charts
-console.log(group.has(chart1));     // Is chart in group?
-console.log(group.getCharts());     // Get all charts
-```
-
-### Cleanup
-
-```typescript
-// Destroy the group (charts remain, just unlinked)
+console.log(group.getOptions());
+console.log(group.size());
 group.destroy();
 ```
 
-## Advanced Configuration
+## Stacked Charts (Recommended)
 
-### Debounce Sync Events
-
-For performance, debounce rapid sync updates:
+For vertical price / volume / indicator layouts, use [`createStackedChart`](/api/stacked-chart) — it wires `ChartGroup`, margins, resize, and fit automatically:
 
 ```typescript
-createChartGroup([chart1, chart2], {
-  debounce: 16,  // Wait 16ms between sync updates
+const stack = createStackedChart({
+  masterPaneId: 'price',
+  sync: { axis: 'x', bidirectional: true },
+  panes: [...],
 });
-```
 
-### Selection Sync
-
-Sync selected data points across charts:
-
-```typescript
-createChartGroup([chart1, chart2], {
-  syncSelection: true,
-});
+stack.setSyncAxis('none');
+stack.getGroup().fitAll();
 ```
 
 ## Use Cases
@@ -152,38 +149,22 @@ createChartGroup([chart1, chart2], {
 ### Multi-Timeframe Analysis
 
 ```typescript
-// Same data at different zoom levels
-const overview = createChart({ ... });  // Full dataset
-const detail = createChart({ ... });    // Zoomed detail
-
 createMasterSlave(overview, detail, 'x');
-```
-
-### Stacked Indicators
-
-```typescript
-// Price chart with separate RSI panel
-const priceChart = createChart({ ... });
-const rsiChart = createChart({ ... });
-
-createChartGroup([priceChart, rsiChart], {
-  axis: 'x',         // Sync time axis
-  syncCursor: true,  // Show crosshair on both
-});
 ```
 
 ### Multi-Sensor Dashboard
 
 ```typescript
-// Multiple sensors sharing the same time window
-const temp = createChart({ ... });
-const pressure = createChart({ ... });
-const humidity = createChart({ ... });
-
 createChartGroup([temp, pressure, humidity], {
   axis: 'x',
   syncCursor: true,
 });
+```
+
+### Full Viewport Lock
+
+```typescript
+createChartGroup([chartA, chartB], { axis: 'xy', bidirectional: true });
 ```
 
 ## API Reference
@@ -198,11 +179,19 @@ class ChartGroup {
   getCharts(): ChartLike[];
   size(): number;
   has(chart: ChartLike): boolean;
+
   syncAxis(axis: SyncAxis): this;
+  syncZoom(enabled: boolean): this;
+  syncPan(enabled: boolean): this;
   syncCursor(enabled: boolean): this;
   syncSelection(enabled: boolean): this;
+  updateOptions(partial: Partial<SyncOptions>): this;
+  getOptions(): Readonly<SyncOptions>;
+
   syncTo(bounds: Partial<Bounds>, excludeChartId?: string): void;
+  fitAll(options?: { x?: Range; padding?: number }): void;
   resetAll(): void;
+  batch<T>(fn: () => T): T;
   clearAllSelections(): void;
   destroy(): void;
 }
@@ -217,7 +206,36 @@ interface SyncOptions {
   syncSelection?: boolean;   // Default: false
   syncZoom?: boolean;        // Default: true
   syncPan?: boolean;         // Default: true
-  debounce?: number;         // Default: 0
+  debounce?: number;         // Default: 0 (uses rAF)
   bidirectional?: boolean;   // Default: true
+  masterId?: string;         // fitAll driver; optional pan/zoom restriction when bidirectional: false
 }
 ```
+
+### Helpers
+
+```typescript
+createChartGroup(charts, options?): ChartGroup
+linkCharts(chart1, chart2, options?): ChartGroup
+createMasterSlave(master, slave, axis?): ChartGroup
+```
+
+### ChartLike
+
+```typescript
+interface ChartLike {
+  getId(): string;
+  getViewBounds(): Bounds;
+  zoom(options: { x?: Range; y?: Range; animate?: boolean }): void;
+  pan(dx: number, dy: number): void;
+  fit?(options?: FitOptions): void;
+  on(event: string, handler: (...args: unknown[]) => void): void;
+  off(event: string, handler: (...args: unknown[]) => void): void;
+}
+```
+
+## Related
+
+- [Chart Sync Example](/examples/chart-sync)
+- [Stacked Chart API](/api/stacked-chart)
+- [Pane Stack Example](/examples/pane-stack)
