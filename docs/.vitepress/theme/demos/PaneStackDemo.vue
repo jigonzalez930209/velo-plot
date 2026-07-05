@@ -57,6 +57,7 @@ type PresetId =
   | 'y-sync'
   | 'master-only'
   | 'compact'
+  | 'horizontal'
 
 const { isDark } = useData()
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -81,6 +82,20 @@ const presets = [
       'Wheel on the Y-axis strip: zoom only that pane’s Y (not synced).',
       'Wave line: green above wt2 (buy), red below (sell).',
       'Drag dividers to resize panes without flicker.',
+    ],
+  },
+  {
+    id: 'horizontal' as const,
+    label: 'Horizontal',
+    badge: 'Side by side · Y sync',
+    height: 360,
+    showSyncControls: false,
+    description:
+      'Two panes laid out horizontally with a shared left Y axis. Pan or zoom on either pane — Y stays aligned, each X scale is independent.',
+    tips: [
+      'Drag the vertical divider to resize pane widths.',
+      'Contrast with TradingView: here Y is shared, X is per-pane.',
+      'Use stack.exportImage() to capture the full side-by-side layout.',
     ],
   },
   {
@@ -336,14 +351,28 @@ function buildCompactPanes(data: ReturnType<typeof generateMarketData>) {
   ]
 }
 
-function buildLinePairPanes(lines: ReturnType<typeof generateLinePair>, labels: [string, string]) {
+function buildLinePairPanes(
+  lines: ReturnType<typeof generateLinePair>,
+  labels: [string, string],
+  layout: 'vertical' | 'horizontal' = 'vertical',
+) {
+  const perPaneXAxis =
+    layout === 'horizontal'
+      ? { label: 'Index', tickCount: 6, showLabels: true, showTicks: true, showLine: true }
+      : null
+
   return [
     {
       id: 'pane-a',
       height: 0.5,
       chart: {
         ...chartBase(),
-        xAxis: { label: 'Index', showLabels: false, showTicks: false, showLine: false },
+        xAxis: perPaneXAxis ?? {
+          label: 'Index',
+          showLabels: false,
+          showTicks: false,
+          showLine: false,
+        },
         yAxis: { label: labels[0], tickCount: 5 },
       },
       series: [
@@ -360,7 +389,7 @@ function buildLinePairPanes(lines: ReturnType<typeof generateLinePair>, labels: 
       height: 0.5,
       chart: {
         ...chartBase(),
-        xAxis: { label: 'Index', tickCount: 8 },
+        xAxis: perPaneXAxis ?? { label: 'Index', tickCount: 8 },
         yAxis: { label: labels[1], tickCount: 5 },
       },
       series: [
@@ -379,6 +408,8 @@ function resolveSyncOptions(preset: PresetId) {
   switch (preset) {
     case 'no-sync':
       return false
+    case 'horizontal':
+      return { axis: 'y' as const, syncCursor: true }
     case 'xy-sync':
       return { axis: 'xy' as const, syncCursor: true }
     case 'y-sync':
@@ -471,6 +502,9 @@ async function initStack() {
       panes = buildTradingViewPanes(data, indicatorPane)
     } else if (preset === 'compact' || preset === 'master-only') {
       panes = buildCompactPanes(data)
+    } else if (preset === 'horizontal') {
+      masterPaneId = 'pane-a'
+      panes = buildLinePairPanes(lines, ['Series A', 'Series B'], 'horizontal')
     } else {
       masterPaneId = 'pane-a'
       sharedXAxis = 'bottom'
@@ -486,7 +520,9 @@ async function initStack() {
     stack = createStackedChart({
       container: containerRef.value,
       masterPaneId,
-      sharedXAxis,
+      direction: preset === 'horizontal' ? 'horizontal' : 'vertical',
+      sharedXAxis: preset === 'horizontal' ? 'none' : sharedXAxis,
+      sharedYAxis: preset === 'horizontal' ? 'left' : undefined,
       gap: 0,
       resizable: preset !== 'xy-sync' && preset !== 'y-sync',
       showLegend: false,
