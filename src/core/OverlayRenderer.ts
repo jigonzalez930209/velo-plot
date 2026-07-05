@@ -11,6 +11,7 @@ import type { Series } from "./Series";
 import type { PlotArea, CursorState, AxisOptions } from "../types";
 import type { ChartTitleOptions } from "./layout/types";
 import type { AxisLayoutOptions } from "./layout/types";
+import { formatXTickValue, formatYTickValue } from "./format/axisFormat";
 
 // ============================================
 // Overlay Renderer Class
@@ -133,14 +134,22 @@ export class OverlayRenderer {
   /**
    * Draw the grid
    */
-  drawGrid(plotArea: PlotArea, xScale: Scale, yScale: Scale): void {
+  drawGrid(
+    plotArea: PlotArea,
+    xScale: Scale,
+    yScale: Scale,
+    xAxisOptions?: AxisOptions,
+    yAxisOptions?: AxisOptions,
+  ): void {
     if (!this.theme.grid.visible) return;
 
     const { ctx } = this;
     const grid = this.theme.grid;
 
-    const xTicks = xScale.ticks(8);
-    const yTicks = yScale.ticks(6);
+    const xTickCount = xAxisOptions?.tickCount ?? 8;
+    const yTickCount = yAxisOptions?.tickCount ?? 6;
+    const xTicks = xScale.ticks(xTickCount);
+    const yTicks = yScale.ticks(yTickCount);
 
     // Major grid lines
     ctx.strokeStyle = grid.majorColor;
@@ -288,47 +297,58 @@ export class OverlayRenderer {
   ): void {
     const { ctx } = this;
     const axis = this.theme.xAxis;
-    const xTicks = xScale.ticks(8);
+    const xTickCount = options?.tickCount ?? 8;
+    const xTicks = xScale.ticks(xTickCount);
     const axisY = plotArea.y + plotArea.height;
     const label = options?.label;
+    const showLine = options?.showLine !== false;
+    const showTicks = options?.showTicks !== false;
+    const showLabels = options?.showLabels !== false;
+    const domainSpan = xScale.domain[1] - xScale.domain[0];
 
-    // Axis line
-    ctx.strokeStyle = axis.lineColor;
-    ctx.lineWidth = axis.lineWidth;
-    ctx.beginPath();
-    ctx.moveTo(plotArea.x, axisY);
-    ctx.lineTo(plotArea.x + plotArea.width, axisY);
-    ctx.stroke();
+    if (showLine) {
+      ctx.strokeStyle = axis.lineColor;
+      ctx.lineWidth = axis.lineWidth;
+      ctx.beginPath();
+      ctx.moveTo(plotArea.x, axisY);
+      ctx.lineTo(plotArea.x + plotArea.width, axisY);
+      ctx.stroke();
+    }
 
-    // Ticks and labels
-    ctx.fillStyle = axis.labelColor;
-    ctx.font = `${axis.labelSize}px ${axis.fontFamily}`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
+    if (showTicks || showLabels) {
+      ctx.fillStyle = axis.labelColor;
+      ctx.font = `${axis.labelSize}px ${axis.fontFamily}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
 
-    xTicks.forEach((tick) => {
-      const x = xScale.transform(tick);
+      xTicks.forEach((tick) => {
+        const x = xScale.transform(tick);
+        if (x >= plotArea.x && x <= plotArea.x + plotArea.width) {
+          if (showTicks) {
+            ctx.strokeStyle = axis.tickColor;
+            ctx.beginPath();
+            ctx.moveTo(x, axisY);
+            ctx.lineTo(x, axisY + axis.tickLength);
+            ctx.stroke();
+          }
+          if (showLabels) {
+            this.drawLatexOrText(
+              this.formatXTick(tick, options, domainSpan),
+              x,
+              axisY + axis.tickLength + 3,
+              {
+                fontSize: axis.labelSize,
+                fontFamily: axis.fontFamily,
+                color: axis.labelColor,
+                align: "center",
+                baseline: "top",
+              },
+            );
+          }
+        }
+      });
+    }
 
-      if (x >= plotArea.x && x <= plotArea.x + plotArea.width) {
-        // Tick mark
-        ctx.strokeStyle = axis.tickColor;
-        ctx.beginPath();
-        ctx.moveTo(x, axisY);
-        ctx.lineTo(x, axisY + axis.tickLength);
-        ctx.stroke();
-
-        // Label
-        this.drawLatexOrText(this.formatXTick(tick, options), x, axisY + axis.tickLength + 3, {
-          fontSize: axis.labelSize,
-          fontFamily: axis.fontFamily,
-          color: axis.labelColor,
-          align: "center",
-          baseline: "top",
-        });
-      }
-    });
-
-    // Axis title
     if (label) {
       const titleGap = layout?.titleGap ?? 45;
       this.drawLatexOrText(label, plotArea.x + plotArea.width / 2, plotArea.y + plotArea.height + titleGap, {
@@ -354,58 +374,58 @@ export class OverlayRenderer {
   ): void {
     const { ctx } = this;
     const axis = this.theme.yAxis;
-    const yTicks = yScale.ticks(6);
+    const yTickCount = options?.tickCount ?? 6;
+    const yTicks = yScale.ticks(yTickCount);
     const label = options?.label;
-    // Calculate X coordinate for axis line based on position and offset
+    const showLine = options?.showLine !== false;
+    const showTicks = options?.showTicks !== false;
+    const showLabels = options?.showLabels !== false;
     const axisX = position === 'left' ? plotArea.x - offset : plotArea.x + plotArea.width + offset;
-    const tickDir = position === 'left' ? -1 : 1; // Left points left, right points right
+    const tickDir = position === 'left' ? -1 : 1;
 
-    // Axis line
-    ctx.strokeStyle = axis.lineColor;
-    ctx.lineWidth = axis.lineWidth;
-    ctx.beginPath();
-    ctx.moveTo(axisX, plotArea.y);
-    ctx.lineTo(axisX, plotArea.y + plotArea.height);
-    ctx.stroke();
+    if (showLine) {
+      ctx.strokeStyle = axis.lineColor;
+      ctx.lineWidth = axis.lineWidth;
+      ctx.beginPath();
+      ctx.moveTo(axisX, plotArea.y);
+      ctx.lineTo(axisX, plotArea.y + plotArea.height);
+      ctx.stroke();
+    }
 
-    // Ticks and labels
-    ctx.fillStyle = axis.labelColor;
-    ctx.font = `${axis.labelSize}px ${axis.fontFamily}`;
-    ctx.textAlign = position === 'left' ? "right" : "left";
-    ctx.textBaseline = "middle";
+    if (showTicks || showLabels) {
+      ctx.fillStyle = axis.labelColor;
+      ctx.font = `${axis.labelSize}px ${axis.fontFamily}`;
+      ctx.textAlign = position === 'left' ? "right" : "left";
+      ctx.textBaseline = "middle";
 
-    yTicks.forEach((tick) => {
-      const y = yScale.transform(tick);
+      yTicks.forEach((tick) => {
+        const y = yScale.transform(tick);
+        if (y >= plotArea.y && y <= plotArea.y + plotArea.height) {
+          if (showTicks) {
+            ctx.strokeStyle = axis.tickColor;
+            ctx.beginPath();
+            ctx.moveTo(axisX, y);
+            ctx.lineTo(axisX + axis.tickLength * tickDir, y);
+            ctx.stroke();
+          }
+          if (showLabels) {
+            const labelX = axisX + (axis.tickLength + 3) * tickDir;
+            this.drawLatexOrText(this.formatYTick(tick, options), labelX, y, {
+              fontSize: axis.labelSize,
+              fontFamily: axis.fontFamily,
+              color: axis.labelColor,
+              align: position === 'left' ? "right" : "left",
+              baseline: "middle",
+            });
+          }
+        }
+      });
+    }
 
-      if (y >= plotArea.y && y <= plotArea.y + plotArea.height) {
-        // Tick mark
-        ctx.strokeStyle = axis.tickColor;
-        ctx.beginPath();
-        ctx.moveTo(axisX, y);
-        ctx.lineTo(axisX + axis.tickLength * tickDir, y);
-        ctx.stroke();
-
-        // Label
-        const labelX = axisX + (axis.tickLength + 3) * tickDir;
-        this.drawLatexOrText(this.formatYTick(tick, options), labelX, y, {
-          fontSize: axis.labelSize,
-          fontFamily: axis.fontFamily,
-          color: axis.labelColor,
-          align: position === 'left' ? "right" : "left",
-          baseline: "middle",
-        });
-      }
-    });
-
-    // Axis title
     if (label) {
       const titleGap = layout?.titleGap ?? 50;
-      const titleX = position === 'left'
-        ? axisX - titleGap // Adjust padding for left title
-        : axisX + titleGap; // Adjust padding for right title
-
+      const titleX = position === 'left' ? axisX - titleGap : axisX + titleGap;
       const titleY = plotArea.y + plotArea.height / 2;
-
       this.drawLatexOrText(label, titleX, titleY, {
         fontSize: axis.titleSize,
         fontFamily: axis.fontFamily,
@@ -1116,50 +1136,11 @@ export class OverlayRenderer {
     return minor;
   }
 
-  private formatXTick(value: number, options?: AxisOptions): string {
-    if (options?.scientific || (Math.abs(value) < 0.001 && value !== 0)) {
-      return this.toScientificUnicode(value, 1);
-    }
-    return value.toFixed(3).replace(/\.?0+$/, "");
+  private formatXTick(value: number, options?: AxisOptions, domainSpan?: number): string {
+    return formatXTickValue(value, options, domainSpan);
   }
 
   private formatYTick(value: number, options?: AxisOptions): string {
-    if (value === 0) return "0";
-    const absVal = Math.abs(value);
-    if (options?.scientific || absVal < 0.0001 || absVal >= 10000) {
-      return this.toScientificUnicode(value, 1);
-    }
-    return value.toPrecision(3);
-  }
-
-  private toScientificUnicode(value: number, precision: number): string {
-    const str = value.toExponential(precision);
-    const [mantissa, exponent] = str.split("e");
-
-    // Convert exponent to unicode superscripts
-    const superscriptMap: Record<string, string> = {
-      "0": "⁰",
-      "1": "¹",
-      "2": "²",
-      "3": "³",
-      "4": "⁴",
-      "5": "⁵",
-      "6": "⁶",
-      "7": "⁷",
-      "8": "⁸",
-      "9": "⁹",
-      "-": "⁻",
-      "+": "⁺",
-    };
-
-    const unicodeExp = exponent
-      .replace("+", "") // Remove plus sign for compactness
-      .replace(
-        /[0-9\-]/g,
-        (char) => superscriptMap[char] || char
-      );
-
-    // Return compact "1.0e⁷" format
-    return `${mantissa}e${unicodeExp}`;
+    return formatYTickValue(value, options);
   }
 }
