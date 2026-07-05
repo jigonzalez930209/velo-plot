@@ -136,7 +136,16 @@ Visit [Sci Plot Docs](https://jigonzalez930209.github.io/velo-plot/) for:
 
 ## 🗺️ Development Roadmap
 
-The library is at **v1.12.0**. The active roadmap toward **v3.0.0** lives in [`docs/roadmap/`](./docs/roadmap/README.md) (6 stages: foundation audit, render engine, trading, scientific depth, React DX, stable release). The older roadmap is archived at [`docs/ROADMAP-LEGACY.md`](./docs/ROADMAP-LEGACY.md).
+The library is at **v1.12.0**. The active roadmap toward **v3.0.0** lives in [`docs/roadmap/`](./docs/roadmap/README.md) (6 stages: foundation audit, render engine, trading, scientific depth, React DX, stable release). Plugin audit: [`docs/PLUGIN-STATUS.md`](./docs/PLUGIN-STATUS.md). The older roadmap is archived at [`docs/ROADMAP-LEGACY.md`](./docs/ROADMAP-LEGACY.md).
+
+### Bundle entry points
+
+| Import | Contents |
+|--------|----------|
+| `velo-plot` | Core chart engine (~60KB) |
+| `velo-plot/full` | Everything including plugins, 3D, analysis |
+| `velo-plot/react` | `SciPlot`, `useSciPlot`, `useStackedPlot` |
+| `velo-plot/plugins/*` | Individual plugins (tree-shakeable) |
 
 ## 📄 License
 

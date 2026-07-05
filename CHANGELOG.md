@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.13.0] - Unreleased
+
+### Added
+- **Stack export**: `stack.exportImage()` / `stack.snapshot()` composes all panes at exact layout positions (PNG/JPEG/WebP, up to 8K).
+- **SVG export**: `chart.exportSVG()` and `chart.snapshot.takeSnapshot({ format: 'svg' })` with vector series paths and tick labels.
+- **Horizontal stack layout**: `direction: 'horizontal'` with `sharedYAxis: 'left'`, vertical dividers, and Y-axis sync default.
+- **CI workflow**: Tests + build on every PR/push to `main`.
+- **`velo-plot/react` export**: Dedicated entry point for React hooks and components.
+- **Plugin status registry**: [docs/PLUGIN-STATUS.md](/PLUGIN-STATUS.md).
+
+### Improved
+- **`ChartGroup.syncSelection`**: Selection now propagates across linked charts when enabled.
+- **HiDPI alignment**: WebGL and overlay canvases use matching rounded backing-store sizes.
+- **Axis rendering**: Pixel-snapped grid lines and tick labels for sharper overlay text.
+- **Build exports**: All `package.json` subpaths now have Vite entry points.
+
+### Deprecated
+- **`PluginSync`**: Use `ChartGroup` / `createChartGroup` instead.
+
 ## [1.12.0] - Unreleased
 
 ### Added
