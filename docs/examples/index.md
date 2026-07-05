@@ -80,6 +80,16 @@ Automatic trend lines and regression analysis (Linear, Polynomial, etc.).
 
 ---
 
+### Multi-Pane Stack
+
+TradingView-style stack with sync presets, drag resize, and composite indicators (buy/sell line colors).
+
+<PaneStackDemo />
+
+[View full example →](/examples/pane-stack)
+
+---
+
 ### Peak Analysis
 
 Baseline correction and area integration for scientific signals.
@@ -143,6 +153,8 @@ Interactive tools for selecting and analyzing specific data regions.
 | [Curve Fitting](/examples/curve-fitting) | Regression analysis | Trend lines & labels |
 | [Peak Analysis](/examples/analysis) | Integration/Baseline | Area calculation |
 | [Bar Charts](/examples/bar-charts) | Categorical data | Automatic width |
+| [Multi-Pane Stack](/examples/pane-stack) | Price / Volume / RSI + sync presets | `createStackedChart` |
+| [Chart Sync](/examples/chart-sync) | Linked charts (X/Y/XY) | `ChartGroup` |
 | [Heatmaps](/examples/heatmap) | 2D intensity maps | Color scales |
 | [Tooltips](/examples/tooltips) | Tooltip system | Themes & Animations |
 | [Export & Media](/examples/export-utilities) | Media Suite | Snapshot/Video/Data |
