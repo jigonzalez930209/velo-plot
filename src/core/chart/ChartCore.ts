@@ -57,6 +57,7 @@ import {
 
 import type { Chart, ExportOptions } from "./types";
 import { exportToCSV, exportToJSON, exportToImage } from "./ChartExporter";
+import { exportToSVG } from "./exporter/SVGExporter";
 import { applyZoom, applyPan, type NavigationContext } from "./ChartNavigation";
 import { autoScaleAll, autoScaleYOnly, handleBoxZoom, fitToData } from "./ChartScaling";
 import {
@@ -837,6 +838,25 @@ export class ChartImpl implements Chart {
       this.showLegend,
       this.dpr,
       type
+    );
+  }
+
+  exportSVG(): string {
+    const rect = this.container.getBoundingClientRect();
+    return exportToSVG(
+      this.getAllSeries(),
+      this.viewBounds,
+      this.getPlotArea(),
+      this.xScale,
+      this.yScales,
+      this.theme,
+      rect.width || this.container.clientWidth,
+      rect.height || this.container.clientHeight,
+      {
+        xAxis: this.xAxisOptions,
+        yAxis: this.yAxisOptionsMap.get(this.primaryYAxisId),
+        primaryYAxisId: this.primaryYAxisId,
+      },
     );
   }
 
