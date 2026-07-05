@@ -30,3 +30,67 @@ jobs:
 
       - name: Build Library
         run: pnpm build
+
+  benchmark:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Stage 1 Benchmarks
+        run: pnpm exec vitest run src/testing/stage1-perf.test.ts --reporter=json --outputFile=benchmark-results.json
+
+      - name: Upload Benchmark Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stage1-benchmark-results
+          path: benchmark-results.json
+
+  benchmark-browser:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Library
+        run: pnpm build
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install chromium --with-deps
+
+      - name: Run Browser FPS Benchmarks
+        run: pnpm test:browser-bench
+
+      - name: Upload Browser Benchmark Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: stage1-browser-benchmark
+          path: browser-benchmark-results.json
