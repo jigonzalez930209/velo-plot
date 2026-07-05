@@ -26,12 +26,20 @@ const dataUrl = await chart.snapshot.downloadSnapshot({
 
 | Option | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `defaultFormat` | `string` | `'png'` | Format used if not specified in call. |
+| `defaultFormat` | `string` | `'png'` | Format used if not specified in call (`png`, `jpeg`, `webp`, `svg`). |
 | `quality` | `number` | `0.9` | Compression quality for JPEG/WebP. |
 
 **Methods:**
-- `takeSnapshot(options)`: Returns `Promise<string>` (Data URL).
-- `downloadSnapshot(options)`: Returns `Promise<string>` and triggers file download.
+- `takeSnapshot(options)`: Returns `Promise<string>` (Data URL for raster formats, raw SVG string for `format: 'svg'`).
+- `downloadSnapshot(options)`: Triggers file download for PNG, JPEG, WebP, or SVG.
+
+**SVG export** uses vector paths and tick labels (not a raster embedded in SVG):
+
+```typescript
+const svg = await chart.snapshot.takeSnapshot({ format: 'svg' });
+// or synchronously:
+const svg = chart.exportSVG();
+```
 
 ---
 

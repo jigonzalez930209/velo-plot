@@ -234,6 +234,25 @@ interface ChartLike {
 }
 ```
 
+## Selection sync
+
+Enable with `syncSelection: true`. When the user selects points on one chart, the same `{ seriesId, indices }` selection is applied to all other charts in the group. Clearing selection on the source chart clears all slaves.
+
+```typescript
+const group = createChartGroup([chart1, chart2], {
+  axis: 'x',
+  syncSelection: true,
+});
+```
+
+Requires charts to implement `selectPoints`, `clearSelection`, and emit `selectionChange`.
+
+## Known limitations
+
+- **`PluginSync`** is deprecated — use `ChartGroup` / `createChartGroup` instead. The plugin stub logs a warning and performs no sync.
+- **WebGPU renderer** remains experimental; use WebGL (default) for production.
+- **Selection sync** propagates by series id and point indices — series ids must match across charts for meaningful cross-chart selection.
+
 ## Related
 
 - [Chart Sync Example](/examples/chart-sync)

@@ -5,7 +5,7 @@ description: TradingView-style multi-pane layouts with X sync, independent Y sca
 
 # Stacked Pane Charts
 
-`createStackedChart` coordinates **1–5 charts stacked vertically** in a single container. Each pane is a full `Chart` instance — candlesticks, bars, lines, composite indicators — with optional shared time-axis sync and aligned margins.
+`createStackedChart` coordinates **1–5 charts** in a single container — **vertically** (default) or **side-by-side** (`direction: 'horizontal'`). Each pane is a full `Chart` instance with optional sync, drag resize, aligned margins, and full-stack export.
 
 Use this instead of manually wiring multiple `createChart` calls, `ChartGroup`, hidden X axes, resize logic, and fit coordination.
 
@@ -84,14 +84,16 @@ stack.fitAll();
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `container` | `HTMLDivElement` | **required** | Root element (cleared and filled with pane layout) |
-| `panes` | `StackedPaneConfig[]` | **required** | 1–5 pane definitions, top to bottom |
-| `masterPaneId` | `string` | first pane `id` | Pane used by `fitAll()` to derive shared X |
-| `sharedXAxis` | `'bottom' \| 'none'` | `'bottom'` | Hide X axis on upper panes; dates only on bottom |
+| `panes` | `StackedPaneConfig[]` | **required** | 1–5 pane definitions |
+| `direction` | `'vertical' \| 'horizontal'` | `'vertical'` | Stack panes top-to-bottom or left-to-right |
+| `masterPaneId` | `string` | first pane `id` | Pane used by `fitAll()` to derive shared axis |
+| `sharedXAxis` | `'bottom' \| 'none'` | `'bottom'` | Vertical layout: hide X on upper panes; dates on bottom |
+| `sharedYAxis` | `'left' \| 'none'` | `'left'` | Horizontal layout: hide Y on non-first panes; labels on left |
 | `sync` | `boolean \| StackedSyncOptions` | `true` | Pan/zoom sync between panes (see below) |
 | `resizable` | `boolean \| ResizableOptions` | `false` | VS Code–style drag dividers between panes |
 | `theme` | `string \| ChartTheme` | — | Applied to all panes unless overridden |
 | `devicePixelRatio` | `number` | `window.devicePixelRatio` | Sharp rendering on HiDPI displays |
-| `gap` | `number` | `0` | Vertical gap between panes (px) |
+| `gap` | `number` | `0` | Gap between panes (px) — vertical margin-top or horizontal margin-left |
 | `showLegend` | `boolean` | `false` | Show legend on panes |
 | `layout` | `Partial<LayoutOptions>` | — | Shared margin overrides |
 
@@ -129,10 +131,11 @@ Pass `sync: false` for fully independent panes.
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `id` | `string` | **required** | Stable pane id (also chart `id` for sync) |
-| `height` | `number \| string` | **required** | Flex ratio (`0.55`) or CSS length (`'24%'`, `'80px'`) |
+| `height` | `number \| string` | **required** | Flex ratio (`0.55`) or CSS length — height ratio when vertical, width ratio when horizontal |
 | `chart` | `Omit<ChartOptions, 'container' \| 'id'>` | — | Per-pane chart options |
 | `series` | `SeriesOptions[]` | — | Series added after chart creation |
-| `showXAxis` | `boolean` | bottom pane only | Show native X axis on this pane |
+| `showXAxis` | `boolean` | layout-dependent | Show native X axis on this pane |
+| `showYAxis` | `boolean` | layout-dependent | Show native Y axis on this pane (horizontal + `sharedYAxis: 'left'`) |
 | `interactive` | `boolean` | `true` | Enable pan/zoom on this pane |
 | `yRange` | `[number, number] \| 'auto'` | `'auto'` | Lock Y range (e.g. RSI 0–100) |
 
@@ -159,9 +162,55 @@ interface StackedChart {
   setSyncOptions(options: Partial<StackedSyncOptions>): void;
 
   whenReady(): Promise<void>;
+
+  /** Export entire stack as one PNG/JPEG/WebP (WYSIWYG layout) */
+  exportImage(options?: StackSnapshotOptions): Promise<string>;
+  snapshot(options?: StackSnapshotOptions): Promise<string>;
+
   destroy(): void;
 }
 ```
+
+### Stack export
+
+Capture the full multi-pane layout — including divider positions after resize — as a single image:
+
+```typescript
+const png = await stack.exportImage({ format: 'png', resolution: '4k' });
+
+// Or trigger download
+await stack.snapshot({
+  format: 'png',
+  download: true,
+  fileName: 'market-stack',
+});
+```
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `format` | `'png' \| 'jpeg' \| 'webp'` | `'png'` | Output format |
+| `resolution` | `'standard' \| '2k' \| '4k' \| '8k' \| number` | `'standard'` | DPR scale multiplier |
+| `includeBackground` | `boolean` | `true` | Fill with chart theme background |
+| `includeDividers` | `boolean` | `true` | Draw resize dividers in export |
+| `transparent` | `boolean` | `false` | Transparent background (PNG/WebP) |
+| `download` | `boolean` | `false` | Auto-download in browser |
+
+### Horizontal layout
+
+```typescript
+const stack = createStackedChart({
+  container,
+  direction: 'horizontal',
+  sharedYAxis: 'left',
+  sync: { axis: 'y' }, // default when horizontal
+  panes: [
+    { id: 'price', height: 0.6, series: [...] },
+    { id: 'volume', height: 0.4, series: [...] },
+  ],
+});
+```
+
+Each pane shows its own X axis at the bottom. Y labels appear only on the leftmost pane when `sharedYAxis: 'left'`. Dividers use `ew-resize` cursor.
 
 ### fitAll / resetAll
 
@@ -261,3 +310,10 @@ See [`useStackedPlot`](/api/react-hook#usestackedplot-hook) for the React bindin
 - [Indicator Panes API](/api/indicator-panes) — composite indicator rendering
 - [Chart Sync API](/api/chart-sync) — lower-level multi-chart linking
 - [`chart.fit()`](/api/chart#fit) — safe single-chart fit
+
+## Known limitations
+
+- **SVG stack export** is not yet available — use PNG/JPEG/WebP via `exportImage()`.
+- **Legend DOM** is not included in stack export (per-pane legends are rasterized only via each chart’s `exportImage` path when visible on canvas).
+- **Horizontal layout** sync defaults to Y-axis; override with `sync: { axis: 'x' }` if needed.
+- **Max 5 panes** per stack (`STACKED_MAX_PANES`).
