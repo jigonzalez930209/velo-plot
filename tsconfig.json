@@ -32,4 +32,9 @@
     "src",
     "docs/.vitepress/theme"
   ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.dom.test.ts",
+    "src/**/*.spec.ts"
+  ]
 }

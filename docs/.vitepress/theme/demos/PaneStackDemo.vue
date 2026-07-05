@@ -36,6 +36,16 @@
       </label>
       <button class="btn" @click="fitAll">Fit All</button>
       <button class="btn" @click="resetAll">Reset</button>
+      <span class="export-divider">Export stack:</span>
+      <button class="btn export-btn" :disabled="!stack || isExporting" @click="exportStack('png')">
+        PNG
+      </button>
+      <button class="btn export-btn" :disabled="!stack || isExporting" @click="exportStack('jpeg')">
+        JPEG
+      </button>
+      <button class="btn export-btn" :disabled="!stack || isExporting" @click="exportStack('webp')">
+        WebP
+      </button>
     </div>
 
     <div
@@ -57,6 +67,7 @@ type PresetId =
   | 'y-sync'
   | 'master-only'
   | 'compact'
+  | 'horizontal'
 
 const { isDark } = useData()
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -66,6 +77,7 @@ const runtimeSyncAxis = ref<'x' | 'y' | 'xy' | 'none'>('x')
 const runtimeCursor = ref(true)
 
 let stack: any = null
+const isExporting = ref(false)
 
 const presets = [
   {
@@ -81,6 +93,20 @@ const presets = [
       'Wheel on the Y-axis strip: zoom only that pane’s Y (not synced).',
       'Wave line: green above wt2 (buy), red below (sell).',
       'Drag dividers to resize panes without flicker.',
+    ],
+  },
+  {
+    id: 'horizontal' as const,
+    label: 'Horizontal',
+    badge: 'Side by side · Y sync',
+    height: 360,
+    showSyncControls: false,
+    description:
+      'Two panes laid out horizontally with a shared left Y axis. Pan or zoom on either pane — Y stays aligned, each X scale is independent.',
+    tips: [
+      'Drag the vertical divider to resize pane widths.',
+      'Contrast with TradingView: here Y is shared, X is per-pane.',
+      'Use stack.exportImage() to capture the full side-by-side layout.',
     ],
   },
   {
@@ -336,14 +362,28 @@ function buildCompactPanes(data: ReturnType<typeof generateMarketData>) {
   ]
 }
 
-function buildLinePairPanes(lines: ReturnType<typeof generateLinePair>, labels: [string, string]) {
+function buildLinePairPanes(
+  lines: ReturnType<typeof generateLinePair>,
+  labels: [string, string],
+  layout: 'vertical' | 'horizontal' = 'vertical',
+) {
+  const perPaneXAxis =
+    layout === 'horizontal'
+      ? { label: 'Index', tickCount: 6, showLabels: true, showTicks: true, showLine: true }
+      : null
+
   return [
     {
       id: 'pane-a',
       height: 0.5,
       chart: {
         ...chartBase(),
-        xAxis: { label: 'Index', showLabels: false, showTicks: false, showLine: false },
+        xAxis: perPaneXAxis ?? {
+          label: 'Index',
+          showLabels: false,
+          showTicks: false,
+          showLine: false,
+        },
         yAxis: { label: labels[0], tickCount: 5 },
       },
       series: [
@@ -360,7 +400,7 @@ function buildLinePairPanes(lines: ReturnType<typeof generateLinePair>, labels: 
       height: 0.5,
       chart: {
         ...chartBase(),
-        xAxis: { label: 'Index', tickCount: 8 },
+        xAxis: perPaneXAxis ?? { label: 'Index', tickCount: 8 },
         yAxis: { label: labels[1], tickCount: 5 },
       },
       series: [
@@ -379,6 +419,8 @@ function resolveSyncOptions(preset: PresetId) {
   switch (preset) {
     case 'no-sync':
       return false
+    case 'horizontal':
+      return { axis: 'y' as const, syncCursor: true }
     case 'xy-sync':
       return { axis: 'xy' as const, syncCursor: true }
     case 'y-sync':
@@ -396,6 +438,24 @@ function fitAll() {
 
 function resetAll() {
   stack?.resetAll()
+}
+
+async function exportStack(format: 'png' | 'jpeg' | 'webp') {
+  if (!stack || isExporting.value) return
+  isExporting.value = true
+  try {
+    await stack.exportImage({
+      format,
+      resolution: '2k',
+      download: true,
+      fileName: `velo-stack-${activePreset.value}`,
+      includeDividers: true,
+    })
+  } catch (err) {
+    console.error('[PaneStackDemo] export failed', err)
+  } finally {
+    isExporting.value = false
+  }
 }
 
 function applyRuntimeSync() {
@@ -471,6 +531,9 @@ async function initStack() {
       panes = buildTradingViewPanes(data, indicatorPane)
     } else if (preset === 'compact' || preset === 'master-only') {
       panes = buildCompactPanes(data)
+    } else if (preset === 'horizontal') {
+      masterPaneId = 'pane-a'
+      panes = buildLinePairPanes(lines, ['Series A', 'Series B'], 'horizontal')
     } else {
       masterPaneId = 'pane-a'
       sharedXAxis = 'bottom'
@@ -486,7 +549,9 @@ async function initStack() {
     stack = createStackedChart({
       container: containerRef.value,
       masterPaneId,
-      sharedXAxis,
+      direction: preset === 'horizontal' ? 'horizontal' : 'vertical',
+      sharedXAxis: preset === 'horizontal' ? 'none' : sharedXAxis,
+      sharedYAxis: preset === 'horizontal' ? 'left' : undefined,
       gap: 0,
       resizable: preset !== 'xy-sync' && preset !== 'y-sync',
       showLegend: false,
@@ -637,6 +702,22 @@ watch(chartTheme, (theme) => {
 
 .btn:hover {
   border-color: #00f2ff;
+}
+
+.export-divider {
+  font-size: 12px;
+  color: var(--vp-c-text-2);
+  margin-left: 4px;
+}
+
+.export-btn {
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.export-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .stack-container {

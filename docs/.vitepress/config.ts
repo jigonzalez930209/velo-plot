@@ -134,7 +134,8 @@ export default defineConfig({
           items: [
             { text: "Responsive Design", link: "/api/responsive" },
             { text: "State Persistence", link: "/api/persistence" },
-            { text: "Data Export", link: "/api/export" },
+            { text: "Image & Vector Export", link: "/api/image-export" },
+            { text: "Data Export (CSV/JSON)", link: "/api/export" },
           ],
         },
         {
@@ -308,6 +309,7 @@ export default defineConfig({
             { text: "Stage 3: Scientific Depth", link: "/roadmap/03-scientific-depth" },
             { text: "Stage 4: React & DX", link: "/roadmap/04-react-dx-ecosystem" },
             { text: "Stage 5: v3.0.0 Release", link: "/roadmap/05-v3-stable-platform" },
+            { text: "Stage 6: SVG Vector Parity", link: "/roadmap/06-svg-vector-parity" },
             { text: "Legacy Roadmap (archived)", link: "/ROADMAP-LEGACY" },
           ],
         },

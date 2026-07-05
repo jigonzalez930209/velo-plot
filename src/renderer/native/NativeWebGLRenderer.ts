@@ -87,8 +87,8 @@ export class NativeWebGLRenderer {
 
   resize(): void {
     const rect = this.canvas.getBoundingClientRect();
-    const width = rect.width * this.dpr;
-    const height = rect.height * this.dpr;
+    const width = Math.round(rect.width * this.dpr);
+    const height = Math.round(rect.height * this.dpr);
 
     if (this.canvas.width !== width || this.canvas.height !== height) {
       this.canvas.width = width;

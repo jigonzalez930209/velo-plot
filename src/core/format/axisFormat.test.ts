@@ -7,7 +7,6 @@ import {
   formatYTickValue,
   formatTooltipX,
   formatTooltipY,
-  toScientificUnicode,
 } from "./axisFormat";
 
 describe("axisFormat", () => {
@@ -78,9 +77,28 @@ describe("axisFormat", () => {
     });
   });
 
-  describe("toScientificUnicode", () => {
-    it("uses unicode superscripts", () => {
-      expect(toScientificUnicode(1_000_000, 1)).toMatch(/⁶/);
+  describe("formatXTickValue linear axis", () => {
+    it("formats small values with scientific notation by default", () => {
+      expect(formatXTickValue(0.0005)).toMatch(/e/i);
+    });
+
+    it("formats linear values without trailing zeros", () => {
+      expect(formatXTickValue(1.5)).toBe("1.5");
+      expect(formatXTickValue(2)).toBe("2");
+    });
+
+    it("uses prefix when configured", () => {
+      expect(formatXTickValue(1500, { prefix: "k" })).toBe("1.50k");
+    });
+  });
+
+  describe("formatYTickValue prefix and micro", () => {
+    it("uses milli prefix path via applyPrefix", () => {
+      expect(formatYTickValue(0.005, { prefix: "m" })).toMatch(/m$/);
+    });
+
+    it("auto prefix selects micro for small values", () => {
+      expect(autoPrefixFor(0.0005)).toBe("µ");
     });
   });
 });

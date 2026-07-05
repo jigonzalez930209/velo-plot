@@ -27,23 +27,24 @@ const manifestSync: PluginManifest = {
 
 /**
  * SciPlot Sync Plugin
- * 
- * Enables smooth coordination and synchronization between separate chart instances.
+ *
+ * @deprecated Use `ChartGroup` / `createChartGroup` from `velo-plot` (or `velo-plot/full`) instead.
+ * This plugin stub does not perform synchronization. Kept for backward-compatible imports only.
  */
 export function PluginSync(config: PluginSyncConfig = {}): ChartPlugin<PluginSyncConfig> {
-    void config;
-    return {
-        manifest: manifestSync,
+  void config;
+  return {
+    manifest: manifestSync,
 
-        onInit(_ctx: PluginContext) {   
-            if (config.groupId) {
-                // Join the specified group
-            }
-        },
+    onInit(_ctx: PluginContext) {
+      console.warn(
+        "[PluginSync] Deprecated: use ChartGroup / createChartGroup from the core sync module instead.",
+      );
+    },
 
-        onDestroy(_ctx: PluginContext) {
-        }
-    };
+    onDestroy(_ctx: PluginContext) {
+    },
+  };
 }
 
 export default PluginSync;

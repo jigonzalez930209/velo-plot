@@ -96,6 +96,37 @@ describe("tooltip format", () => {
       );
       expect(label).not.toMatch(/e/i);
     });
+
+    it("formats billions, millions, and thousands without axis context", () => {
+      expect(formatCompactValue(baseDataPoint({ dataX: 2.5e9 }), "x")).toBe("2.5G");
+      expect(formatCompactValue(baseDataPoint({ dataY: 3.2e6 }), "y")).toBe("3.2M");
+      expect(formatCompactValue(baseDataPoint({ dataY: 4500 }), "y")).toBe("4.5k");
+    });
+
+    it("formats sub-unit SI prefixes and invalid values", () => {
+      expect(formatCompactValue(baseDataPoint({ dataY: 0.004 }), "y")).toBe("4.0m");
+      expect(formatCompactValue(baseDataPoint({ dataY: 4e-7 }), "y")).toBe("400.0n");
+      expect(formatCompactValue(baseDataPoint({ dataY: NaN }), "y")).toBe("N/A");
+    });
+  });
+
+  describe("fallback formatters without axis context", () => {
+    it("formatDataPointX uses exponential for raw epoch values", () => {
+      expect(formatDataPointX(baseDataPoint())).toMatch(/e/i);
+    });
+
+    it("formatCrosshairY uses precision tiers", () => {
+      const data: CrosshairTooltip = {
+        type: "crosshair",
+        cursorX: 0,
+        cursorY: 0,
+        dataX: 0,
+        interpolatedValues: [],
+      };
+      expect(formatCrosshairY(0.005, data)).toBe("0.005000");
+      expect(formatCrosshairY(42.5, data)).toBe("42.500");
+      expect(formatCrosshairY(null as unknown as number, data)).toBe("N/A");
+    });
   });
 });
 

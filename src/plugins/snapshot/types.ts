@@ -2,7 +2,7 @@
  * SciPlot - Snapshot Export Plugin Types
  */
 
-export type SnapshotFormat = 'png' | 'jpeg' | 'webp';
+export type SnapshotFormat = 'png' | 'jpeg' | 'webp' | 'svg';
 
 /**
  * Snapshot Resolution presets or scale factor

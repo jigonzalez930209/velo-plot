@@ -73,6 +73,8 @@ export interface Chart {
   ): void;
   destroy(): void;
   exportImage(type?: "png" | "jpeg"): string;
+  /** Vector export of series, axes, grid, and tick labels */
+  exportSVG(): string;
   autoScale(animate?: boolean): void;
   setTheme(theme: string | object): void;
   /** Access to data analysis utilities */

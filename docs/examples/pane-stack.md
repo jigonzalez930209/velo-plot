@@ -20,6 +20,7 @@ Use the tabs above the chart to explore capabilities:
 | Preset | What it demonstrates |
 |--------|---------------------|
 | **TradingView** | 4 panes, X sync, Y independent, wave indicator with buy/sell colors, drag resize |
+| **Horizontal** | Side-by-side panes, Y sync, per-pane X axes, stack export buttons |
 | **Price + Volume** | Minimal 2-pane stack |
 | **No sync** | Fully independent panes |
 | **XY sync** | Both axes linked between two line panes |
@@ -171,6 +172,30 @@ stack.setSyncOptions({ syncCursor: false });
 stack.getGroup().updateOptions({ axis: 'xy' });
 ```
 
+## Stack export (PNG / JPEG / WebP)
+
+Use the **Export stack** buttons in the demo toolbar, or call the API after `whenReady()`:
+
+```typescript
+await stack.whenReady();
+
+// Data URL
+const png = await stack.exportImage({ format: 'png', resolution: '4k' });
+
+// Browser download
+await stack.snapshot({
+  format: 'jpeg',
+  quality: 0.9,
+  download: true,
+  fileName: 'market-stack',
+  includeDividers: true,
+});
+```
+
+Supported stack formats: **PNG**, **JPEG**, **WebP**. Full-stack SVG is not yet available — export individual panes with `stack.getPane('price')?.exportSVG()`.
+
+See [Image & Vector Export](/api/image-export#multi-pane-stack-export) for all options.
+
 ## Drag Resize
 
 ```typescript
@@ -237,6 +262,7 @@ Do **not** set `barWidth: 0.7` with epoch millisecond X values. Omit `barWidth` 
 ## See Also
 
 - [Stacked Chart API](/api/stacked-chart)
+- [Image & Vector Export](/api/image-export)
 - [Indicator Panes API](/api/indicator-panes)
 - [Chart Sync](/api/chart-sync)
 - [Multi-Pane Guide](/guide/multi-pane)

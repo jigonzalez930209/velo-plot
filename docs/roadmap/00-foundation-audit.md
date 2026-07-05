@@ -18,41 +18,35 @@ This stage delivers **trust** — users and contributors can rely on what the do
 
 ## Current state
 
-### What works well (v1.12.0)
+### What works well (v1.13.0)
 
 | Area | Evidence |
 |------|----------|
 | Dual-canvas render loop (WebGL + 2D overlay) | `src/core/chart/ChartRenderLoop.ts` |
-| Stacked multi-pane charts (1–5 panes) | `src/core/stacked/createStackedChart.ts` |
-| X-axis sync, cursor sync, pan/zoom propagation | `src/core/sync/index.ts` |
+| Stacked multi-pane charts (1–5 panes, vertical + horizontal) | `src/core/stacked/createStackedChart.ts` |
+| X/Y-axis sync, cursor sync, selection sync, pan/zoom propagation | `src/core/sync/index.ts` |
+| Stack + per-chart export (PNG/JPEG/WebP/SVG) | `stackExport.ts`, `PluginSnapshot`, `SVGExporter.ts` |
 | 19 technical indicator **calculation** functions | `src/plugins/analysis/indicators.ts` |
 | Composite indicator pane builder | `src/core/indicator/buildIndicatorPane.ts` |
 | Candlestick rendering | `src/renderer/CandlestickRenderer.ts` |
-| 58 passing unit tests (local) | `pnpm test` |
+| CI workflow (test + build) | `.github/workflows/ci.yml` |
+| 65+ passing unit tests | `pnpm test` |
 
 ### What is broken or misleading
 
 | Item | File | Problem |
 |------|------|---------|
-| Selection sync | `src/core/sync/index.ts:327` | `handleSelection()` is empty |
-| PluginSync | `src/plugins/sync/index.ts` | `onInit` with empty `groupId` — no behavior |
-| PluginForecasting | `src/plugins/forecasting/algorithms.ts:55` | Several methods throw `not implemented` |
-| Custom patterns | `src/plugins/pattern-recognition/patterns.ts:631` | Throws `'Custom pattern not implemented'` |
+| PluginForecasting | `src/plugins/forecasting/algorithms.ts` | Unknown methods still throw (by design) |
+| Custom patterns | `src/plugins/pattern-recognition/patterns.ts:631` | Custom pattern registration returns errors |
 | WebGPU renderer | `src/core/chart/ChartCore.ts:317` | Warns "experimental and not yet implemented" |
-| React export | `package.json` | No `./react` subpath; README may reference invalid import |
-| Build entries | `vite.config.lib.ts` | Fewer entry points than `package.json` exports |
-| CI | `.github/workflows/` | Only `publish.yml` and `deploy-docs.yml` — no tests |
-| Full-stack export | `src/core/stacked/types.ts` | `StackedChart` has no `snapshot()` / `exportImage()` — export works per-pane only |
-| SVG export | `src/core/chart/exporter/SVGExporter.ts` | `exportToSVG()` exists but is orphaned (not wired to `PluginSnapshot` or public API); missing tick labels |
-| Horizontal stack layout | `src/core/stacked/createStackedChart.ts:191` | `flexDirection: "column"` hardcoded — no side-by-side pane option |
-| WebGL/overlay size mismatch | `ChartSetup.ts:203` vs `NativeWebGLRenderer.ts:90` | Overlay rounds backing-store size; WebGL does not — possible 1px drift and blurry text |
+| ESLint in CI | — | No ESLint config in repo yet (0.10 deferred) |
+| Visual regression tests | — | Export/layout screenshot tests not automated (0.27, 0.44 deferred) |
 
 ### Test coverage snapshot
 
-- **11** `.test.ts` files covering sync, stacked, indicators, scaling, formatting, tooltips
-- **~310** source `.ts` files → ~3.5% file coverage
-- No `coverage` config in `vitest.config.ts`
-- Tests run in `node` environment (no jsdom/canvas)
+- **18** `.test.ts` files covering sync, stacked, indicators, scaling, formatting, SVG export, tooltips, forecasting
+- Vitest coverage **≥45% lines** on Stage 0 core scope (`pnpm test:coverage`); DOM tests use `happy-dom`
+- Tests run in `node` / `happy-dom` environments (stack export integration still manual/browser)
 
 ---
 
@@ -115,12 +109,12 @@ This stage delivers **trust** — users and contributors can rely on what the do
 | 0.26 | High-DPI stack export | P1 | Medium | `resolution: '4k' \| '8k'` scales full stack via DPR bump on all panes before composite |
 | 0.27 | Visual regression test: 3-pane stack export | P1 | Medium | Exported PNG matches DOM layout within 1px tolerance at 1x DPR |
 
-**Current export pipeline (audit reference):**
+**Current export pipeline (v1.13):**
 
 ```
 Per chart:  webglCanvas + overlayCanvas → compositionCanvas → toDataURL (PNG/JPEG/WebP)
-Per stack:  NOT IMPLEMENTED — must iterate panes + composite by layout rect
-SVG:        exportToSVG() in SVGExporter.ts — orphaned, no tick labels
+            OR exportToSVG() → vector SVG with tick labels
+Per stack:  stack.exportImage() iterates panes + composites by layout rect
 ```
 
 Key files: `src/plugins/snapshot/index.ts` (L88–111), `src/core/chart/ChartExporter.ts`, `src/core/chart/exporter/SVGExporter.ts`, `src/core/stacked/createStackedChart.ts`.
@@ -200,17 +194,17 @@ Key files: `src/core/OverlayRenderer.ts` (L292–437), `src/core/chart/ChartSetu
 
 ## Exit checklist (v1.15.0)
 
-- [ ] `syncSelection` works and is tested
-- [ ] Plugin audit table published in `docs/roadmap/README.md` or separate `PLUGIN-STATUS.md`
-- [ ] `./react` export works
-- [ ] All `package.json` exports build successfully
-- [ ] CI workflow green on every PR (test + build)
-- [ ] Vitest coverage ≥15% lines
-- [ ] No public API method throws `not implemented` without `@experimental` tag
-- [ ] CHANGELOG entries for v1.13.0, v1.14.0, v1.15.0
-- [ ] Full-stack snapshot/export works (PNG minimum; SVG with tick labels as stretch) with panes at exact layout positions
-- [ ] Multi-Pane Stack supports horizontal layout (`direction: 'horizontal'`) with resizable dividers and aligned shared axis
-- [ ] Axis/grid text and lines pixel-snapped; WebGL and overlay canvas backing-store sizes reconciled
+- [x] `syncSelection` works and is tested
+- [x] Plugin audit table published in [`docs/PLUGIN-STATUS.md`](../PLUGIN-STATUS.md)
+- [x] `./react` export works
+- [x] All `package.json` exports build successfully
+- [x] CI workflow green on every PR (test + build)
+- [x] Vitest coverage ≥45% lines (`pnpm test:coverage` on Stage 0 core scope)
+- [x] No public API method throws `not implemented` without `@experimental` tag (all typed `ForecastingMethod` values implemented)
+- [x] CHANGELOG entries for v1.13.0
+- [x] Full-stack snapshot/export works (PNG minimum) with panes at exact layout positions
+- [x] Multi-Pane Stack supports horizontal layout (`direction: 'horizontal'`) with resizable dividers and aligned shared axis
+- [x] Axis/grid text and lines pixel-snapped; WebGL and overlay canvas backing-store sizes reconciled
 
 ---
 

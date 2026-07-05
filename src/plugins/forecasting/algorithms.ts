@@ -41,6 +41,9 @@ export function calculateForecast(
     case 'holt':
       result = forecastHolt(y, horizon, params.alpha || 0.3, params.beta || 0.1);
       break;
+    case 'wma':
+      result = forecastWMA(y, horizon, params.windowSize || 10);
+      break;
     case 'holtWinters':
       result = forecastHoltWinters(
         y, 
@@ -69,6 +72,24 @@ export function calculateForecast(
     method,
     metadata: calculateFitMetrics(y, result.yValues) // Simplified for now
   };
+}
+
+/**
+ * Weighted Moving Average (WMA)
+ * Uses linear weights on the trailing window; projects flat at last WMA value.
+ */
+function forecastWMA(y: number[] | Float64Array | Float32Array, horizon: number, window: number) {
+  const n = y.length;
+  const effectiveWindow = Math.min(window, n);
+  let weightedSum = 0;
+  let weightTotal = 0;
+  for (let i = 0; i < effectiveWindow; i++) {
+    const weight = i + 1;
+    weightedSum += y[n - effectiveWindow + i] * weight;
+    weightTotal += weight;
+  }
+  const wma = weightedSum / weightTotal;
+  return { yValues: new Array(horizon).fill(wma) };
 }
 
 /**

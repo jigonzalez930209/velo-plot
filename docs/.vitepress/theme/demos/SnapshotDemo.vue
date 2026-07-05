@@ -4,7 +4,7 @@ import { ref, onMounted, onUnmounted } from 'vue';
 const chartContainer = ref<HTMLDivElement | null>(null);
 let chart: any = null;
 
-const format = ref<'png' | 'jpeg' | 'webp'>('png');
+const format = ref<'png' | 'jpeg' | 'webp' | 'svg'>('png');
 const resolution = ref('standard');
 const quality = ref(0.9);
 const includeBackground = ref(true);
@@ -20,7 +20,8 @@ const resolutions = [
   { value: '8k', label: '8K (Publication)' },
 ];
 
-const formats = ['png', 'jpeg', 'webp'];
+const formats = ['png', 'jpeg', 'webp', 'svg'] as const;
+let lastPreviewObjectUrl: string | null = null;
 
 async function initChart() {
   if (typeof window === 'undefined' || !chartContainer.value) return;
@@ -93,16 +94,27 @@ async function takeSnapshot() {
     if (!chart.snapshot) {
       throw new Error('Snapshot plugin not initialized. Did you call chart.use(PluginSnapshot())?');
     }
-    const url = await chart.snapshot.takeSnapshot({
+    const result = await chart.snapshot.takeSnapshot({
       format: format.value,
-      resolution: resolution.value === 'standard' ? 'standard' : resolution.value,
+      resolution: format.value === 'svg' ? 'standard' : (resolution.value === 'standard' ? 'standard' : resolution.value),
       quality: quality.value,
       includeBackground: includeBackground.value,
       includeOverlays: includeOverlays.value,
       watermarkText: watermarkText.value,
     });
-    
-    lastSnapshotUrl.value = url as string;
+
+    if (lastPreviewObjectUrl) {
+      URL.revokeObjectURL(lastPreviewObjectUrl);
+      lastPreviewObjectUrl = null;
+    }
+
+    if (format.value === 'svg') {
+      const blob = new Blob([result as string], { type: 'image/svg+xml' });
+      lastPreviewObjectUrl = URL.createObjectURL(blob);
+      lastSnapshotUrl.value = lastPreviewObjectUrl;
+    } else {
+      lastSnapshotUrl.value = result as string;
+    }
   } catch (err) {
     console.error('Snapshot failed:', err);
   } finally {
@@ -131,6 +143,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  if (lastPreviewObjectUrl) URL.revokeObjectURL(lastPreviewObjectUrl);
   chart?.destroy();
 });
 </script>
@@ -155,11 +168,13 @@ onUnmounted(() => {
       <div class="controls-section">
         <div class="control-group">
           <h3>Resolution</h3>
-          <div class="radio-group">
+          <p v-if="format === 'svg'" class="format-hint">SVG is vector — resolution presets apply to raster formats only.</p>
+          <div class="radio-group" :class="{ disabled: format === 'svg' }">
             <button 
               v-for="res in resolutions" 
               :key="res.value"
               :class="{ active: resolution === res.value }"
+              :disabled="format === 'svg'"
               @click="resolution = res.value"
             >
               {{ res.label }}
@@ -173,7 +188,7 @@ onUnmounted(() => {
             <select v-model="format">
               <option v-for="f in formats" :key="f" :value="f">{{ f.toUpperCase() }}</option>
             </select>
-            <div v-if="format !== 'png'" class="quality-slider">
+            <div v-if="format === 'jpeg' || format === 'webp'" class="quality-slider">
               <span>Quality: {{ Math.round(quality * 100) }}%</span>
               <input type="range" v-model.number="quality" min="0.1" max="1" step="0.05" />
             </div>
@@ -203,7 +218,7 @@ onUnmounted(() => {
             {{ isExporting ? 'Capturing...' : 'Generate Preview' }}
           </button>
           <button @click="download" :disabled="isExporting" class="outline-btn">
-            Download Image
+            Download {{ format.toUpperCase() }}
           </button>
         </div>
       </div>
@@ -280,6 +295,18 @@ onUnmounted(() => {
   background: rgba(0, 242, 255, 0.1);
   border-color: #00f2ff;
   color: #00f2ff;
+}
+
+.radio-group.disabled button {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.format-hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  color: #768390;
+  line-height: 1.4;
 }
 
 .format-options {
