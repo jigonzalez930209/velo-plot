@@ -22,10 +22,29 @@ A high-performance, WebGL-powered scientific charting engine built for precision
 
 ## 🛠️ Installation
 
+**Requirements:** Node.js **24+**, pnpm **11+** (enforced via `packageManager` in `package.json`).
+
 ```bash
-npm install velo-plot
-# or
+# Enable pnpm via Corepack (recommended)
+corepack enable
+corepack prepare pnpm@11.9.0 --activate
+
+# Or install pnpm: https://pnpm.io/installation
+```
+
+```bash
 pnpm add velo-plot
+```
+
+### Development (this repo)
+
+```bash
+git clone https://github.com/jigonzalez930209/velo-plot.git
+cd velo-plot
+pnpm install
+pnpm test
+pnpm build
+pnpm docs:dev
 ```
 
 ## 🚀 Quick Examples
