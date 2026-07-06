@@ -218,8 +218,31 @@ export type {
 export {
   lttbDownsample,
   minMaxDownsample,
+  ohlcMinMaxDownsample,
   calculateTargetPoints,
+  sliceSeriesToViewport,
+  lowerBoundX,
+  upperBoundX,
 } from "./workers/downsample";
+
+export {
+  downsampleAsync,
+  ohlcDownsampleAsync,
+  destroyDownsamplePool,
+  getDownsamplePoolSize,
+} from "./workers/downsampleAsync";
+
+export {
+  rsiAsync,
+  smaAsync,
+  emaAsync,
+  macdAsync,
+  bollingerBandsAsync,
+  destroyIndicatorPool,
+} from "./workers/indicatorsAsync";
+
+export { WorkerPool, nextTaskId } from "./workers/pool";
+export type { WorkerPoolOptions } from "./workers/pool";
 
 // ============================================
 // Data Analysis utilities
@@ -472,6 +495,12 @@ export {
   // Benchmarking
   benchmarkRender,
   assertPerformance,
+  compareGridBackends,
+  evaluateRendererCompare,
+  benchmarkCanvasGrid,
+  benchmarkWebGLGrid,
+  getBaseline,
+  compareScenarioToBaseline,
 
   // Snapshots
   createSnapshot,
@@ -525,6 +554,10 @@ export {
   buildIndicatorSeries,
   createIndicatorSeries,
   buildIndicatorPane,
+  buildIndicatorPaneFromPreset,
+  addIndicatorToChart,
+  computeIndicatorFromSeries,
+  computeIndicatorPreset,
   detectIndicatorMarkers,
   type IndicatorData,
   type IndicatorSeriesOptions,
@@ -532,7 +565,28 @@ export {
   type IndicatorLineLayer,
   type IndicatorLineColorZones,
   type BuildIndicatorPaneOptions,
+  type AddIndicatorOptions,
+  type AddIndicatorResult,
+  type IndicatorPresetName,
 } from "./core/indicator";
+
+// ============================================
+// Stage 2 — Trading (time scale, markers, heikin-ashi)
+// ============================================
+export {
+  mapToBusinessDayScale,
+  isBusinessDay,
+  businessDaySpanMs,
+  type TimeScaleOptions,
+  type BusinessDayMapping,
+} from "./core/time/TimeScale";
+export { computeHeikinAshi } from "./core/chart/heikinAshi";
+export type {
+  CandlestickMarker,
+  CandlestickMarkerPosition,
+  CandlestickMarkerShape,
+} from "./core/chart/candlestickMarkers";
+export type { PriceAlertOptions } from "./core/chart/ChartAlerts";
 
 // ============================================
 // Theme Editor
@@ -652,6 +706,8 @@ export {
   PluginVideoRecorder,
   PluginOffscreen,
   PluginVirtualization,
+  PluginDrawingTools,
+  PluginReplay,
   PluginROI,
   PluginForecasting,
   BuiltinPlugins,
