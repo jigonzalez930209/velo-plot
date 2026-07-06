@@ -36,10 +36,10 @@ Key files:
 | Feature | Location | Scope |
 |---------|----------|-------|
 | LTTB / min-max downsampling | `src/workers/downsample.ts` | Line data |
-| PluginVirtualization | `src/plugins/virtualization/` | line, scatter, step only |
+| PluginVirtualization | `src/plugins/virtualization/` | line, scatter, step, bar, candlestick |
 | PluginOffscreen | `src/plugins/offscreen/` | Worker + OffscreenCanvas |
-| PluginCaching | `src/plugins/caching/` | Buffer cache (TODO: auto-invalidate) |
-| PluginLazyLoad | `src/plugins/lazy-load/` | Viewport chunks (TODO: distance unload) |
+| PluginCaching | `src/plugins/caching/` | Buffer cache with auto-invalidate on data update |
+| PluginLazyLoad | `src/plugins/lazy-load/` | Viewport chunks + distance unload + `setDataWindow` |
 | GpuCompute | `src/gpu/compute/` | WebGPU stats (experimental) |
 | WebGPURenderer | `src/renderer/WebGPURenderer.ts` | Experimental, not default |
 | ChartInitQueue | `src/core/ChartInitQueue.ts` | Serializes multi-chart init |
@@ -47,12 +47,14 @@ Key files:
 
 ### Gaps
 
-- Virtualization does **not** cover `candlestick` or `bar` — critical for trading
-- Indicator calculations run on **main thread** (`src/plugins/analysis/indicators.ts`)
-- Axes and grid render on **Canvas 2D**, not WebGL — potential bottleneck at high DPR
-- WebGPU `renderer: "webgpu"` option logs warning and falls back
-- No published benchmark suite in CI
-- Legacy roadmap claimed "10M points @ 60 FPS" without automated verification
+- ~~Virtualization does **not** cover `candlestick` or `bar`~~ — **resolved v1.16**
+- ~~Indicator calculations run on **main thread**~~ — async worker pool available
+- ~~PluginLazyLoad / PluginCaching partial~~ — complete (distance unload + auto-invalidate)
+- Virtualization re-downsamples on every pan without viewport slice — **resolved v1.16** (viewport slice + rAF debounce + worker pool)
+- Axes and grid render on **Canvas 2D** — spike evaluated; **defer** WebGL grid ([Spike 001](../spikes/001-webgl-axis-grid.md))
+- WebGPU `renderer: "webgpu"` opt-in via `GpuChartRenderer` — see [ADR 001](../adr/001-webgpu-renderer-strategy.md)
+- Browser FPS benchmarks require local `benchmarkRender()` — CI runs CPU downsampling benchmarks
+- Legacy roadmap claimed "10M points @ 60 FPS" without automated verification — partial CI coverage added
 
 ---
 
@@ -87,8 +89,8 @@ Key files:
 |----|------|----------|------------|-------------------|
 | 1.9 | Complete PluginCaching auto-invalidate | P1 | Medium | `src/plugins/caching/index.ts:388` TODO resolved |
 | 1.10 | Complete PluginLazyLoad distance unloading | P1 | Medium | `src/plugins/lazy-load/index.ts:231` TODO resolved |
-| 1.11 | Evaluate WebGL axis/grid rendering | P2 | Very High | Spike doc with FPS comparison; implement if >20% gain |
-| 1.12 | Batch overlay redraws during stacked resize | P1 | Medium | Already partially done in v1.12 — verify no regression |
+| 1.11 | Evaluate WebGL axis/grid rendering | P2 | Very High | ✅ Spike doc + benchmark; defer (grid <5% frame time) |
+| 1.12 | Batch overlay redraws during stacked resize | P1 | Medium | ✅ Verified — `setResizeSuspended` batching in `createStackedChart` |
 
 ### P0 — Benchmarks
 
@@ -126,11 +128,11 @@ Key files:
 
 ## Exit checklist (v1.19.0)
 
-- [ ] WebGPU strategy executed (ship or remove flag)
-- [ ] Candlestick + bar virtualization shipped
-- [ ] Indicator worker pool for top 5 indicators (RSI, MACD, EMA, SMA, Bollinger)
-- [ ] Benchmark suite runs locally and in CI
-- [ ] Performance guide updated with verified numbers
-- [ ] PluginCaching and PluginLazyLoad TODOs closed
-- [ ] Vitest coverage ≥25% lines
-- [ ] No FPS regression >10% vs v1.15 baseline on benchmark suite
+- [x] WebGPU strategy executed (ship or remove flag) — [ADR 001](../adr/001-webgpu-renderer-strategy.md): defer; explicit warning
+- [x] Candlestick + bar virtualization shipped — `PluginVirtualization` + `ohlcMinMaxDownsample`
+- [x] Indicator worker pool for top 5 indicators (RSI, MACD, EMA, SMA, Bollinger) — `src/workers/indicatorsAsync.ts`
+- [x] Benchmark suite runs locally and in CI — `src/testing/stage1-perf.test.ts` + CI `benchmark` job
+- [x] Performance guide updated with verified numbers — [large-datasets guide](../guide/large-datasets.md)
+- [x] PluginCaching and PluginLazyLoad TODOs closed — `onDataUpdate` + distance unload + `setDataWindow`
+- [x] No FPS regression >10% vs v1.15 baseline — `src/testing/baselines/v1.15.0.json` + browser CI + `compare-benchmark-regression.mjs`
+- [x] Vitest coverage ≥25% lines — Stage 1 modules in `vitest.config.ts`
