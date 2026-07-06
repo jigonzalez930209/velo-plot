@@ -25,6 +25,7 @@
 import {
   lttbDownsample,
   minMaxDownsample,
+  ohlcMinMaxDownsample,
   type DownsampleResult,
 } from './downsample';
 
@@ -57,7 +58,31 @@ interface ErrorMessage {
   error: string;
 }
 
-type WorkerMessage = DownsampleRequestMessage;
+interface OhlcDownsampleRequestMessage {
+  type: 'ohlc-downsample';
+  id?: string;
+  x: Float32Array | Float64Array;
+  open: Float32Array | Float64Array;
+  high: Float32Array | Float64Array;
+  low: Float32Array | Float64Array;
+  close: Float32Array | Float64Array;
+  targetBars: number;
+}
+
+interface OhlcDownsampleResponseMessage {
+  type: 'ohlc-downsample-result';
+  id?: string;
+  x: Float32Array;
+  open: Float32Array;
+  high: Float32Array;
+  low: Float32Array;
+  close: Float32Array;
+  indices: Uint32Array;
+  originalLength: number;
+  duration: number;
+}
+
+type WorkerMessage = DownsampleRequestMessage | OhlcDownsampleRequestMessage;
 
 // ============================================
 // Worker Logic
@@ -98,6 +123,37 @@ self.onmessage = function (e: MessageEvent<WorkerMessage>) {
       (self.postMessage as (message: unknown, transfer: Transferable[]) => void)(
         response,
         [result.x.buffer, result.y.buffer, result.indices.buffer]
+      );
+    } else if (message.type === 'ohlc-downsample') {
+      const start = performance.now();
+      const { x, open, high, low, close, targetBars, id } = message;
+
+      const result = ohlcMinMaxDownsample(x, open, high, low, close, targetBars);
+      const duration = performance.now() - start;
+
+      const response: OhlcDownsampleResponseMessage = {
+        type: 'ohlc-downsample-result',
+        id,
+        x: result.x,
+        open: result.open,
+        high: result.high,
+        low: result.low,
+        close: result.close,
+        indices: result.indices,
+        originalLength: x.length,
+        duration,
+      };
+
+      (self.postMessage as (message: unknown, transfer: Transferable[]) => void)(
+        response,
+        [
+          result.x.buffer,
+          result.open.buffer,
+          result.high.buffer,
+          result.low.buffer,
+          result.close.buffer,
+          result.indices.buffer,
+        ]
       );
     }
   } catch (error) {
