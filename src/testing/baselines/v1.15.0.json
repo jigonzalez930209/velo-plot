@@ -1,0 +1,48 @@
+{
+  "version": "1.17.0",
+  "recordedAt": "2026-07-05",
+  "notes": "Stage 1 baselines. Headless CI uses effective FPS (render throughput when rAF throttled) via scripts/benchmark-scenario-eval.mjs smoke floors.",
+  "regressionThreshold": 0.10,
+  "webgpuMinFpsRatio": 0.95,
+  "scenarios": {
+    "line-1m-pan": {
+      "minAvgFps": 50,
+      "maxAvgFrameTimeMs": 20,
+      "points": 1000000,
+      "description": "1M line points, continuous pan/zoom simulation"
+    },
+    "candlestick-500k": {
+      "minAvgFps": 45,
+      "maxAvgFrameTimeMs": 22,
+      "points": 500000,
+      "description": "500k OHLC bars with PluginVirtualization"
+    },
+    "stack-5pane-resize": {
+      "minAvgFps": 48,
+      "maxAvgFrameTimeMs": 21,
+      "description": "5-pane stack divider drag (batched overlay redraw)"
+    },
+    "line-200k-webgl": {
+      "minAvgFps": 45,
+      "description": "200k line WebGL baseline for renderer compare"
+    },
+    "line-200k-webgpu": {
+      "minAvgFps": 42,
+      "description": "200k line WebGPU — target ≥95% of WebGL FPS"
+    },
+    "boxplot-5k-webgpu": {
+      "minAvgFps": 50,
+      "description": "5k boxplot series on WebGPU chart path"
+    },
+    "grid-canvas2d-dpr2": {
+      "maxAvgFrameUs": 1200,
+      "dpr": 2,
+      "description": "Canvas 2D grid+minor at 1920×1080 @2x"
+    },
+    "grid-webgl-dpr2": {
+      "maxAvgFrameUs": 400,
+      "dpr": 2,
+      "description": "WebGL grid spike lines only @2x"
+    }
+  }
+}
