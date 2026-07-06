@@ -152,32 +152,30 @@ export class OverlayRenderer {
     const xTicks = xScale.ticks(xTickCount);
     const yTicks = yScale.ticks(yTickCount);
 
-    // Major grid lines
+    // Major grid lines — batched into two strokes (vertical + horizontal)
     ctx.strokeStyle = grid.majorColor;
     ctx.lineWidth = grid.majorWidth;
     ctx.setLineDash(grid.majorDash);
 
-    // Vertical lines (X ticks)
+    ctx.beginPath();
     xTicks.forEach((tick) => {
       const x = snapLineCoord(xScale.transform(tick));
       if (x >= plotArea.x && x <= plotArea.x + plotArea.width) {
-        ctx.beginPath();
         ctx.moveTo(x, plotArea.y);
         ctx.lineTo(x, plotArea.y + plotArea.height);
-        ctx.stroke();
       }
     });
+    ctx.stroke();
 
-    // Horizontal lines (Y ticks)
+    ctx.beginPath();
     yTicks.forEach((tick) => {
       const y = snapLineCoord(yScale.transform(tick));
       if (y >= plotArea.y && y <= plotArea.y + plotArea.height) {
-        ctx.beginPath();
         ctx.moveTo(plotArea.x, y);
         ctx.lineTo(plotArea.x + plotArea.width, y);
-        ctx.stroke();
       }
     });
+    ctx.stroke();
 
     // Minor grid lines (if enabled)
     if (grid.showMinor) {
@@ -185,29 +183,28 @@ export class OverlayRenderer {
       ctx.lineWidth = grid.minorWidth;
       ctx.setLineDash(grid.minorDash);
 
-      // Generate minor ticks between major ticks
       const minorXTicks = this.generateMinorTicks(xTicks, grid.minorDivisions);
       const minorYTicks = this.generateMinorTicks(yTicks, grid.minorDivisions);
 
+      ctx.beginPath();
       minorXTicks.forEach((tick) => {
         const x = snapLineCoord(xScale.transform(tick));
         if (x >= plotArea.x && x <= plotArea.x + plotArea.width) {
-          ctx.beginPath();
           ctx.moveTo(x, plotArea.y);
           ctx.lineTo(x, plotArea.y + plotArea.height);
-          ctx.stroke();
         }
       });
+      ctx.stroke();
 
+      ctx.beginPath();
       minorYTicks.forEach((tick) => {
         const y = snapLineCoord(yScale.transform(tick));
         if (y >= plotArea.y && y <= plotArea.y + plotArea.height) {
-          ctx.beginPath();
           ctx.moveTo(plotArea.x, y);
           ctx.lineTo(plotArea.x + plotArea.width, y);
-          ctx.stroke();
         }
       });
+      ctx.stroke();
     }
 
     ctx.setLineDash([]);
@@ -1143,5 +1140,83 @@ export class OverlayRenderer {
 
   private formatYTick(value: number, options?: AxisOptions): string {
     return formatYTickValue(value, options);
+  }
+
+  /** Draw buy/sell markers on candlestick series (Stage 2.14). */
+  drawCandlestickMarkers(
+    plotArea: PlotArea,
+    series: Series,
+    xScale: Scale,
+    yScale: Scale,
+  ): void {
+    const markers = series.getMarkers?.() ?? [];
+    if (!markers.length || series.getType() !== "candlestick") return;
+
+    const data = series.getData();
+    const ctx = this.ctx;
+    const xArr = data.x;
+    const high = data.high ?? data.y;
+    const low = data.low ?? data.y;
+    const close = data.close ?? data.y;
+
+    for (const m of markers) {
+      const idx = (() => {
+        let best = 0;
+        let bestDist = Math.abs(xArr[0] - m.time);
+        for (let i = 1; i < xArr.length; i++) {
+          const d = Math.abs(xArr[i] - m.time);
+          if (d < bestDist) {
+            bestDist = d;
+            best = i;
+          }
+        }
+        return best;
+      })();
+
+      const position = m.position ?? "aboveBar";
+      const yVal =
+        position === "belowBar"
+          ? low[idx]
+          : position === "inBar"
+            ? close[idx]
+            : high[idx];
+
+      const px = plotArea.x + xScale.transform(xArr[idx]);
+      const py = plotArea.y + yScale.transform(yVal);
+      const color = m.color ?? "#22c55e";
+      const offset = position === "belowBar" ? 10 : -10;
+
+      ctx.save();
+      ctx.fillStyle = color;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+
+      if (m.shape === "arrowDown") {
+        ctx.beginPath();
+        ctx.moveTo(px, py - offset);
+        ctx.lineTo(px - 5, py - offset - 8);
+        ctx.lineTo(px + 5, py - offset - 8);
+        ctx.closePath();
+        ctx.fill();
+      } else if (m.shape === "circle") {
+        ctx.beginPath();
+        ctx.arc(px, py + offset, 4, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(px, py + offset);
+        ctx.lineTo(px - 5, py + offset + 8);
+        ctx.lineTo(px + 5, py + offset + 8);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      if (m.text) {
+        ctx.font = "10px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(m.text, px, py + offset + (position === "belowBar" ? 20 : -14));
+      }
+      ctx.restore();
+    }
   }
 }
