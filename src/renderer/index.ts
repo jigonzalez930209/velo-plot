@@ -25,7 +25,10 @@ export {
   createNativeRenderer,
 } from "./RendererInterface";
 
+export { GpuChartRenderer, createGpuChartRenderer } from "./GpuChartRenderer";
 export { WebGPURenderer, type WebGPURendererOptions } from "./WebGPURenderer";
+export type { ChartSeriesRenderer, ChartRendererBackend } from "./ChartSeriesRenderer";
+export { getRendererBackend } from "./ChartSeriesRenderer";
 
 export * from "./shaders";
 
