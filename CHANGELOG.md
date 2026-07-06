@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.16.0] - Unreleased
+
+### Added
+- **Viewport-aware virtualization**: slices visible x-range before LOD; debounced pan/zoom refresh; fixes original-data cache corruption on re-downsample.
+- **Async downsampling pool**: `downsampleAsync`, `ohlcDownsampleAsync` for large series off main thread.
+- **Canvas grid batching**: major/minor grid lines drawn with batched `stroke()` calls (fewer Canvas2D state changes).
+- **`PluginVirtualization` `precision: 'full'`**: Opt out of LOD downsampling for fidelity-critical views.
+- **`chart.getActiveRenderer()`**: Returns the runtime chart backend (`'webgl'` until WebGPU ships).
+- **Async indicators**: `rsiAsync`, `smaAsync`, `emaAsync`, `macdAsync`, `bollingerBandsAsync` via shared worker pool.
+- **Benchmark suite**: CPU tests (`stage1-perf.test.ts`), browser FPS demo, 5-pane stack resize scenario, regression compare script.
+- **WebGL grid spike**: `compareGridBackends()` for axis/grid backend evaluation (defer Canvas2D migration).
+
+### Changed
+- **`renderer: 'webgpu'`**: Opt-in chart WebGPU via `GpuChartRenderer`; automatic WebGL2 fallback when unavailable.
+- **Vitest coverage**: Stage 1 modules included; line threshold lowered to 25% for expanded scope.
+
+### Documentation
+- [Large Datasets Guide](/guide/large-datasets), [Async Indicators API](/api/indicators-async), renderer section in [createChart](/api/chart).
+
 ## [1.13.0] - Unreleased
 
 ### Added
