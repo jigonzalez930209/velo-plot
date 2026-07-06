@@ -384,16 +384,19 @@ export function PluginCaching(
       cleanupInterval = window.setInterval(() => {
         pruneExpired();
       }, 60000);
+    },
 
-      // TODO: Auto-invalidate on data changes if enabled
-      // Requires 'dataUpdate' event to be added to ChartEventMap
-      // if (config.autoInvalidate) {
-      //   ctx.chart.on?.('dataUpdate', () => {
-      //     if (config.cacheTypes.transforms) invalidateByTags(['transform']);
-      //     if (config.cacheTypes.analysis) invalidateByTags(['analysis']);
-      //     if (config.cacheTypes.bounds) invalidateByTags(['bounds']);
-      //   });
-      // }
+    onDataUpdate(_pluginCtx: PluginContext) {
+      if (!config.autoInvalidate) return;
+
+      const tags: string[] = [];
+      if (config.cacheTypes.transforms) tags.push("transform");
+      if (config.cacheTypes.analysis) tags.push("analysis");
+      if (config.cacheTypes.bounds) tags.push("bounds");
+
+      if (tags.length > 0) {
+        invalidateByTags(tags);
+      }
     },
 
     onDestroy(pluginCtx: PluginContext) {
