@@ -1,9 +1,5 @@
 /**
  * Sci Plot - Keyboard Shortcuts Plugin
- * 
- * Provides customizable keyboard shortcut management.
- * 
- * @module plugins/keyboard
  */
 
 import { KeyBindingManager, DEFAULT_KEY_BINDINGS } from "../../core/keybindings";
@@ -11,33 +7,60 @@ import type { KeyBinding, KeyBindingManagerOptions } from "../../core/keybinding
 import type { PluginManifest, ChartPlugin, PluginContext } from "../types";
 
 export interface PluginKeyboardConfig extends Partial<KeyBindingManagerOptions> {
-    /** Additional shortcuts to register */
-    extraShortcuts?: KeyBinding[];
+  extraShortcuts?: KeyBinding[];
 }
 
 const manifestKeyboard: PluginManifest = {
-    name: "velo-plot-keyboard",
-    version: "1.0.0",
-    description: "Keyboard shortcut management for velo-plot",
-    provides: ["interaction"],
-    tags: ["keyboard", "shortcuts", "interaction", "accessibility"],
+  name: "velo-plot-keyboard",
+  version: "1.0.0",
+  description: "Keyboard shortcut management for velo-plot",
+  provides: ["interaction"],
+  tags: ["keyboard", "shortcuts", "interaction", "accessibility"],
 };
 
-/**
- * SciPlot Keyboard Plugin
- * 
- * Adds support for keyboard shortcuts and hotkeys.
- */
-export function PluginKeyboard(_config: PluginKeyboardConfig = {}): ChartPlugin<PluginKeyboardConfig> {
-    return {
-        manifest: manifestKeyboard,
+export function PluginKeyboard(config: PluginKeyboardConfig = {}): ChartPlugin<PluginKeyboardConfig> {
+  let manager: KeyBindingManager | null = null;
 
-        onInit(_ctx: PluginContext) {
+  return {
+    manifest: manifestKeyboard,
+
+    onInit(ctx: PluginContext) {
+      const chart = ctx.chart as any;
+      const drawing = ctx.getPlugin?.("velo-plot-drawing-tools") as { api?: { undo?: () => boolean; redo?: () => boolean } } | undefined;
+
+      manager = new KeyBindingManager({
+        target: ctx.ui.container,
+        bindings: [...(config.bindings ?? []), ...(config.extraShortcuts ?? [])],
+        replaceDefaults: config.replaceDefaults,
+        callbacks: {
+          onResetZoom: () => chart.resetZoom?.(),
+          onAutoScale: () => chart.autoScale?.(false),
+          onEscape: () => chart.clearSelection?.(),
+          onExportImage: () => {
+            try {
+              const url = chart.exportImage?.("png");
+              if (url) {
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "chart.png";
+                a.click();
+              }
+            } catch {
+              /* ignore */
+            }
+          },
+          onUndo: () => drawing?.api?.undo?.(),
+          onRedo: () => drawing?.api?.redo?.(),
+          ...config.callbacks,
         },
+      });
+    },
 
-        onDestroy(_ctx: PluginContext) {
-        }
-    };
+    onDestroy() {
+      manager?.destroy();
+      manager = null;
+    },
+  };
 }
 
 export { KeyBindingManager, DEFAULT_KEY_BINDINGS };
