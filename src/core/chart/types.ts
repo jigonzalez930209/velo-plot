@@ -43,6 +43,14 @@ export interface Chart {
   setAutoScroll(enabled: boolean): void;
   setMaxPoints(id: string, maxPoints: number): void;
   addFitLine(seriesId: string, type: any, options?: any): string;
+  addIndicator(
+    preset: import("../indicator/addIndicator").IndicatorPresetName,
+    options?: import("../indicator/addIndicator").AddIndicatorOptions,
+  ): Promise<import("../indicator/addIndicator").AddIndicatorResult>;
+  addAlert(options: import("./ChartAlerts").PriceAlertOptions): string;
+  removeAlert(id: string): boolean;
+  clearAlerts(): void;
+  setDrawingMode(mode: import("../../plugins/drawing-tools").DrawingMode): void;
   zoom(options: ZoomOptions & { animate?: boolean }): void;
   /** Fit view to data; no-op when series have no valid bounds */
   fit(options?: FitOptions): void;
@@ -60,6 +68,8 @@ export interface Chart {
   syncDragLayout?(width?: number, height?: number): void;
   /** Get current device pixel ratio used for rendering */
   getDPR(): number;
+  /** Actual renderer backend in use */
+  getActiveRenderer(): "webgl" | "webgpu";
   /** Set device pixel ratio and trigger re-render */
   setDPR(dpr: number): void;
   render(): void;

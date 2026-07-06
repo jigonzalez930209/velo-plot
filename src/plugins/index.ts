@@ -151,6 +151,10 @@ export { PluginOffscreen, type PluginOffscreenConfig, type OffscreenAPI, type Of
 // Virtualization
 export { PluginVirtualization, type PluginVirtualizationConfig, type VirtualizationAPI, type VirtualizationStats, type VirtualizationMode, type VirtualizationStrategy } from "./virtualization";
 
+// Stage 2 — Trading
+export { PluginDrawingTools, type PluginDrawingToolsConfig, type DrawingToolsAPI, type DrawingMode } from "./drawing-tools";
+export { PluginReplay, type PluginReplayConfig, type ReplayAPI } from "./replay";
+
 // ROI
 export { PluginROI, type PluginROIConfig, type RoiAPI, type RoiRegion, type RoiPoint, type RoiMaskResult, type RoiTool, type RoiEvent, type RoiSelectedEvent } from "./roi";
 

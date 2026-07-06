@@ -87,6 +87,8 @@ export interface AxisOptions {
   labelRotation?: number;
   /** Target number of tick divisions on this axis (default: 8 for X, 6 for Y) */
   tickCount?: number;
+  /** Trading time scale (Stage 2) — business-day gaps, session presets */
+  timeScale?: import("./core/time/TimeScale").TimeScaleOptions;
 }
 
 // ============================================
@@ -254,6 +256,8 @@ export interface SeriesOptions {
   maxPoints?: number;
   /** Identifier for stacking series (same ID will be stacked together) */
   stackId?: string;
+  /** Buy/sell markers on candlestick series (Stage 2.14) */
+  markers?: import("./core/chart/candlestickMarkers").CandlestickMarker[];
 }
 
 export interface SeriesUpdateData {
@@ -635,7 +639,14 @@ export interface ChartOptions {
   container: HTMLDivElement;
   /** Stable chart id (used by sync groups; auto-generated if omitted) */
   id?: string;
-  /** Renderer backend selection (default: 'webgl') */
+  /**
+   * Renderer backend selection (default: `'webgl'`).
+   * `'webgl'` uses WebGL2 via `NativeWebGLRenderer`.
+   * `'webgpu'` uses the GPU abstraction layer (WebGPU when available, otherwise
+   * falls back to WebGL2 with a console warning). Use `chart.getActiveRenderer()`
+   * to inspect the runtime backend. Boxplot/waterfall series render on WebGL only.
+   * @see docs/adr/001-webgpu-renderer-strategy.md
+   */
   renderer?: "webgl" | "webgpu";
   /** X-axis configuration */
   xAxis?: AxisOptions;
@@ -909,6 +920,15 @@ export interface ChartEventMap {
   // Delta tool events
   deltaMeasure: DeltaMeasurement;
   peakMeasure: PeakMeasurement;
+  /** Price alert triggered (Stage 2.18) */
+  alert: {
+    id: string;
+    price: number;
+    direction: "above" | "below" | "cross";
+    seriesId?: string;
+    triggeredAt: number;
+    triggerPrice: number;
+  };
 }
 
 // ============================================

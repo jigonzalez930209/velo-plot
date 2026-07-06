@@ -13,7 +13,8 @@ export function interleaveCandlestickData(
   high: Float32Array | Float64Array,
   low: Float32Array | Float64Array,
   close: Float32Array | Float64Array,
-  width: number
+  width: number,
+  hollow = false,
 ): { bullish: Float32Array; bearish: Float32Array } {
   const n = x.length;
   const bullishBody: number[] = [];
@@ -30,8 +31,10 @@ export function interleaveCandlestickData(
     const bodyTop = Math.max(open[i], close[i]);
     const bodyBottom = Math.min(open[i], close[i]);
     
-    // Body (Rectangle as 2 triangles)
-    appendRect(target, x[i] - halfWidth, bodyBottom, x[i] + halfWidth, bodyTop);
+    // Body (skip filled body for hollow bullish candles)
+    if (!(hollow && isBullish)) {
+      appendRect(target, x[i] - halfWidth, bodyBottom, x[i] + halfWidth, bodyTop);
+    }
     
     // Wick (Rectangle as 2 triangles, thin)
     appendRect(target, x[i] - halfWick, low[i], x[i] + halfWick, high[i]);

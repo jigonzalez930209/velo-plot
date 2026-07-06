@@ -193,3 +193,165 @@ export function calculateTargetPoints(
   const maxPoints = canvasWidth * pointsPerPixel;
   return Math.min(dataLength, maxPoints);
 }
+
+export interface OhlcDownsampleResult {
+  x: Float32Array;
+  open: Float32Array;
+  high: Float32Array;
+  low: Float32Array;
+  close: Float32Array;
+  indices: Uint32Array;
+}
+
+/**
+ * Aggregate OHLC bars into fewer buckets while preserving extremes.
+ * Each bucket: open=first open, close=last close, high=max high, low=min low, x=last x.
+ */
+export function ohlcMinMaxDownsample(
+  x: Float32Array | Float64Array,
+  open: Float32Array | Float64Array,
+  high: Float32Array | Float64Array,
+  low: Float32Array | Float64Array,
+  close: Float32Array | Float64Array,
+  targetBars: number,
+): OhlcDownsampleResult {
+  const length = x.length;
+  if (targetBars >= length || targetBars <= 1 || length === 0) {
+    return {
+      x: new Float32Array(x),
+      open: new Float32Array(open),
+      high: new Float32Array(high),
+      low: new Float32Array(low),
+      close: new Float32Array(close),
+      indices: new Uint32Array(Array.from({ length }, (_, i) => i)),
+    };
+  }
+
+  const bucketSize = length / targetBars;
+  const outX: number[] = [];
+  const outOpen: number[] = [];
+  const outHigh: number[] = [];
+  const outLow: number[] = [];
+  const outClose: number[] = [];
+  const outIndices: number[] = [];
+
+  for (let b = 0; b < targetBars; b++) {
+    const start = Math.floor(b * bucketSize);
+    const end = Math.min(length, Math.floor((b + 1) * bucketSize));
+    if (start >= end) continue;
+
+    let hi = -Infinity;
+    let lo = Infinity;
+    let lastIdx = start;
+
+    for (let i = start; i < end; i++) {
+      if (high[i] > hi) hi = high[i];
+      if (low[i] < lo) lo = low[i];
+      lastIdx = i;
+    }
+
+    outOpen.push(open[start]);
+    outHigh.push(hi);
+    outLow.push(lo);
+    outClose.push(close[lastIdx]);
+    outX.push(x[lastIdx]);
+    outIndices.push(lastIdx);
+  }
+
+  return {
+    x: new Float32Array(outX),
+    open: new Float32Array(outOpen),
+    high: new Float32Array(outHigh),
+    low: new Float32Array(outLow),
+    close: new Float32Array(outClose),
+    indices: new Uint32Array(outIndices),
+  };
+}
+
+/** Binary search lower bound: first index where x[i] >= value */
+export function lowerBoundX(
+  x: Float32Array | Float64Array,
+  value: number,
+): number {
+  let lo = 0;
+  let hi = x.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (x[mid] < value) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/** Binary search upper bound: first index where x[i] > value */
+export function upperBoundX(
+  x: Float32Array | Float64Array,
+  value: number,
+): number {
+  let lo = 0;
+  let hi = x.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (x[mid] <= value) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+export interface ViewportSlice {
+  x: Float32Array;
+  y?: Float32Array;
+  open?: Float32Array;
+  high?: Float32Array;
+  low?: Float32Array;
+  close?: Float32Array;
+  start: number;
+  end: number;
+}
+
+/**
+ * Slice sorted x-series to visible range plus buffer (fraction of visible width).
+ */
+export function sliceSeriesToViewport(
+  source: {
+    x: Float32Array | Float64Array;
+    y?: Float32Array | Float64Array;
+    open?: Float32Array | Float64Array;
+    high?: Float32Array | Float64Array;
+    low?: Float32Array | Float64Array;
+    close?: Float32Array | Float64Array;
+  },
+  xMin: number,
+  xMax: number,
+  bufferRatio = 0.5,
+): ViewportSlice {
+  const length = source.x.length;
+  if (length === 0) {
+    return { x: new Float32Array(0), start: 0, end: 0 };
+  }
+
+  const range = Math.max(xMax - xMin, 1e-12);
+  const paddedMin = xMin - range * bufferRatio;
+  const paddedMax = xMax + range * bufferRatio;
+
+  let start = lowerBoundX(source.x, paddedMin);
+  let end = upperBoundX(source.x, paddedMax);
+  start = Math.max(0, start);
+  end = Math.min(length, Math.max(end, start + 1));
+
+  const slice = <T extends Float32Array | Float64Array>(arr: T | undefined): Float32Array | undefined => {
+    if (!arr) return undefined;
+    return new Float32Array(arr.subarray(start, end));
+  };
+
+  return {
+    x: new Float32Array(source.x.subarray(start, end)),
+    y: slice(source.y),
+    open: slice(source.open),
+    high: slice(source.high),
+    low: slice(source.low),
+    close: slice(source.close),
+    start,
+    end,
+  };
+}

@@ -61,11 +61,15 @@ chart.virtualization.updateConfig({
 
 | Property | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
+| `precision` | `'lod' \| 'full'` | `'lod'` | `'full'` skips downsampling (all points sent to GPU). |
 | `mode` | `'lod' \| 'bins' \| 'hybrid'` | `'lod'` | Virtualization mode. |
 | `strategy` | `'lttb' \| 'minmax'` | `'lttb'` | Downsampling algorithm. |
 | `targetPoints` | `number \| 'auto'` | `'auto'` | Max points to send to GPU. |
 | `pointsPerPixel` | `number` | `2` | Detail density when `targetPoints` is `'auto'`. |
 | `lodLevels` | `number[]` | `[1, 4, 8, 16]` | Pre-calculated LOD factors. |
+| `viewportBuffer` | `number` | `0.5` | Extra x-range (fraction of visible width) sliced before downsample. |
+| `useWorker` | `boolean` | `true` | Offload large downsamples to Web Workers. |
+| `workerThreshold` | `number` | `250000` | Minimum points before worker path is used. |
 | `includeSeries` | `string[]` | `all` | Specific series to virtualize. |
 
 ## Virtualization Strategies
@@ -77,6 +81,16 @@ LTTB is more computationally expensive but provides the best representation of p
 ### 2. Min-Max
 **Best for**: Signals with very high frequency or noise where you want to see the "envelope" of the signal.
 Min-Max is extremely fast and ensures that outliers (highest and lowest points) are never missed.
+
+### Full precision opt-out
+
+When visual fidelity matters more than frame rate (e.g. exporting a zoomed region at native resolution), disable downsampling:
+
+```typescript
+await chart.use(PluginVirtualization({
+  precision: 'full', // no LOD — all points rendered
+}));
+```
 
 ## Performance Tips
 

@@ -3,6 +3,7 @@ import type { ChartGroup } from "../sync";
 import type { SyncAxis, SyncOptions } from "../sync";
 import type { ChartOptions as RootChartOptions, Range, SeriesOptions } from "../../types";
 import type { LayoutOptions } from "../layout";
+import type { AddIndicatorResult } from "../indicator/addIndicator";
 
 /** Stack layout direction */
 export type StackDirection = "vertical" | "horizontal";
@@ -86,6 +87,13 @@ export interface StackedChart {
   setSyncOptions(options: Partial<StackedSyncOptions>): void;
   /** Resolves when all pane charts have started rendering */
   whenReady(): Promise<void>;
+  /** Append a pane at runtime (max 5 panes) */
+  addPane(pane: StackedPaneConfig): Chart;
+  /** Calculate + mount indicator pane or overlay on master price chart */
+  addIndicator(
+    preset: import("../indicator/addIndicator").IndicatorPresetName,
+    options?: import("../indicator/addIndicator").AddIndicatorOptions,
+  ): Promise<AddIndicatorResult & { paneId?: string; chart?: Chart }>;
   /** Export the entire stack as one PNG/JPEG/WebP image (WYSIWYG layout) */
   exportImage(options?: StackSnapshotOptions): Promise<string>;
   /** Alias for exportImage */

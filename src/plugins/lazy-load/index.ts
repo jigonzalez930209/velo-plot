@@ -217,6 +217,25 @@ export function PluginLazyLoad(
   }
 
   /**
+   * Chunk index range that should stay loaded for the current viewport.
+   */
+  function getKeepChunkRange(
+    seriesInfo: LazyLoadedSeries,
+    visibleRange: { xMin: number; xMax: number },
+  ): { startChunk: number; endChunk: number } {
+    const buffer = config.viewportBuffer;
+    const rangeWidth = visibleRange.xMax - visibleRange.xMin;
+    const buffered = {
+      xMin: visibleRange.xMin - rangeWidth * buffer,
+      xMax: visibleRange.xMax + rangeWidth * buffer,
+    };
+    const totalChunks = Math.ceil(seriesInfo.totalPoints / config.chunkSize);
+    const startChunk = Math.max(0, Math.floor(buffered.xMin / config.chunkSize));
+    const endChunk = Math.min(totalChunks - 1, Math.floor(buffered.xMax / config.chunkSize));
+    return { startChunk, endChunk };
+  }
+
+  /**
    * Unload distant chunks
    */
   function unloadDistant(): number {
@@ -228,20 +247,36 @@ export function PluginLazyLoad(
     let unloadedCount = 0;
 
     for (const [, seriesInfo] of series) {
-      // TODO: Implement distance-based unloading logic
-      // For now, only maxLoadedChunks handles eviction
+      let seriesUnloaded = 0;
+      const { startChunk, endChunk } = getKeepChunkRange(seriesInfo, visibleRange);
+      const visibleSpan = Math.max(1, endChunk - startChunk + 1);
+      const thresholdChunks = Math.ceil(config.unloadThreshold * visibleSpan);
+      const keepStart = Math.max(0, startChunk - thresholdChunks);
+      const keepEnd = endChunk + thresholdChunks;
 
-      // Enforce max chunks limit
+      for (const chunkIndex of Array.from(seriesInfo.chunks.keys())) {
+        if (chunkIndex < keepStart || chunkIndex > keepEnd) {
+          seriesInfo.chunks.delete(chunkIndex);
+          seriesUnloaded++;
+        }
+      }
+
+      // Enforce max chunks limit (LRU eviction)
       if (seriesInfo.chunks.size > config.maxLoadedChunks) {
         const sortedChunks = Array.from(seriesInfo.chunks.entries()).sort(
-          (a, b) => a[1].loadedAt - b[1].loadedAt
+          (a, b) => a[1].loadedAt - b[1].loadedAt,
         );
-        
+
         const toRemove = seriesInfo.chunks.size - config.maxLoadedChunks;
         for (let i = 0; i < toRemove; i++) {
           seriesInfo.chunks.delete(sortedChunks[i][0]);
-          unloadedCount++;
+          seriesUnloaded++;
         }
+      }
+
+      if (seriesUnloaded > 0) {
+        void updateSeriesData(seriesInfo);
+        unloadedCount += seriesUnloaded;
       }
     }
 
@@ -346,6 +381,36 @@ export function PluginLazyLoad(
     }
   }
 
+  /**
+   * Load a data window with optional buffer (viewport-aware windowing API).
+   */
+  async function setDataWindow(opts: {
+    from: number;
+    to: number;
+    buffer?: number;
+    seriesId?: string;
+  }): Promise<void> {
+    if (!ctx || !config.enabled) return;
+
+    const buffer = opts.buffer ?? config.viewportBuffer;
+    const span = opts.to - opts.from;
+    const startIndex = Math.max(0, Math.floor(opts.from - span * buffer));
+    const endIndex = Math.ceil(opts.to + span * buffer);
+
+    const targets = opts.seriesId
+      ? [[opts.seriesId, series.get(opts.seriesId)] as const]
+      : Array.from(series.entries()).map(([id, info]) => [id, info] as const);
+
+    for (const [seriesId, seriesInfo] of targets) {
+      if (!seriesInfo) continue;
+      await loadRange(seriesId, startIndex, endIndex);
+    }
+
+    if (config.autoUnload) {
+      unloadDistant();
+    }
+  }
+
   // API implementation
   const api: LazyLoadAPI & Record<string, unknown> = {
     registerSeries,
@@ -353,6 +418,7 @@ export function PluginLazyLoad(
     loadRange,
     loadVisible,
     unloadDistant,
+    setDataWindow,
     getLoadingStatus,
     clear,
     updateConfig(newConfig: Partial<PluginLazyLoadConfig>) {
@@ -368,6 +434,12 @@ export function PluginLazyLoad(
 
       // Attach to chart API
       (ctx.chart as any).lazyLoad = api;
+      (ctx.chart as any).setDataWindow = (opts: {
+        from: number;
+        to: number;
+        buffer?: number;
+        seriesId?: string;
+      }) => setDataWindow(opts);
 
       // Listen for zoom/pan if auto-load enabled
       if (config.autoLoad) {
@@ -393,6 +465,7 @@ export function PluginLazyLoad(
 
       // Remove from chart API
       delete (pluginCtx.chart as any).lazyLoad;
+      delete (pluginCtx.chart as any).setDataWindow;
 
       ctx = null;
     },

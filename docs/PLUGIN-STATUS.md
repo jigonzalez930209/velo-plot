@@ -18,12 +18,12 @@ Status key: **complete** = production-ready and tested | **partial** = usable wi
 | PluginPatternRecognition | partial | Built-in patterns OK; `custom` pattern returns errors |
 | PluginForecasting | complete | `sma`, `ema`, `wma`, `linear`, `expSmoothing`, `holt`, `holtWinters` |
 | PluginMLIntegration | partial | Simple native NN/regression only |
-| PluginVirtualization | partial | line/scatter/step only — not candlestick/bar |
+| PluginVirtualization | complete | Viewport-aware LOD, worker offload, `precision: 'full'` |
 | PluginOffscreen | partial | Requires OffscreenCanvas support |
-| PluginLazyLoad | partial | TODO: distance-based unloading |
-| PluginCaching | partial | TODO: auto-invalidate on data change |
+| PluginLazyLoad | complete | Chunks, distance unload, `setDataWindow` |
+| PluginCaching | complete | Auto-invalidate on data update |
 | PluginSync | **stub** | Deprecated — use `ChartGroup` |
-| PluginGpu / WebGPU | experimental | Not production default |
+| PluginGpu / WebGPU | **paused** | Opt-in `renderer: 'webgpu'` — deferred past Stage 1; WebGL2 default |
 | ChartGroup sync | complete | X/Y pan/zoom/cursor; selection sync (v1.13+) |
 | createStackedChart | complete | Vertical + horizontal layout, stack export (v1.13+) |
 

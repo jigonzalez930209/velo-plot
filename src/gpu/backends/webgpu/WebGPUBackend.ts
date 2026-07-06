@@ -417,7 +417,7 @@ export class WebGPUBackend implements GpuBackend {
     switch (item.kind) {
       case "triangles":
       case "bar":
-        this.renderTriangles(pass, buf, item.count);
+        this.renderSolidTriangles(pass, buf, item.count, uniforms, color);
         break;
 
       case "line":
@@ -475,8 +475,21 @@ export class WebGPUBackend implements GpuBackend {
     }
   }
 
-  private renderTriangles(pass: any, buf: any, count: number): void {
-    pass.setPipeline(this.trianglePipeline!.pipeline);
+  /** Triangle list with line-pipeline uniforms (xy vertices, uniform color). */
+  private renderSolidTriangles(
+    pass: any,
+    buf: any,
+    count: number,
+    uniforms: { scale: [number, number]; translate: [number, number] },
+    color: [number, number, number, number],
+  ): void {
+    updateLineUniforms(this.device, this.linePipeline!.uniformBuffer, {
+      scale: uniforms.scale,
+      translate: uniforms.translate,
+      color,
+    });
+    pass.setPipeline(this.linePipeline!.pipeline);
+    pass.setBindGroup(0, this.linePipeline!.bindGroup);
     pass.setVertexBuffer(0, buf);
     pass.draw(count);
   }

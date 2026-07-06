@@ -24,6 +24,8 @@ import {
   parseColor,
   brightenColor,
 } from "../../renderer/NativeWebGLRenderer";
+import { createGpuChartRenderer } from "../../renderer/GpuChartRenderer";
+import type { ChartSeriesRenderer } from "../../renderer/ChartSeriesRenderer";
 import type { Scale } from "../../scales";
 import {
   getThemeByName,
@@ -100,6 +102,13 @@ import { mergeLayoutOptions } from "../layout";
 import { ChartAxisManager } from "./ChartAxisManager";
 import { ChartStateManager } from "./ChartStateManager";
 import { ChartRenderLoop } from "./ChartRenderLoop";
+import {
+  addIndicatorToChart,
+  type AddIndicatorOptions,
+  type AddIndicatorResult,
+  type IndicatorPresetName,
+} from "../indicator/addIndicator";
+import { ChartAlertManager, type PriceAlertOptions } from "./ChartAlerts";
 // ============================================
 // Chart Implementation
 // ============================================
@@ -123,7 +132,9 @@ export class ChartImpl implements Chart {
   private dpr: number;
   private backgroundColor: [number, number, number, number];
   private plotAreaBackground: [number, number, number, number];
-  private renderer: NativeWebGLRenderer;
+  private renderer!: ChartSeriesRenderer;
+  private activeRendererType: "webgl" | "webgpu" = "webgl";
+  private rendererInitPromise: Promise<void> | null = null;
   private overlay: OverlayRenderer;
   private interaction: InteractionManager;
   private xScale: Scale;
@@ -177,6 +188,7 @@ export class ChartImpl implements Chart {
   private axisManager: ChartAxisManager;
   private stateManager: ChartStateManager;
   private renderLoop: ChartRenderLoop;
+  private resizeObserver: ResizeObserver | null = null;
 
   setXScale(scale: Scale): void {
     this.xScale = scale;
@@ -218,6 +230,7 @@ export class ChartImpl implements Chart {
   }
   private selectionManager: SelectionManager;
   private responsiveManager: ResponsiveManager;
+  private alertManager: ChartAlertManager;
 
   constructor(options: ChartOptions) {
     this.initialOptions = options;
@@ -268,7 +281,10 @@ export class ChartImpl implements Chart {
       chart: this,
       container: this.container,
       theme: this.theme,
-      getGL: () => this.renderer?.getGL(),
+      getGL: () =>
+        this.renderer && "getGL" in this.renderer
+          ? this.renderer.getGL()
+          : undefined,
       get2DContext: () => this.overlayCtx,
       getPixelRatio: () => this.dpr,
       getCanvasSize: () => ({
@@ -311,17 +327,12 @@ export class ChartImpl implements Chart {
 
     const requestedRenderer = options.renderer ?? "webgl";
     if (requestedRenderer === "webgpu") {
-      const isSupported =
-        typeof (globalThis as any).navigator !== "undefined" &&
-        typeof (globalThis as any).navigator.gpu !== "undefined";
-      console.warn(
-        `[SciPlot] 'renderer: "webgpu"' requested but WebGPU renderer is experimental and not yet implemented. ` +
-        `Falling back to WebGL. WebGPU supported: ${isSupported}`
-      );
+      this.rendererInitPromise = this.initGpuRenderer();
+    } else {
+      this.renderer = new NativeWebGLRenderer(this.webglCanvas);
+      this.activeRendererType = "webgl";
+      this.renderer.setDPR(this.dpr);
     }
-
-    this.renderer = new NativeWebGLRenderer(this.webglCanvas);
-    this.renderer.setDPR(this.dpr);
     this.overlay = new OverlayRenderer(this.overlayCtx, this.theme);
 
     // Initialize selection manager EARLY so plugins can use it for hit-testing
@@ -358,6 +369,13 @@ export class ChartImpl implements Chart {
       },
       responsiveConfig
     );
+
+    this.alertManager = new ChartAlertManager(this.events, (seriesId) => {
+      const s = seriesId ? this.series.get(seriesId) : undefined;
+      if (s) return s as import("./ChartAlerts").AlertableSeries;
+      const first = this.series.values().next().value;
+      return first as import("./ChartAlerts").AlertableSeries | undefined;
+    });
 
     // Initialize axis manager
     this.axisManager = new ChartAxisManager({
@@ -569,9 +587,10 @@ export class ChartImpl implements Chart {
       () => getAxesLayout(this.yAxisOptionsMap as any)
     );
 
-    new ResizeObserver(() => {
+    this.resizeObserver = new ResizeObserver(() => {
       if (!this.isDestroyed && !this.resizeSuspended) this.resize();
-    }).observe(this.container);
+    });
+    this.resizeObserver.observe(this.container);
     this.initControls();
     this.initLegend(options);
 
@@ -587,8 +606,24 @@ export class ChartImpl implements Chart {
    * Start the chart initialization (called by queue system)
    * This performs the actual render startup that was deferred from constructor
    */
-  startInit(): void {
+  async startInit(): Promise<void> {
     if (this.renderLoop.isInitStarted() || this._isDestroyed) return;
+
+    if (this.rendererInitPromise) {
+      await this.rendererInitPromise;
+      this.rendererInitPromise = null;
+    }
+    if (!this.renderer) {
+      this.renderer = new NativeWebGLRenderer(this.webglCanvas);
+      this.activeRendererType = "webgl";
+      this.renderer.setDPR(this.dpr);
+    }
+
+    this.renderLoop.setRenderer(this.renderer);
+    for (const s of this.series.values()) {
+      updateSeriesBuffer(this.getSeriesContext(), s);
+    }
+
     this.renderLoop.startInit();
 
     this.resize();
@@ -618,12 +653,10 @@ export class ChartImpl implements Chart {
   async completeInit(): Promise<void> {
     if (!this.initQueueId) return;
 
-    // Wait for all startup animations (like autoScale) to finish
-    // before allowing the next chart to start its heavy initialization.
-    await this.animationEngine.waitForIdle();
-
-    // Extra safety wait to allow browser to breathe
-    await new Promise((r) => setTimeout(r, 60));
+    if (!this._isDestroyed) {
+      await this.animationEngine.waitForIdle();
+      await new Promise((r) => setTimeout(r, 60));
+    }
 
     if (this.initQueueId) {
       markInitComplete(this.initQueueId);
@@ -912,6 +945,7 @@ export class ChartImpl implements Chart {
         bounds: series.getBounds() ?? this.viewBounds,
       });
     }
+    this.alertManager.evaluate();
   }
   appendData(
     id: string,
@@ -929,6 +963,7 @@ export class ChartImpl implements Chart {
         bounds: series.getBounds() ?? this.viewBounds,
       });
     }
+    this.alertManager.evaluate();
   }
   setAutoScroll(enabled: boolean): void {
     this.autoScroll = enabled;
@@ -950,6 +985,35 @@ export class ChartImpl implements Chart {
     this.fitLineQueue.push({ id, seriesId, type, options });
     return id;
   }
+
+  /**
+   * Calculate and render a trading indicator preset (RSI, MACD, Bollinger, EMA, SMA).
+   * For stacked layouts use buildIndicatorPaneFromPreset() when creating panes.
+   */
+  async addIndicator(
+    preset: IndicatorPresetName,
+    options?: AddIndicatorOptions,
+  ): Promise<AddIndicatorResult> {
+    return addIndicatorToChart(this, preset, options);
+  }
+
+  addAlert(options: PriceAlertOptions): string {
+    return this.alertManager.addAlert(options);
+  }
+
+  removeAlert(id: string): boolean {
+    return this.alertManager.removeAlert(id);
+  }
+
+  clearAlerts(): void {
+    this.alertManager.clearAlerts();
+  }
+
+  setDrawingMode(mode: import("../../plugins/drawing-tools").DrawingMode): void {
+    const plugin = this.getPluginAPI<any>("velo-plot-drawing-tools");
+    plugin?.setMode?.(mode);
+  }
+
   getSeries(id: string): Series | undefined {
     return this.series.get(id);
   }
@@ -1267,6 +1331,35 @@ export class ChartImpl implements Chart {
    */
   getDPR(): number {
     return this.dpr;
+  }
+
+  /** Runtime chart renderer backend in use. */
+  getActiveRenderer(): "webgl" | "webgpu" {
+    return this.activeRendererType;
+  }
+
+  private async initGpuRenderer(): Promise<void> {
+    const gpu = await createGpuChartRenderer(this.webglCanvas, {
+      backend: "webgpu",
+      powerPreference: "high-performance",
+    });
+
+    if (gpu) {
+      this.renderer = gpu;
+      this.activeRendererType = gpu.backend;
+      this.renderer.setDPR(this.dpr);
+      this.renderLoop?.setRenderer(this.renderer);
+      return;
+    }
+
+    console.warn(
+      "[SciPlot] WebGPU unavailable — falling back to WebGL2. " +
+        "See docs/adr/001-webgpu-renderer-strategy.md.",
+    );
+    this.renderer = new NativeWebGLRenderer(this.webglCanvas);
+    this.activeRendererType = "webgl";
+    this.renderer.setDPR(this.dpr);
+    this.renderLoop?.setRenderer(this.renderer);
   }
 
   /**
@@ -1603,7 +1696,7 @@ export class ChartImpl implements Chart {
 
   // Rendering
   resize(): void {
-    if (this.resizeSuspended) return;
+    if (this.isDestroyed || this.resizeSuspended || !this.renderer) return;
     const desiredDpr =
       this.initialOptions.devicePixelRatio ?? window.devicePixelRatio;
     if (Math.abs(desiredDpr - this.dpr) > 0.001) {
@@ -1677,16 +1770,23 @@ export class ChartImpl implements Chart {
   destroy(): void {
     this._isDestroyed = true;
     this.renderLoop.cancelPendingRender();
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
+    if (this.initQueueId) {
+      markInitComplete(this.initQueueId);
+      this.initQueueId = null;
+    }
     this.animationEngine.destroy();
     this.selectionManager.destroy();
+    this.alertManager.destroy();
     this.responsiveManager.destroy();
     this.interaction.destroy();
     this.series.forEach((s) => {
-      this.renderer.deleteBuffer(s.getId());
+      this.renderer?.deleteBuffer(s.getId());
       s.destroy();
     });
     this.series.clear();
-    this.renderer.destroy();
+    this.renderer?.destroy();
     if (this.controls) this.controls.destroy();
     if (this.legend) this.legend.destroy();
     this.pluginManager.destroy(); // Destroy all plugins!
@@ -1747,11 +1847,9 @@ export function createChart(options: ChartOptions): Chart {
     }
 
     // Start the actual rendering
-    chart.startInit();
-
-    // Wait for initial render and autoScale to complete before allowing next chart
-    // completeInit() is async and waits for animationEngine to be idle.
-    chart.completeInit();
+    chart.startInit().then(() => {
+      chart.completeInit();
+    });
   });
 
   return chart;

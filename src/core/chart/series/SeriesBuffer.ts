@@ -19,6 +19,8 @@ import {
 } from "../../../renderer";
 
 export function updateSeriesBuffer(ctx: any, s: Series): void {
+  if (!ctx.renderer) return;
+
   const stackId = s.getStackId();
   if (stackId) {
     refreshStack(ctx, stackId);
@@ -42,7 +44,10 @@ export function updateSeriesBuffer(ctx: any, s: Series): void {
     const d = s.getData();
     if (d.open && d.high && d.low && d.close) {
       const barWidth = (s.getStyle() as any).barWidth ?? calculateBarWidth(d.x);
-      const { bullish, bearish } = interleaveCandlestickData(d.x, d.open, d.high, d.low, d.close, barWidth);
+      const hollow = Boolean((s.getStyle() as any).hollow);
+      const { bullish, bearish } = interleaveCandlestickData(
+        d.x, d.open, d.high, d.low, d.close, barWidth, hollow,
+      );
       ctx.renderer.createBuffer(`${seriesId}_bullish`, bullish);
       ctx.renderer.createBuffer(`${seriesId}_bearish`, bearish);
       // Store counts for rendering

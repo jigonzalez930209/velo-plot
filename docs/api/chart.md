@@ -19,6 +19,7 @@ function createChart(options: ChartOptions): Chart
 |----------|------|---------|-------------|
 | `container` | `HTMLElement` | **required** | Container element for the chart |
 | `id` | `string` | auto-generated | Stable chart id for sync groups (`chart.getId()`) |
+| `renderer` | `'webgl' \| 'webgpu'` | `'webgl'` | Chart renderer backend (see [Renderer backend](#renderer-backend)) |
 | `xAxis` | `AxisOptions` | `{ auto: true }` | X-axis configuration |
 | `yAxis` | `AxisOptions` | `{ auto: true }` | Y-axis configuration |
 | `theme` | `string \| ChartTheme` | `'dark'` | Theme name or custom theme object |
@@ -84,6 +85,31 @@ const chart = createChart({
 `xAxisLayout.titleGap` moves the X-axis label vertically. `yAxisLayout.titleGap` moves Y-axis labels horizontally.
 
 By default, the X-axis label gap is `45` and the Y-axis label gap is `50`.
+
+### Renderer backend
+
+Sci Plot renders series with **WebGL2** by default. **WebGPU** is available as an opt-in chart renderer when the browser supports it.
+
+```typescript
+const chart = createChart({
+  container: document.getElementById('chart')!,
+  renderer: 'webgl', // default — NativeWebGLRenderer
+});
+
+const webgpuChart = createChart({
+  container: document.getElementById('chart')!,
+  renderer: 'webgpu', // WebGPU when available, else WebGL2 fallback
+});
+
+console.log(webgpuChart.getActiveRenderer()); // 'webgpu' | 'webgl'
+```
+
+| Value | Behavior |
+|-------|----------|
+| `'webgl'` | Native WebGL2 renderer (default). All series types. |
+| `'webgpu'` | WebGPU via `GpuChartRenderer`. WebGL2 fallback if unavailable ([ADR 001](/adr/001-webgpu-renderer-strategy.md)). |
+
+For WebGPU **compute** experiments (not chart rendering), use `PluginGpu`.
 
 ## Returns
 

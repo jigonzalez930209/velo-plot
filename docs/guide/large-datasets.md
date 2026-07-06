@@ -197,6 +197,86 @@ largeDataArray = null
 
 ## Virtualization
 
+For extremely large datasets, use `PluginVirtualization` (automatic LOD) or `PluginLazyLoad` (chunked loading):
+
+```typescript
+import { createChart, PluginVirtualization, PluginLazyLoad } from 'velo-plot'
+
+const chart = createChart('#chart')
+
+// Automatic LOD for line, bar, and candlestick series
+await chart.use(PluginVirtualization({
+  targetPoints: 'auto',  // ~2 points per pixel
+  strategy: 'lttb',      // 'minmax' for bar/OHLC aggregation
+}))
+
+// Viewport-aware chunk loading for 100M+ virtual points
+await chart.use(PluginLazyLoad({ chunkSize: 10_000 }))
+
+chart.lazyLoad.registerSeries('ticks', dataProvider)
+
+// Load only visible window + buffer
+await chart.setDataWindow({ from: 1_000_000, to: 1_050_000, buffer: 0.5 })
+```
+
+### Verified performance targets (Stage 1 benchmarks)
+
+Measured on CI runner (Node/vitest, CPU-only downsampling path):
+
+| Scenario | Target | Typical result |
+|----------|--------|----------------|
+| 1M line points LTTB | < 1s | ~200–400ms |
+| 500k OHLC bars → canvas budget | < 500ms | ~50–150ms |
+| RSI(14) on 100k bars | < 200ms | ~20–80ms |
+| 1M line pan/zoom (browser) | ≥ 55 FPS | Use `benchmarkRender()` locally |
+| 500k candlestick pan/zoom | ≥ 50 FPS | Requires `PluginVirtualization` |
+| 5-pane stack resize | ≥ 55 FPS | See stacked chart benchmarks |
+
+Run benchmarks locally:
+
+```bash
+pnpm exec vitest run src/testing/stage1-perf.test.ts
+```
+
+### Browser FPS benchmarks (Playwright)
+
+Headless Chromium suite comparing against v1.15 baselines:
+
+```bash
+pnpm build
+pnpm exec playwright install chromium   # first time only
+pnpm test:browser-bench
+```
+
+Results are written to `browser-benchmark-results.json`. Interactive page: [`/demos/stage1-benchmark.html`](/demos/stage1-benchmark.html).
+
+Baseline thresholds live in `src/testing/baselines/v1.15.0.json` (10% regression slack).
+
+Grid spike comparison (Canvas 2D vs WebGL lines-only): see [Spike 001 — WebGL axis/grid](../spikes/001-webgl-axis-grid.md).
+
+For browser FPS measurement:
+
+```typescript
+import { benchmarkRender, assertPerformance } from 'velo-plot/testing'
+
+const result = await benchmarkRender(chart, { duration: 3000 })
+const { passed, failures } = assertPerformance(result, { minFps: 55 })
+```
+
+### Async indicators (Web Worker pool)
+
+Heavy indicator calculations run off the main thread when Workers are available:
+
+```typescript
+import { rsiAsync, macdAsync, bollingerBandsAsync } from 'velo-plot'
+
+const { values, duration } = await rsiAsync(closePrices, 14)
+const macd = await macdAsync(closePrices)
+const bands = await bollingerBandsAsync(closePrices, 20, 2)
+```
+
+Sync fallbacks apply in Node.js and environments without Workers.
+
 For extremely large datasets, only load visible data:
 
 ```typescript

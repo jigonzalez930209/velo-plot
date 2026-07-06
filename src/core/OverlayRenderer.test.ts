@@ -506,4 +506,34 @@ describe("OverlayRenderer", () => {
     }
     expect(latex.render).toHaveBeenCalled();
   });
+
+  it("drawCandlestickMarkers renders shapes and text", () => {
+    const { xScale, yScale } = makeScales();
+    const series = {
+      getType: () => "candlestick",
+      getMarkers: () => [
+        { time: 50, shape: "arrowUp" as const, position: "aboveBar" as const, text: "Buy" },
+        { time: 90, shape: "circle" as const, position: "belowBar" as const, color: "#ef4444" },
+        { time: 10, shape: "arrowDown" as const, position: "inBar" as const },
+      ],
+      getData: () => ({
+        x: Float32Array.from([10, 50, 90]),
+        high: Float32Array.from([22, 62, 42]),
+        low: Float32Array.from([18, 58, 38]),
+        close: Float32Array.from([20, 60, 40]),
+      }),
+    } as unknown as Series;
+
+    renderer.drawCandlestickMarkers(plotArea, series, xScale, yScale);
+    expect(ctx.save).toHaveBeenCalled();
+    expect(ctx.fill).toHaveBeenCalled();
+    expect(ctx.fillText).toHaveBeenCalledWith("Buy", expect.any(Number), expect.any(Number));
+  });
+
+  it("drawCandlestickMarkers skips non-candlestick series", () => {
+    const { xScale, yScale } = makeScales();
+    const lineSeries = mockSeries({ type: "line" });
+    renderer.drawCandlestickMarkers(plotArea, lineSeries, xScale, yScale);
+    expect(ctx.arc).not.toHaveBeenCalled();
+  });
 });

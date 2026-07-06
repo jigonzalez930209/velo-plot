@@ -67,6 +67,9 @@ chart.lazyLoad.unloadDistant(): number
 // Status
 chart.lazyLoad.getLoadingStatus(id)
 chart.lazyLoad.clear()
+
+// Viewport window (loads visible range + buffer)
+chart.setDataWindow({ from: 1000, to: 5000, buffer: 0.5 })
 ```
 
 ## Configuration

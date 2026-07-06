@@ -76,6 +76,37 @@ const stack = createStackedChart({
 
 Returns a `StackedPaneConfig` ready for `createStackedChart`.
 
+### High-level presets (Stage 2)
+
+```typescript
+import { createChart, buildIndicatorPaneFromPreset } from 'velo-plot';
+
+// Single chart — overlay or inline layers
+await chart.addIndicator('bollinger', { period: 20, sourceSeriesId: 'candles' });
+await chart.addIndicator('rsi', { period: 14, id: 'rsi' });
+
+// Stacked chart — build pane at creation time
+const rsiPane = await buildIndicatorPaneFromPreset('rsi', x, closePrices, {
+  id: 'rsi',
+  label: 'RSI (14)',
+  height: 0.24,
+});
+
+const stack = createStackedChart({
+  container,
+  panes: [pricePane, volumePane, rsiPane],
+});
+```
+
+| Preset | Placement | Notes |
+|--------|-----------|-------|
+| `rsi` | oscillator pane | Reference lines at 70 / 30 |
+| `macd` | oscillator pane | Histogram + MACD + signal |
+| `bollinger` | price overlay | Band fill + middle line |
+| `ema`, `sma` | price overlay | Single line on source series Y axis |
+
+Calculations use the Stage 1 worker pool when available (`indicatorsAsync`).
+
 ```typescript
 function buildIndicatorPane(options: BuildIndicatorPaneOptions): StackedPaneConfig
 ```

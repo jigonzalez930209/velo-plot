@@ -23,6 +23,13 @@ import {
 import { exportStackImage } from "./stackExport";
 import { getInitQueueStatus } from "../ChartInitQueue";
 import {
+  addIndicatorToChart,
+  buildIndicatorPaneFromPreset,
+  type AddIndicatorOptions,
+  type IndicatorPresetName,
+} from "../indicator/addIndicator";
+import { extractPriceSeries, resolveSourceSeries } from "../indicator/indicatorPresets";
+import {
   attachPaneResize,
   applyPaneFlexRatios,
   initialPaneRatio,
@@ -580,6 +587,90 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     return dataUrl;
   };
 
+  const mountPane = (pane: StackedPaneConfig): Chart => {
+    if (paneCharts.size >= STACKED_MAX_PANES) {
+      throw new Error(`[StackedChart] Cannot exceed ${STACKED_MAX_PANES} panes`);
+    }
+    if (paneCharts.has(pane.id)) {
+      throw new Error(`[StackedChart] Pane "${pane.id}" already exists`);
+    }
+
+    if (!isHorizontal && sharedXAxis === "bottom" && paneIds.length > 0) {
+      const prevId = paneIds[paneIds.length - 1];
+      paneCharts.get(prevId)?.updateXAxis({
+        showLabels: false,
+        showTicks: false,
+        showLine: false,
+      });
+    }
+
+    const newRatio = initialPaneRatio(pane.height ?? 0.25);
+    const total = paneRatios.reduce((a, b) => a + b, 0);
+    const scale = total > 0 ? (1 - newRatio) / total : 1;
+    for (let j = 0; j < paneRatios.length; j++) paneRatios[j] *= scale;
+
+    const index = paneIds.length;
+    paneIds.push(pane.id);
+    paneRatios.push(newRatio);
+
+    const wrapper = document.createElement("div");
+    wrapper.dataset.paneId = pane.id;
+    wrapper.style.cssText = wrapperStyle(paneRatios[index], gap, index, direction);
+
+    const chartDiv = document.createElement("div");
+    chartDiv.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
+    wrapper.appendChild(chartDiv);
+    container.appendChild(wrapper);
+    paneWrappers.push(wrapper);
+
+    const isLast = true;
+    const showXAxis = isHorizontal
+      ? (pane.showXAxis ?? true)
+      : (pane.showXAxis ?? (sharedXAxis === "bottom" ? isLast : true));
+    const showYAxis = isHorizontal
+      ? (pane.showYAxis ?? (sharedYAxis === "left" ? index === 0 : true))
+      : (pane.showYAxis ?? true);
+
+    const chart = createChart(
+      buildPaneChartOptions(
+        pane,
+        chartDiv,
+        options,
+        index,
+        paneIds.length,
+        {
+          left: isHorizontal && !showYAxis ? MARGINS.left : alignedLeft,
+          right: alignedRight,
+          top: baseTop,
+          bottom: alignedBottom,
+        },
+        showXAxis,
+        showYAxis,
+        direction,
+      ),
+    );
+
+    const seriesList = expandPaneSeries(pane.series);
+    for (const s of seriesList) chart.addSeries(s);
+    if (pane.yRange && pane.yRange !== "auto") {
+      chart.zoom({ y: pane.yRange, animate: false });
+    }
+
+    paneCharts.set(pane.id, chart);
+    paneAxisMetas.push({
+      chart,
+      wrapper,
+      baseYTickCount: readBaseYTickCount(pane.chart?.yAxis),
+      baseXTickCount: pane.chart?.xAxis?.tickCount ?? 8,
+      showXAxis,
+    });
+
+    group.add(chart);
+    applyFlexCss();
+    commitPaneLayout();
+    return chart;
+  };
+
   const stack: StackedChart = {
     container,
     getPane(id: string) {
@@ -635,6 +726,40 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     },
     snapshot(opts) {
       return runStackExport(opts);
+    },
+    addPane(pane: StackedPaneConfig): Chart {
+      return mountPane(pane);
+    },
+    async addIndicator(preset: IndicatorPresetName, opts: AddIndicatorOptions = {}) {
+      const priceChart = paneCharts.get(masterPaneId) ?? master;
+      if (opts.pane !== "new") {
+        const overlay = await addIndicatorToChart(priceChart, preset, opts);
+        return { ...overlay, chart: priceChart };
+      }
+
+      const source = resolveSourceSeries(priceChart, opts.sourceSeriesId);
+      const { x, prices } = extractPriceSeries(source);
+      const paneConfig = await buildIndicatorPaneFromPreset(preset, x, prices, {
+        id: opts.id ?? preset,
+        label: opts.label ?? preset.toUpperCase(),
+        height: opts.paneHeight ?? 0.25,
+        showXAxis: opts.showXAxis,
+        period: opts.period,
+        fastPeriod: opts.fastPeriod,
+        slowPeriod: opts.slowPeriod,
+        signalPeriod: opts.signalPeriod,
+        stdDev: opts.stdDev,
+      });
+
+      const chart = mountPane(paneConfig);
+      return {
+        id: paneConfig.id,
+        preset,
+        placement: "oscillator" as const,
+        seriesIds: paneConfig.series?.map((s) => s.id) ?? [],
+        paneId: paneConfig.id,
+        chart,
+      };
     },
     destroy() {
       if (resizeRaf) cancelAnimationFrame(resizeRaf);

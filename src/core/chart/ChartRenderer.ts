@@ -7,8 +7,8 @@
 import type { Bounds, CursorOptions, AxisOptions } from "../../types";
 import type { Series } from "../Series";
 import type { Scale } from "../../scales";
+import type { ChartSeriesRenderer } from "../../renderer/ChartSeriesRenderer";
 import type {
-  NativeWebGLRenderer,
   NativeSeriesRenderData as SeriesRenderData,
 } from "../../renderer/NativeWebGLRenderer";
 import type { OverlayRenderer } from "../OverlayRenderer";
@@ -30,7 +30,7 @@ export interface RenderContext {
   yAxisOptionsMap: Map<string, AxisOptions>;
   xAxisOptions: AxisOptions;
   primaryYAxisId: string;
-  renderer: NativeWebGLRenderer;
+  renderer: ChartSeriesRenderer;
   overlay: OverlayRenderer;
   backgroundColor: [number, number, number, number];
   cursorOptions: CursorOptions | null;
@@ -517,6 +517,14 @@ export function renderOverlay(
 
       ctx.overlay.drawErrorBars(plotArea, s, ctx.xScale, yScale);
     }
+  });
+
+  // Trade markers on candlesticks
+  ctx.series.forEach((s) => {
+    if (!s.isVisible() || s.getType() !== "candlestick") return;
+    const axisId = s.getYAxisId() || ctx.primaryYAxisId;
+    const scale = ctx.yScales.get(axisId) || primaryYScale;
+    ctx.overlay.drawCandlestickMarkers(plotArea, s, ctx.xScale, scale);
   });
 
   // Draw Selection Box

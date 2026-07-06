@@ -76,6 +76,8 @@ export interface BenchmarkResult {
   pointsRendered: number;
   /** Points per second throughput */
   throughput: number;
+  /** Render-only throughput (1000 / avgFrameTime); can exceed wall FPS */
+  renderFps?: number;
 }
 
 export interface BenchmarkOptions {
@@ -451,7 +453,6 @@ export async function benchmarkRender(
   const fpsHistory: number[] = [];
   const frameTimes: number[] = [];
   let frameCount = 0;
-  let lastTime = performance.now();
 
   // Calculate total points
   const totalPoints = chart
@@ -462,27 +463,43 @@ export async function benchmarkRender(
     const endTime = performance.now() + opts.warmup + opts.duration;
     const warmupEndTime = performance.now() + opts.warmup;
     let recording = false;
+    let recordingStartTime = 0;
 
     function frame() {
       const now = performance.now();
 
       if (now >= endTime) {
-        // Calculate results
-        const avgFps = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
-        const minFps = Math.min(...fpsHistory);
-        const maxFps = Math.max(...fpsHistory);
-        const avgFrameTime = frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length;
+        const avgRenderMs =
+          frameTimes.length > 0
+            ? frameTimes.reduce((a, b) => a + b, 0) / frameTimes.length
+            : 0;
+        const recordElapsedMs =
+          recordingStartTime > 0 ? now - recordingStartTime : opts.duration;
+        // Wall-clock FPS (includes rAF pacing + work outside timed render)
+        const wallFps =
+          frameCount > 0 && recordElapsedMs > 0
+            ? (frameCount / recordElapsedMs) * 1000
+            : 0;
+        // Instantaneous render throughput (can exceed monitor refresh; useful for micro-bench)
+        const renderFps =
+          fpsHistory.length > 0
+            ? fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length
+            : avgRenderMs > 0
+              ? 1000 / avgRenderMs
+              : 0;
 
         const result: BenchmarkResult = {
-          avgFps: Math.round(avgFps * 100) / 100,
-          minFps,
-          maxFps,
-          avgFrameTime: Math.round(avgFrameTime * 100) / 100,
+          avgFps: Math.round(wallFps * 100) / 100,
+          minFps: Math.round((fpsHistory.length > 0 ? Math.min(...fpsHistory) : wallFps) * 100) / 100,
+          maxFps: Math.round((fpsHistory.length > 0 ? Math.max(...fpsHistory) : wallFps) * 100) / 100,
+          avgFrameTime: Math.round(avgRenderMs * 1000) / 1000,
           frameCount,
           duration: opts.duration,
           pointsRendered: totalPoints,
-          throughput: Math.round((totalPoints * avgFps) / 1000) * 1000,
-        };
+          throughput: Math.round((totalPoints * wallFps) / 1000) * 1000,
+          /** @internal render-only FPS (not wall clock) */
+          ...(renderFps > 0 ? { renderFps: Math.round(renderFps * 100) / 100 } : {}),
+        } as BenchmarkResult;
 
         resolve(result);
         return;
@@ -491,27 +508,30 @@ export async function benchmarkRender(
       // Start recording after warmup
       if (now >= warmupEndTime && !recording) {
         recording = true;
-        lastTime = now;
+        recordingStartTime = now;
         frameCount = 0;
+        frameTimes.length = 0;
+        fpsHistory.length = 0;
       }
 
-      // Render frame
+      const renderStart = performance.now();
       chart.render();
+      const renderEnd = performance.now();
 
       if (recording) {
-        const frameTime = now - lastTime;
+        const frameTime = renderEnd - renderStart;
         frameTimes.push(frameTime);
         frameCount++;
 
-        // Calculate instantaneous FPS every 500ms window
         const recentTimes = frameTimes.slice(-30);
         if (recentTimes.length > 0) {
           const avgRecentTime = recentTimes.reduce((a, b) => a + b, 0) / recentTimes.length;
-          fpsHistory.push(1000 / avgRecentTime);
+          if (avgRecentTime > 0) {
+            fpsHistory.push(1000 / avgRecentTime);
+          }
         }
       }
 
-      lastTime = now;
       requestAnimationFrame(frame);
     }
 
@@ -669,3 +689,29 @@ export function waitForFrames(count: number = 1): Promise<void> {
 export function waitFor(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// Stage 1 grid spike + browser benchmarks
+export {
+  benchmarkCanvasGrid,
+  benchmarkWebGLGrid,
+  compareGridBackends,
+  countGridVertices,
+  type GridBenchmarkResult,
+  type GridCompareResult,
+} from "./gridSpikeBenchmark";
+
+export {
+  getBaseline,
+  compareScenarioToBaseline,
+  buildStage1Report,
+  effectiveBenchmarkFps,
+  HEADLESS_LOW_FRAME_THRESHOLD,
+  SMOKE_FLOORS,
+  type Stage1ScenarioResult,
+  type Stage1BrowserReport,
+} from "./stage1BrowserBench";
+
+export {
+  evaluateRendererCompare,
+  type RendererCompareResult,
+} from "./rendererBenchmark";

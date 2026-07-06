@@ -4,7 +4,7 @@
  * Handles render requests, frame scheduling, and coordinates WebGL + overlay rendering.
  */
 
-import type { NativeWebGLRenderer } from "../../renderer/NativeWebGLRenderer";
+import type { ChartSeriesRenderer } from "../../renderer/ChartSeriesRenderer";
 import type { OverlayRenderer } from "../OverlayRenderer";
 import type { Series } from "../Series";
 import type { Scale } from "../../scales";
@@ -26,7 +26,7 @@ export interface RenderLoopContext {
   yAxisOptionsMap: Map<string, AxisOptions>;
   xAxisOptions: AxisOptions;
   primaryYAxisId: string;
-  renderer: NativeWebGLRenderer;
+  renderer?: ChartSeriesRenderer;
   overlay: OverlayRenderer;
   backgroundColor: [number, number, number, number];
   plotAreaBackground: [number, number, number, number];
@@ -63,6 +63,11 @@ export class ChartRenderLoop {
    */
   startInit(): void {
     this.initStarted = true;
+  }
+
+  /** Wire renderer after async WebGPU init (context holds a snapshot, not a live ref). */
+  setRenderer(renderer: ChartSeriesRenderer): void {
+    this.ctx.renderer = renderer;
   }
 
   /**
@@ -133,6 +138,7 @@ export class ChartRenderLoop {
     const start = performance.now();
     const plotArea = this.ctx.getPlotArea();
     if (this.ctx.webglCanvas.width === 0 || this.ctx.webglCanvas.height === 0) return;
+    if (!this.ctx.renderer) return;
 
     const renderCtx = {
       webglCanvas: this.ctx.webglCanvas,

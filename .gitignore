@@ -8,4 +8,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 coverage/
+browser-benchmark-results.json
+benchmark-results.json
 coverage/
