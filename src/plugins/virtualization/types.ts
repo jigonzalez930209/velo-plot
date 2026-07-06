@@ -9,6 +9,12 @@ export type VirtualizationStrategy = "lttb" | "minmax";
 export interface PluginVirtualizationConfig {
   /** Enable virtualization (default: true) */
   enabled?: boolean;
+  /**
+   * Data fidelity mode (default: `'lod'`).
+   * - `'lod'`: downsample to canvas budget (recommended for large datasets).
+   * - `'full'`: skip downsampling and send all points to the GPU (opt-out for fidelity-critical views).
+   */
+  precision?: "lod" | "full";
   /** Virtualization mode (default: 'lod') */
   mode?: VirtualizationMode;
   /** Target points or 'auto' (default: 'auto') */
@@ -29,6 +35,12 @@ export interface PluginVirtualizationConfig {
   excludeSeries?: string[];
   /** Debug logging (default: false) */
   debug?: boolean;
+  /** Viewport buffer as fraction of visible x-range when slicing before downsample (default: 0.5) */
+  viewportBuffer?: number;
+  /** Downsample off main thread when Workers are available (default: true) */
+  useWorker?: boolean;
+  /** Point count threshold before using worker path (default: 250000) */
+  workerThreshold?: number;
 }
 
 export interface VirtualizationStats {
