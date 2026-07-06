@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Stage 1 Browser Benchmark</title>
+  <style>
+    body { margin: 0; background: #0b0e14; color: #ccc; font-family: system-ui, sans-serif; }
+    #root { display: grid; grid-template-columns: 1fr 320px; height: 100vh; }
+    #chart-host { min-height: 400px; }
+    #log { padding: 1rem; font-family: monospace; font-size: 12px; overflow: auto; background: #12151c; }
+    .pass { color: #00ff88; }
+    .fail { color: #ff4444; }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div id="chart-host"></div>
+    <pre id="log">Running Stage 1 benchmarks…</pre>
+  </div>
+  <script>
+    window.process = { env: { NODE_ENV: 'production' } };
+  </script>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@18.3.1",
+      "react-dom": "https://esm.sh/react-dom@18.3.1",
+      "react-dom/client": "https://esm.sh/react-dom@18.3.1/client"
+    }
+  }
+  </script>
+  <script type="module">
+    const logEl = document.getElementById('log');
+    const host = document.getElementById('chart-host');
+
+    const report = {
+      done: false,
+      timestamp: Date.now(),
+      version: '1.16.0',
+      scenarios: [],
+      grid: null,
+      rendererCompare: null,
+      allPassed: false,
+    };
+    window.__STAGE1_BENCHMARK__ = report;
+
+    function log(msg, cls = '') {
+      logEl.innerHTML += `\n<span class="${cls}">${msg}</span>`;
+    }
+
+    async function loadLib() {
+      return import('/dist/velo-plot.full.js');
+    }
+
+    function makeLineData(n) {
+      const x = new Float32Array(n);
+      const y = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        x[i] = i;
+        y[i] = Math.sin(i * 0.0001) * 100;
+      }
+      return { x, y };
+    }
+
+    function makeOhlc(n) {
+      const x = new Float32Array(n);
+      const open = new Float32Array(n);
+      const high = new Float32Array(n);
+      const low = new Float32Array(n);
+      const close = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        x[i] = i;
+        open[i] = 100 + (i % 20);
+        high[i] = open[i] + 3;
+        low[i] = open[i] - 2;
+        close[i] = open[i] + 1;
+      }
+      return { x, open, high, low, close };
+    }
+
+    async function waitForRenderer(chart, renderer) {
+      for (let i = 0; i < 120; i++) {
+        chart.render();
+        await new Promise((r) => requestAnimationFrame(r));
+        const active = chart.getActiveRenderer?.() ?? 'webgl';
+        if (renderer === 'webgl' || active === 'webgpu') return active;
+      }
+      return chart.getActiveRenderer?.() ?? 'webgl';
+    }
+
+    function makeBoxplot(n) {
+      const x = new Float32Array(n);
+      const low = new Float32Array(n);
+      const open = new Float32Array(n);
+      const median = new Float32Array(n);
+      const close = new Float32Array(n);
+      const high = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        x[i] = i;
+        low[i] = 90 + (i % 7);
+        open[i] = 100 + (i % 5);
+        median[i] = 102 + (i % 4);
+        close[i] = 101 + (i % 6);
+        high[i] = 108 + (i % 3);
+      }
+      return { x, low, open, median, close, high };
+    }
+
+    async function runScenario(id, setup, minFps, benchOpts = {}) {
+      const { simulatePan = true, renderer = 'webgl', ...renderOpts } = benchOpts;
+      host.innerHTML = '';
+      const div = document.createElement('div');
+      div.style.cssText = 'width:100%;height:100%;min-height:400px;';
+      host.appendChild(div);
+
+      const lib = await loadLib();
+      const chart = lib.createChart({ container: div, width: 800, height: 400, animations: false, renderer });
+      await setup(chart, lib);
+      const active = await waitForRenderer(chart, renderer);
+      if (renderer === 'webgpu' && active !== 'webgpu') {
+        log(`${id}: WebGPU unavailable — skipped`, 'fail');
+        report.scenarios.push({ id, result: { avgFps: 0, frameCount: 0 }, passed: true, minFps, skipped: true });
+        chart.destroy();
+        return null;
+      }
+
+      for (let i = 0; i < 3; i++) {
+        chart.render();
+        await new Promise((r) => requestAnimationFrame(r));
+      }
+
+      const origRender = chart.render.bind(chart);
+      if (simulatePan) {
+        let panStep = 0;
+        const pointCount = () => chart.getAllSeries()[0]?.getPointCount?.() ?? 1000;
+        chart.render = () => {
+          panStep++;
+          const total = pointCount();
+          const w = Math.max(10, total * 0.15);
+          const maxFrom = Math.max(0, total - w);
+          const from = ((panStep % 100) / 100) * maxFrom;
+          try {
+            chart.zoom({ x: [from, from + w], animate: false });
+          } catch { /* ignore */ }
+          origRender();
+        };
+      }
+
+      const result = await lib.benchmarkRender(chart, {
+        duration: 2500,
+        warmup: 1500,
+        targetFps: minFps,
+        ...renderOpts,
+      });
+      chart.destroy();
+
+      const fps = result.avgFps ?? 0;
+      const passed = fps >= minFps * 0.9;
+      report.scenarios.push({ id, result, passed, minFps, renderer: active });
+      log(
+        `${id} [${active}]: ${fps.toFixed(1)} FPS wall (${result.frameCount} frames, render ${result.avgFrameTime}ms, ${passed ? 'PASS' : 'FAIL'})`,
+        passed ? 'pass' : 'fail',
+      );
+      return result;
+    }
+
+    async function runStackScenario(id, minFps) {
+      host.innerHTML = '';
+      const div = document.createElement('div');
+      div.style.cssText = 'width:100%;height:100%;min-height:500px;';
+      host.appendChild(div);
+
+      const lib = await loadLib();
+      const paneIds = ['p1', 'p2', 'p3', 'p4', 'p5'];
+      const stack = lib.createStackedChart({
+        container: div,
+        resizable: true,
+        panes: paneIds.map((pid, i) => ({
+          id: pid,
+          height: 0.2,
+          chart: { animations: false },
+          series: [{
+            id: `line-${i}`,
+            type: 'line',
+            data: makeLineData(120_000),
+          }],
+        })),
+      });
+      await stack.whenReady();
+
+      const panes = stack.getPanes();
+      for (const chart of panes) {
+        await chart.use(lib.PluginVirtualization({ targetPoints: 1200 }));
+      }
+
+      for (let i = 0; i < 3; i++) {
+        panes.forEach((c) => c.render());
+        await new Promise((r) => requestAnimationFrame(r));
+      }
+
+      let step = 0;
+      const composite = {
+        render: () => {
+          step++;
+          const t = (step % 80) / 80;
+          const base = 0.12 + t * 0.08;
+          const ratios = {};
+          paneIds.forEach((pid, i) => {
+            ratios[pid] = i === 4 ? 1 - base * 4 : base;
+          });
+          stack.setPaneRatios(ratios);
+          panes.forEach((c) => c.render());
+        },
+        destroy: () => stack.destroy(),
+        getAllSeries: () => panes.flatMap((c) => c.getAllSeries()),
+      };
+
+      const result = await lib.benchmarkRender(composite, {
+        duration: 2500,
+        warmup: 1500,
+        targetFps: minFps,
+      });
+      stack.destroy();
+
+      const fps = result.avgFps ?? 0;
+      const passed = fps >= minFps * 0.9;
+      report.scenarios.push({ id, result, passed, minFps });
+      log(
+        `${id}: ${fps.toFixed(1)} FPS wall (${result.frameCount} frames, render ${result.avgFrameTime}ms, ${passed ? 'PASS' : 'FAIL'})`,
+        passed ? 'pass' : 'fail',
+      );
+      return result;
+    }
+
+    try {
+      const lib = await loadLib();
+
+      await runScenario('line-1m-pan', async (chart, lib) => {
+        const { x, y } = makeLineData(1_000_000);
+        chart.addSeries({ id: 'line', type: 'line', data: { x, y } });
+        await chart.use(lib.PluginVirtualization({ targetPoints: 2000 }));
+      }, 50);
+
+      await runScenario('candlestick-500k', async (chart, lib) => {
+        const data = makeOhlc(500_000);
+        chart.addSeries({ id: 'ohlc', type: 'candlestick', data });
+        await chart.use(lib.PluginVirtualization({ targetPoints: 1600, strategy: 'minmax' }));
+      }, 45, { duration: 2500, warmup: 1500, simulatePan: true });
+
+      await runStackScenario('stack-5pane-resize', 48);
+
+      // WebGPU vs WebGL comparison (200k line — faster init in CI)
+      const webglResult = await runScenario('line-200k-webgl', async (chart, lib) => {
+        const { x, y } = makeLineData(200_000);
+        chart.addSeries({ id: 'line', type: 'line', data: { x, y } });
+        await chart.use(lib.PluginVirtualization({ targetPoints: 1600 }));
+      }, 40, { renderer: 'webgl', simulatePan: true });
+
+      const webgpuResult = await runScenario('line-200k-webgpu', async (chart, lib) => {
+        const { x, y } = makeLineData(200_000);
+        chart.addSeries({ id: 'line', type: 'line', data: { x, y } });
+        await chart.use(lib.PluginVirtualization({ targetPoints: 1600 }));
+      }, 38, { renderer: 'webgpu', simulatePan: true });
+
+      if (webglResult && webgpuResult && lib.evaluateRendererCompare) {
+        report.rendererCompare = lib.evaluateRendererCompare(webglResult, webgpuResult, true);
+        const rc = report.rendererCompare;
+        log(
+          `renderer-compare: WebGL ${rc.webgl.avgFps.toFixed(1)} vs WebGPU ${rc.webgpu.avgFps.toFixed(1)} FPS (ratio ${(rc.fpsRatio * 100).toFixed(0)}%) → ${rc.recommendation}`,
+          rc.meetsTarget ? 'pass' : 'fail',
+        );
+      }
+
+      await runScenario('boxplot-5k-webgpu', async (chart, lib) => {
+        const data = makeBoxplot(5000);
+        chart.addSeries({ id: 'bp', type: 'boxplot', data });
+      }, 45, { renderer: 'webgpu', simulatePan: false, duration: 2000, warmup: 1000 });
+
+      // Grid spike comparison (lines only)
+      if (lib.compareGridBackends) {
+        report.grid = lib.compareGridBackends({ dpr: 2, frames: 60 });
+        log(`grid spike: WebGL ${report.grid.gainPercent}% vs Canvas2D → ${report.grid.recommendation}`, 'pass');
+      }
+
+      report.allPassed = report.scenarios.every(s => s.passed);
+      log(`\nDone. allPassed=${report.allPassed}`, report.allPassed ? 'pass' : 'fail');
+    } catch (e) {
+      log(`ERROR: ${e.message}`, 'fail');
+      report.error = e.message;
+    } finally {
+      report.done = true;
+    }
+  </script>
+</body>
+</html>
