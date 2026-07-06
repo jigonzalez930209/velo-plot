@@ -2,13 +2,13 @@
  * Chart Series Types
  */
 import { Series } from "../../Series";
-import { NativeWebGLRenderer } from "../../../renderer";
+import type { ChartSeriesRenderer } from "../../../renderer/ChartSeriesRenderer";
 import { Bounds } from "../../../types";
 import { Annotation } from "../../annotations";
 
 export interface SeriesManagerContext {
   series: Map<string, Series>;
-  renderer: NativeWebGLRenderer;
+  renderer: ChartSeriesRenderer;
   viewBounds: Bounds;
   autoScale: () => void;
   requestRender: () => void;
