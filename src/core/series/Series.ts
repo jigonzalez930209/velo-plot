@@ -47,6 +47,7 @@ export class Series {
   private stackId?: string;
   private cycle?: number;
   private maxPoints?: number;
+  private markers: import("../chart/candlestickMarkers").CandlestickMarker[] = [];
 
   public bullishCount = 0;
   public bearishCount = 0;
@@ -82,6 +83,7 @@ export class Series {
     this.stackId = (options as SeriesOptions).stackId;
     this.cycle = (options as any).cycle;
     this.maxPoints = (options as any).maxPoints;
+    this.markers = (options as SeriesOptions).markers ?? [];
 
     if (this.type === "heatmap") {
       const hOpts = options as HeatmapOptions;
@@ -153,6 +155,11 @@ export class Series {
   getVisible = () => this.visible;
   isVisible = () => this.visible;
   getStyle = () => this.style;
+  getMarkers = () => this.markers;
+  setMarkers = (markers: import("../chart/candlestickMarkers").CandlestickMarker[]) => {
+    this.markers = markers;
+    this._needsBufferUpdate = true;
+  };
   getHeatmapData = () => this.heatmapData;
   getHeatmapStyle = () => this.heatmapStyle;
   getPolarData = () => this.polarData;
