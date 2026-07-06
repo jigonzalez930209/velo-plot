@@ -123,6 +123,14 @@ export interface LazyLoadAPI {
   
   /** Unload distant chunks */
   unloadDistant(): number;
+
+  /** Load only a visible data window (+ buffer) */
+  setDataWindow(opts: {
+    from: number;
+    to: number;
+    buffer?: number;
+    seriesId?: string;
+  }): Promise<void>;
   
   /** Get loading status */
   getLoadingStatus(seriesId: string): {
