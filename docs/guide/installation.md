@@ -25,7 +25,10 @@ import { createChart } from 'velo-plot';
 import { PluginTools, PluginAnalysis, PluginAnnotations } from 'velo-plot';
 
 // React components
-import { SciPlot, useSciPlot } from 'velo-plot';
+import { SciPlot, useSciPlot } from 'velo-plot/react';
+
+// Trading dashboard bundle (tree-shaken — no 3D/scientific plugins)
+import { createStackedChart, PluginDrawingTools } from 'velo-plot/trading';
 
 // Built-in Themes
 import { MIDNIGHT_THEME, DARK_THEME, LIGHT_THEME } from 'velo-plot';
