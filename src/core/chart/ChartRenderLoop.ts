@@ -45,6 +45,8 @@ export interface RenderLoopContext {
   getPlotArea: () => PlotArea;
   pixelToDataX: (px: number) => number;
   pixelToDataY: (py: number, yAxisId?: string) => number;
+  getBusinessDayMapping?: () => import("../time/TimeScale").BusinessDayMapping | null;
+  getAlerts?: () => Array<{ price: number; direction?: string }>;
   get yScale(): Scale;
 }
 
@@ -163,6 +165,8 @@ export class ChartRenderLoop {
       getPlotArea: () => plotArea,
       pixelToDataX: this.ctx.pixelToDataX,
       pixelToDataY: this.ctx.pixelToDataY,
+      getBusinessDayMapping: this.ctx.getBusinessDayMapping,
+      getAlerts: this.ctx.getAlerts,
       selectionManager: this.ctx.selectionManager,
       hoveredSeriesId: this.ctx.getHoveredSeriesId(),
       layout: this.ctx.getLayout(),

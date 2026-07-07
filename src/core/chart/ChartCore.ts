@@ -109,6 +109,11 @@ import {
   type IndicatorPresetName,
 } from "../indicator/addIndicator";
 import { ChartAlertManager, type PriceAlertOptions } from "./ChartAlerts";
+import {
+  buildPositionLineAnnotation,
+  type PositionLineOptions,
+} from "./positionLines";
+import type { BusinessDayMapping } from "../time/TimeScale";
 // ============================================
 // Chart Implementation
 // ============================================
@@ -231,6 +236,8 @@ export class ChartImpl implements Chart {
   private selectionManager: SelectionManager;
   private responsiveManager: ResponsiveManager;
   private alertManager: ChartAlertManager;
+  private timeScaleMapping: BusinessDayMapping | null = null;
+  private positionLineCounter = 0;
 
   constructor(options: ChartOptions) {
     this.initialOptions = options;
@@ -442,6 +449,8 @@ export class ChartImpl implements Chart {
       getPlotArea: () => this.getPlotArea(),
       pixelToDataX: (px) => this.pixelToDataX(px),
       pixelToDataY: (py, yAxisId) => this.pixelToDataY(py, yAxisId),
+      getBusinessDayMapping: () => this.timeScaleMapping,
+      getAlerts: () => this.alertManager.getAlerts(),
       get yScale() { return this.yScales.get(this.primaryYAxisId) || this.yScales.values().next().value as Scale; },
     });
 
@@ -895,6 +904,7 @@ export class ChartImpl implements Chart {
 
   // Series Management (delegates to ChartSeries)
   private getSeriesContext() {
+    const self = this;
     return {
       series: this.series,
       renderer: this.renderer,
@@ -909,6 +919,12 @@ export class ChartImpl implements Chart {
       addSeries: (o: SeriesOptions | HeatmapOptions) => this.addSeries(o),
       updateLegend: () => {
         if (this.legend) this.legend.update(this.getAllSeries());
+      },
+      get timeScaleMapping() {
+        return self.timeScaleMapping;
+      },
+      set timeScaleMapping(v: BusinessDayMapping | null) {
+        self.timeScaleMapping = v;
       },
     };
   }
@@ -1007,6 +1023,16 @@ export class ChartImpl implements Chart {
 
   clearAlerts(): void {
     this.alertManager.clearAlerts();
+  }
+
+  getAlerts(): PriceAlertOptions[] {
+    return this.alertManager.getAlerts();
+  }
+
+  addPositionLine(options: PositionLineOptions): string {
+    const id = options.id ?? `position-${++this.positionLineCounter}`;
+    this.addAnnotation(buildPositionLineAnnotation(options, id));
+    return id;
   }
 
   setDrawingMode(mode: import("../../plugins/drawing-tools").DrawingMode): void {
