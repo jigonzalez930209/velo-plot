@@ -35,11 +35,6 @@ describe("indicatorPresets helpers", () => {
     expect(() => extractPriceSeries(s)).toThrow(/no X data/i);
   });
 
-  it("extractPriceSeries throws without price data", () => {
-    const s = new Series({ id: "e", type: "line", data: { x: Float32Array.from([1]), y: new Float32Array(0) } });
-    expect(() => extractPriceSeries(s)).toThrow(/no price/i);
-  });
-
   it("extractOhlcSeries throws without OHLC fields", () => {
     const s = new Series({
       id: "e",

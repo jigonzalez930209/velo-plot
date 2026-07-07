@@ -40,4 +40,18 @@ describe("applyTimeScale", () => {
     expect(label).toBeTruthy();
     expect(label).not.toMatch(/^0$/);
   });
+
+  it("formatBusinessDayTick returns null for out-of-range index", () => {
+    const times = Float64Array.from([Date.UTC(2024, 0, 5)]);
+    const { mapping } = applyBusinessDayX(times, {
+      type: "time",
+      timeScale: { calendar: "business-day" },
+    });
+    expect(formatBusinessDayTick(99, mapping)).toBeNull();
+  });
+
+  it("isBusinessDayScaleActive defaults to business-day when calendar omitted", () => {
+    expect(isBusinessDayScaleActive({ type: "time" })).toBe(true);
+    expect(isBusinessDayScaleActive({ type: "linear" } as any)).toBe(false);
+  });
 });
