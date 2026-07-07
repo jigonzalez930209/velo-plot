@@ -154,6 +154,54 @@ describe("stage1BrowserBench baseline", () => {
   it("SMOKE_FLOORS defines candlestick headless minimum", () => {
     expect(SMOKE_FLOORS["candlestick-500k"]).toBe(25);
   });
+
+  it("effectiveBenchmarkFps keeps wall clock when headless has enough frames", () => {
+    const result = {
+      avgFps: 45,
+      renderFps: 120,
+      minFps: 40,
+      maxFps: 50,
+      avgFrameTime: 22,
+      frameCount: 60,
+      duration: 2500,
+      pointsRendered: 1e6,
+      throughput: 45e6,
+    };
+    expect(effectiveBenchmarkFps(result, true)).toBe(45);
+  });
+
+  it("buildStage1Report aggregates scenario results", async () => {
+    const { buildStage1Report } = await import("./stage1BrowserBench");
+    const report = buildStage1Report([
+      { id: "a", benchmark: { avgFps: 50 } as any, passed: true, failures: [] },
+      { id: "b", benchmark: { avgFps: 40 } as any, passed: false, failures: ["slow"] },
+    ]);
+    expect(report.allPassed).toBe(false);
+    expect(report.scenarios).toHaveLength(2);
+    expect(report.version).toBeTruthy();
+  });
+
+  it("compareScenarioToBaseline passes unknown scenarios", async () => {
+    const { compareScenarioToBaseline } = await import("./stage1BrowserBench");
+    const check = compareScenarioToBaseline("unknown-scenario", { avgFps: 1 });
+    expect(check.passed).toBe(true);
+  });
+
+  it("compareScenarioToBaseline flags frame time regression", async () => {
+    const { compareScenarioToBaseline } = await import("./stage1BrowserBench");
+    const check = compareScenarioToBaseline("line-1m-pan", {
+      avgFps: 60,
+      minFps: 55,
+      maxFps: 65,
+      avgFrameTime: 50,
+      frameCount: 100,
+      duration: 3000,
+      pointsRendered: 1e6,
+      throughput: 60e6,
+    });
+    expect(check.passed).toBe(false);
+    expect(check.failures.some((f) => f.includes("Frame time"))).toBe(true);
+  });
 });
 
 describe("stacked chart overlay batching (1.12)", () => {

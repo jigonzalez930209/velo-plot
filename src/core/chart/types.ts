@@ -50,6 +50,8 @@ export interface Chart {
   addAlert(options: import("./ChartAlerts").PriceAlertOptions): string;
   removeAlert(id: string): boolean;
   clearAlerts(): void;
+  getAlerts(): import("./ChartAlerts").PriceAlertOptions[];
+  addPositionLine(options: import("./positionLines").PositionLineOptions): string;
   setDrawingMode(mode: import("../../plugins/drawing-tools").DrawingMode): void;
   zoom(options: ZoomOptions & { animate?: boolean }): void;
   /** Fit view to data; no-op when series have no valid bounds */

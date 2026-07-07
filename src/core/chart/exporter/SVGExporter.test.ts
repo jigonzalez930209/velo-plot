@@ -150,4 +150,85 @@ describe("exportToSVG", () => {
     expect(svg).not.toContain("<polyline");
     expect(svg).not.toContain("stroke-dasharray");
   });
+
+  it("renders step modes and area series", () => {
+    const before = exportWithSeries([
+      mockSeries(
+        "step",
+        { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
+        { color: "#0f0", stepMode: "before" },
+      ),
+    ]);
+    expect(before).toContain("<polyline");
+
+    const center = exportWithSeries([
+      mockSeries(
+        "step",
+        { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
+        { color: "#0f0", stepMode: "center" },
+      ),
+    ]);
+    expect(center).toContain("<polyline");
+
+    const area = exportWithSeries([
+      mockSeries(
+        "area",
+        { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
+        { color: "#aaf" },
+      ),
+    ]);
+    expect(area).toContain("<polygon");
+  });
+
+  it("throws when no Y scale is available", () => {
+    expect(() =>
+      exportToSVG(
+        [],
+        { xMin: 0, xMax: 1, yMin: 0, yMax: 1 },
+        { x: 0, y: 0, width: 100, height: 100 },
+        new LinearScale(),
+        new Map(),
+        theme,
+        100,
+        100,
+      ),
+    ).toThrow(/Y scale/i);
+  });
+
+  it("renders bearish candlesticks and hides tick labels when requested", () => {
+    const bear = exportWithSeries([
+      mockSeries(
+        "candlestick",
+        {
+          x: Float32Array.from([50]),
+          y: Float32Array.from([0]),
+          open: Float32Array.from([30]),
+          high: Float32Array.from([32]),
+          low: Float32Array.from([20]),
+          close: Float32Array.from([22]),
+        },
+        { barWidth: 10 },
+      ),
+    ]);
+    expect(bear).toContain("#ef5350");
+
+    const xScale = new LinearScale();
+    xScale.setDomain(0, 100);
+    xScale.setRange(60, 460);
+    const yScale = new LinearScale();
+    yScale.setDomain(0, 60);
+    yScale.setRange(280, 40);
+    const hidden = exportToSVG(
+      [mockSeries("line", { x: Float32Array.from([0, 50]), y: Float32Array.from([1, 2]) }, { color: "#fff" })],
+      { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
+      { x: 60, y: 40, width: 400, height: 240 },
+      xScale,
+      new Map([["default", yScale]]),
+      theme,
+      520,
+      320,
+      { xAxis: { tickCount: 4, showLabels: false }, yAxis: { tickCount: 4, showLabels: false } },
+    );
+    expect(hidden).not.toContain("<text");
+  });
 });

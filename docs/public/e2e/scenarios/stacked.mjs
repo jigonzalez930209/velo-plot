@@ -127,6 +127,27 @@ export const stackedScenarios = {
     stack.destroy();
   },
 
+  "stacked-addIndicator-stochastic": async (lib) => {
+    const stack = lib.createStackedChart({
+      container: hostEl(),
+      masterPaneId: "price",
+      panes: [
+        { id: "price", height: 0.7, series: [{ id: "candles", type: "candlestick", data: ohlcData(90) }] },
+      ],
+    });
+    await stack.whenReady();
+    const result = await stack.addIndicator("stochastic", {
+      pane: "new",
+      id: "stoch-pane",
+      sourceSeriesId: "candles",
+      period: 14,
+      signalPeriod: 3,
+    });
+    assert(result.paneId === "stoch-pane", "stochastic pane");
+    assert(stack.getPane("stoch-pane"), "stochastic pane exists");
+    stack.destroy();
+  },
+
   "stacked-export-image": async (lib) => {
     const stack = lib.createStackedChart({
       container: hostEl(),

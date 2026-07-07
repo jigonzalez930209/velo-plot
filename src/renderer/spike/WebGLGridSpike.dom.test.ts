@@ -84,4 +84,28 @@ describe("WebGLGridSpike (DOM)", () => {
     });
     expect(verts.length).toBe(0);
   });
+
+  it("throws when shader compile fails", () => {
+    const gl = createMockWebGL();
+    gl.getShaderParameter = vi.fn(() => false);
+    gl.getShaderInfoLog = vi.fn(() => "compile error");
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => gl as unknown as WebGLRenderingContext);
+    const canvas = document.createElement("canvas");
+    expect(() => new WebGLGridSpike(canvas)).toThrow(/compile/i);
+  });
+
+  it("throws when program link fails", () => {
+    const gl = createMockWebGL();
+    gl.getProgramParameter = vi.fn(() => false);
+    gl.getProgramInfoLog = vi.fn(() => "link error");
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => gl as unknown as WebGLRenderingContext);
+    const canvas = document.createElement("canvas");
+    expect(() => new WebGLGridSpike(canvas)).toThrow(/link/i);
+  });
+
+  it("throws when WebGL context is unavailable", () => {
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => null);
+    const canvas = document.createElement("canvas");
+    expect(() => new WebGLGridSpike(canvas)).toThrow(/WebGL not available/i);
+  });
 });

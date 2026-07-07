@@ -62,6 +62,7 @@ export default defineConfig({
             { text: "Multi-Pane Layouts", link: "/guide/multi-pane" },
             { text: "Series & Data", link: "/guide/series" },
             { text: "Integration Guide", link: "/guide/react" },
+            { text: "Migration v1 → v2", link: "/guide/migration-v2" },
           ],
         },
         {
@@ -160,6 +161,18 @@ export default defineConfig({
           ],
         },
         {
+          text: "Trading Experience (v2)",
+          items: [
+            { text: "Trading Bundle", link: "/api/trading-bundle" },
+            { text: "Business-Day Time Scale", link: "/api/trading-time-scale" },
+            { text: "addIndicator()", link: "/api/trading-indicators" },
+            { text: "Alerts & Position Lines", link: "/api/trading-alerts" },
+            { text: "Drawing Tools", link: "/api/plugin-drawing-tools" },
+            { text: "Bar Replay", link: "/api/plugin-replay" },
+            { text: "Datafeed Adapter", link: "/api/datafeed" },
+          ],
+        },
+        {
           text: "Ecosystem",
           items: [
             { text: "React Components", link: "/api/react-velo-plot" },
@@ -206,6 +219,22 @@ export default defineConfig({
             { text: "Step Charts", link: "/examples/step-charts" },
             { text: "Stacked Charts", link: "/examples/stacked-charts" },
             { text: "Multiple Y-Axes", link: "/examples/multiple-y-axes" },
+          ],
+        },
+        {
+          text: "Trading Experience (v2)",
+          items: [
+            { text: "Overview", link: "/examples/trading/" },
+            { text: "Trading Dashboard", link: "/examples/trading/dashboard" },
+            { text: "Session Time Scale", link: "/examples/trading/session" },
+            { text: "addIndicator()", link: "/examples/trading/indicators" },
+            { text: "Drawing Tools", link: "/examples/trading/drawing-tools" },
+            { text: "Heikin-Ashi", link: "/examples/trading/heikin-ashi" },
+            { text: "Hollow Candles", link: "/examples/trading/hollow-candles" },
+            { text: "Markers & Positions", link: "/examples/trading/markers-positions" },
+            { text: "Price Alerts", link: "/examples/trading/alerts" },
+            { text: "Bar Replay", link: "/examples/trading/replay" },
+            { text: "Mock Datafeed", link: "/examples/trading/datafeed" },
           ],
         },
         {
@@ -295,6 +324,24 @@ export default defineConfig({
             { text: "Lazy Loading", link: "/examples/lazy-load" },
             { text: "ROI Tools", link: "/examples/roi-tools" },
             { text: "Offscreen Rendering", link: "/examples/offscreen" },
+          ],
+        },
+      ],
+      "/examples/trading/": [
+        {
+          text: "Trading Experience (v2)",
+          items: [
+            { text: "Overview", link: "/examples/trading/" },
+            { text: "Trading Dashboard", link: "/examples/trading/dashboard" },
+            { text: "Session Time Scale", link: "/examples/trading/session" },
+            { text: "addIndicator()", link: "/examples/trading/indicators" },
+            { text: "Drawing Tools", link: "/examples/trading/drawing-tools" },
+            { text: "Heikin-Ashi", link: "/examples/trading/heikin-ashi" },
+            { text: "Hollow Candles", link: "/examples/trading/hollow-candles" },
+            { text: "Markers & Positions", link: "/examples/trading/markers-positions" },
+            { text: "Price Alerts", link: "/examples/trading/alerts" },
+            { text: "Bar Replay", link: "/examples/trading/replay" },
+            { text: "Mock Datafeed", link: "/examples/trading/datafeed" },
           ],
         },
       ],

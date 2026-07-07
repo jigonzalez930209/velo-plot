@@ -30,6 +30,16 @@ import OffscreenDemo from "./demos/OffscreenDemo.vue";
 import ForecastingDemo from "./demos/ForecastingDemo.vue";
 import InvertedAxisDemo from "./demos/InvertedAxisDemo.vue";
 import PaneStackDemo from "./demos/PaneStackDemo.vue";
+import TradingDashboardDemo from "./demos/trading/TradingDashboardDemo.vue";
+import TradingSessionDemo from "./demos/trading/TradingSessionDemo.vue";
+import TradingIndicatorsDemo from "./demos/trading/TradingIndicatorsDemo.vue";
+import TradingDrawingToolsDemo from "./demos/trading/TradingDrawingToolsDemo.vue";
+import TradingHeikinAshiDemo from "./demos/trading/TradingHeikinAshiDemo.vue";
+import TradingHollowCandlesDemo from "./demos/trading/TradingHollowCandlesDemo.vue";
+import TradingMarkersPositionsDemo from "./demos/trading/TradingMarkersPositionsDemo.vue";
+import TradingAlertsDemo from "./demos/trading/TradingAlertsDemo.vue";
+import TradingReplayDemo from "./demos/trading/TradingReplayDemo.vue";
+import TradingDatafeedDemo from "./demos/trading/TradingDatafeedDemo.vue";
 // import ContextMenu from "./components/ContextMenu.vue";
 import './custom.css'
 
@@ -68,6 +78,16 @@ export default {
     app.component('ForecastingDemo', ForecastingDemo)
     app.component('InvertedAxisDemo', InvertedAxisDemo)
     app.component('PaneStackDemo', PaneStackDemo)
+    app.component('TradingDashboardDemo', TradingDashboardDemo)
+    app.component('TradingSessionDemo', TradingSessionDemo)
+    app.component('TradingIndicatorsDemo', TradingIndicatorsDemo)
+    app.component('TradingDrawingToolsDemo', TradingDrawingToolsDemo)
+    app.component('TradingHeikinAshiDemo', TradingHeikinAshiDemo)
+    app.component('TradingHollowCandlesDemo', TradingHollowCandlesDemo)
+    app.component('TradingMarkersPositionsDemo', TradingMarkersPositionsDemo)
+    app.component('TradingAlertsDemo', TradingAlertsDemo)
+    app.component('TradingReplayDemo', TradingReplayDemo)
+    app.component('TradingDatafeedDemo', TradingDatafeedDemo)
     // app.component('ContextMenu', ContextMenu)
   }
 }

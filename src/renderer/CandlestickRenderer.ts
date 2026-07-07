@@ -25,6 +25,7 @@ export function interleaveCandlestickData(
   const halfWick = wickWidth / 2;
 
   for (let i = 0; i < n; i++) {
+    if (!Number.isFinite(x[i])) continue;
     const isBullish = close[i] >= open[i];
     const target = isBullish ? bullishBody : bearishBody;
     

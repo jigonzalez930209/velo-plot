@@ -25,6 +25,7 @@ describe("candlestickMarkers", () => {
   it("resolveMarkerY respects position", () => {
     expect(resolveMarkerY("aboveBar", 12, 8, 10)).toBe(12);
     expect(resolveMarkerY("belowBar", 12, 8, 10)).toBe(8);
+    expect(resolveMarkerY("inBar", 12, 8, 10)).toBe(10);
   });
 });
 
@@ -74,6 +75,50 @@ describe("ChartAlertManager", () => {
     expect(mgr.removeAlert(id)).toBe(true);
     mgr.addAlert({ price: 60, direction: "below" });
     mgr.clearAlerts();
+    expect(mgr.getAlerts()).toHaveLength(0);
+  });
+
+  it("uses custom alert id and repeats when once is false", () => {
+    const emit = vi.fn();
+    const mgr = new ChartAlertManager({ emit } as any, () => seriesFactory([101, 102]));
+    mgr.addAlert({ id: "custom", price: 100, direction: "above", once: false });
+    mgr.evaluate();
+    mgr.evaluate();
+    expect(emit).toHaveBeenCalledTimes(2);
+    expect(mgr.getAlerts()).toHaveLength(1);
+  });
+
+  it("skips evaluation when series or prices are missing", () => {
+    const emit = vi.fn();
+    const mgr = new ChartAlertManager({ emit } as any, () => undefined);
+    mgr.addAlert({ price: 1, direction: "above" });
+    mgr.evaluate();
+    expect(emit).not.toHaveBeenCalled();
+
+    const empty = {
+      getId: () => "e",
+      getData: () => ({ x: new Float32Array(0), y: new Float32Array(0) }),
+    };
+    const mgr2 = new ChartAlertManager({ emit } as any, () => empty);
+    mgr2.addAlert({ price: 1, direction: "below" });
+    mgr2.evaluate();
+    expect(emit).not.toHaveBeenCalled();
+  });
+
+  it("emits cross alert when price crosses downward", () => {
+    const events: unknown[] = [];
+    const mgr = new ChartAlertManager({ emit: (_: string, e: unknown) => events.push(e) } as any, () =>
+      seriesFactory([102, 98]),
+    );
+    mgr.addAlert({ price: 100, direction: "cross" });
+    mgr.evaluate();
+    expect(events.length).toBe(1);
+  });
+
+  it("destroy clears pending alerts", () => {
+    const mgr = new ChartAlertManager({ emit: vi.fn() } as any, () => seriesFactory([100]));
+    mgr.addAlert({ price: 1, direction: "above" });
+    mgr.destroy();
     expect(mgr.getAlerts()).toHaveLength(0);
   });
 });

@@ -14,7 +14,20 @@ describe("buildIndicatorSeries", () => {
     const ids = series.map((s) => s.id);
     expect(ids).toContain("macd-hist-pos");
     expect(ids).toContain("macd-hist-neg");
-    expect(ids).toContain("macd-baseline");
+    expect(ids).not.toContain("macd-baseline");
+  });
+
+  it("renders baseline only when explicitly set", () => {
+    const series = buildIndicatorSeries({
+      id: "macd",
+      type: "indicator",
+      data: {
+        x: new Float32Array([1, 2, 3]),
+        histogram: { y: new Float32Array([2, -1, 3]) },
+        baseline: 0,
+      },
+    });
+    expect(series.map((s) => s.id)).toContain("macd-baseline");
   });
 
   it("includes lines, fills, and markers", () => {
@@ -93,5 +106,27 @@ describe("detectIndicatorMarkers", () => {
     const y = new Float32Array([0, 2, 5, 2, 0]);
     const markers = detectIndicatorMarkers(x, y, 1);
     expect(markers.some((m) => m.kind === "peak" && m.x === 2)).toBe(true);
+  });
+
+  it("finds local troughs", () => {
+    const x = new Float32Array([0, 1, 2, 3, 4]);
+    const y = new Float32Array([5, 2, 0, 2, 5]);
+    const markers = detectIndicatorMarkers(x, y, 1);
+    expect(markers.some((m) => m.kind === "trough" && m.x === 2)).toBe(true);
+  });
+
+  it("renders trough marker series and default reference line styles", () => {
+    const series = buildIndicatorSeries({
+      id: "m",
+      type: "indicator",
+      data: {
+        x: new Float32Array([0, 1, 2]),
+        lines: [{ y: new Float32Array([1, 2, 1]) }],
+        markers: [{ x: 1, y: 2, kind: "trough" }],
+        referenceLines: [{ y: 50 }],
+      },
+    });
+    expect(series.some((s) => s.id === "m-troughs")).toBe(true);
+    expect(series.some((s) => s.id === "m-ref-0")).toBe(true);
   });
 });

@@ -1,10 +1,5 @@
 import { test } from "@playwright/test";
 import { scenarioTest } from "../helpers/run-scenario";
+import { UTILITY_SCENARIOS } from "../scenario-ids";
 
-const UTILITY_SCENARIOS = [
-  "util-scales-linear-log",
-  "util-chart-group-sync",
-  "util-indicator-build-pane",
-];
-
-scenarioTest(test, UTILITY_SCENARIOS);
+scenarioTest(test, [...UTILITY_SCENARIOS]);

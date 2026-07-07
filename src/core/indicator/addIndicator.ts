@@ -58,7 +58,7 @@ export async function computeIndicatorFromSeries(
 ): Promise<ComputedIndicatorPreset> {
   const source = resolveSourceSeries(chart, options.sourceSeriesId);
   const { x, prices } = extractPriceSeries(source);
-  return computeIndicatorPreset(preset, x, prices, options);
+  return computeIndicatorPreset(preset, x, prices, options, source);
 }
 
 /**
@@ -117,8 +117,9 @@ export async function buildIndicatorPaneFromPreset(
       BuildIndicatorPaneOptions,
       "id" | "height" | "label" | "yRange" | "tickCount" | "showXAxis" | "seriesId" | "style"
     >,
+  source?: import("../Series").Series,
 ): Promise<StackedPaneConfig> {
-  const computed = await computeIndicatorPreset(preset, x, prices, options);
+  const computed = await computeIndicatorPreset(preset, x, prices, options, source);
   return buildIndicatorPane({
     id: options.id ?? computed.id,
     height: options.height ?? 0.25,

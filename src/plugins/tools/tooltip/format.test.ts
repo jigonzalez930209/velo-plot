@@ -125,7 +125,31 @@ describe("tooltip format", () => {
       };
       expect(formatCrosshairY(0.005, data)).toBe("0.005000");
       expect(formatCrosshairY(42.5, data)).toBe("42.500");
+      expect(formatCrosshairY(0, data)).toBe("0");
+      expect(formatCrosshairY(15000, data)).toMatch(/e/i);
       expect(formatCrosshairY(null as unknown as number, data)).toBe("N/A");
+    });
+
+    it("formatDataPointY without axis uses fallback tiers", () => {
+      expect(formatDataPointY(baseDataPoint({ dataY: 0 }))).toBe("0");
+      expect(formatDataPointY(baseDataPoint({ dataY: 0.5 }))).toBe("0.5000");
+      expect(formatDataPointY(baseDataPoint({ dataY: 99999 }))).toMatch(/e/i);
+    });
+
+    it("formatCrosshairX without axis uses exponential fallback", () => {
+      const data: CrosshairTooltip = {
+        type: "crosshair",
+        cursorX: 0,
+        cursorY: 0,
+        dataX: 15000,
+        interpolatedValues: [],
+      };
+      expect(formatCrosshairX(data)).toMatch(/e/i);
+    });
+
+    it("formatCompactValue handles micro and sub-nano prefixes", () => {
+      expect(formatCompactValue(baseDataPoint({ dataY: 0.0005 }), "y")).toBe("500.0µ");
+      expect(formatCompactValue(baseDataPoint({ dataY: 5e-10 }), "y")).toMatch(/e/i);
     });
   });
 });

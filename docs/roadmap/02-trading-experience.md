@@ -59,7 +59,7 @@ Bring velo-plot to **professional trading dashboard** parity with libraries like
 | 2.1 | `TimeScale` module | P0 | Very High | New `src/core/time/TimeScale.ts` with business-day gaps, session hours, timezone |
 | 2.2 | Integrate TimeScale with axis formatting | P0 | High | `xAxis.timeScale: { type: 'business-day', session: 'NYSE', timezone: 'America/New_York' }` |
 | 2.3 | Candlestick index → timestamp mapping | P0 | Medium | OHLC data can use logical index or timestamp; gaps render correctly |
-| 2.4 | Docs + example: trading session chart | P0 | Low | `docs/examples/trading-session.md` |
+| 2.4 | Docs + example: trading session chart | P0 | Low | `docs/examples/trading/session.md` |
 
 ### P0 — High-level indicator API
 
@@ -151,15 +151,16 @@ stack.getChart('price').on('alert', (e) => console.log(e))
 
 ---
 
-## Exit checklist (v2.1.0)
+## Exit checklist (v2.0.0)
 
-- [ ] Business-day time scale with at least one market session preset
-- [ ] `addIndicator()` for RSI, MACD, Bollinger, EMA, SMA
-- [ ] Drawing tools: trendline, horizontal, rectangle + undo/redo
-- [ ] Trade markers on candlestick series
-- [ ] Replay plugin MVP (play/pause/step)
-- [ ] Price alert events
-- [ ] Heikin-Ashi or hollow candles (at least one)
-- [ ] Trading example app in docs (price + volume + RSI + MACD)
-- [ ] `velo-plot/trading` bundle exported and documented
-- [ ] Migration guide v1.x → v2.0 published
+- [x] Business-day time scale with at least one market session preset
+- [x] `addIndicator()` for RSI, MACD, Bollinger, EMA, SMA, Stochastic
+- [x] Drawing tools: trendline, horizontal, rectangle, fibonacci + undo/redo
+- [x] Trade markers on candlestick series
+- [x] Replay plugin MVP (play/pause/step)
+- [x] Price alert events
+- [x] Heikin-Ashi and hollow candles
+- [x] Trading example app in docs (price + volume + RSI + MACD)
+- [x] `velo-plot/trading` bundle exported and documented
+- [x] Migration guide v1.x → v2.0 published
+- [x] Dedicated API + example page per Stage 2 feature

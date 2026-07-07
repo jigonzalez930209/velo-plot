@@ -77,6 +77,22 @@ await stack.whenReady();
 stack.fitAll();
 ```
 
+## addIndicator (Stage 2)
+
+Append indicator panes or overlays without manual `buildIndicatorPane` wiring:
+
+```typescript
+import { createStackedChart } from 'velo-plot/trading'
+
+const stack = createStackedChart({ container, panes: [pricePane, volumePane] })
+
+await stack.addIndicator('rsi', { period: 14, pane: 'new' })
+await stack.addIndicator('macd', { pane: 'new' })
+await stack.addIndicator('bollinger', { period: 20, sourceSeriesId: 'ohlc' }) // overlay on price
+```
+
+See [High-level Indicators](/api/trading-indicators) and [Trading Dashboard example](/examples/trading/dashboard).
+
 ## Options
 
 ### StackedChartOptions

@@ -58,4 +58,20 @@ describe("calculateForecast", () => {
     expect(result.yValues).toHaveLength(4);
     expect(result.method).toBe("holtWinters");
   });
+
+  it("throws for unsupported forecast method", () => {
+    expect(() => calculateForecast(x, y, "arima" as any, 2)).toThrow(/not implemented/i);
+  });
+
+  it("holtWinters falls back to Holt when history is shorter than two seasons", () => {
+    const shortX = [0, 1, 2, 3, 4];
+    const shortY = [10, 11, 12, 13, 14];
+    const result = calculateForecast(shortX, shortY, "holtWinters", 2, {
+      period: 4,
+      alpha: 0.3,
+      beta: 0.1,
+      gamma: 0.2,
+    });
+    expect(result.yValues).toHaveLength(2);
+  });
 });

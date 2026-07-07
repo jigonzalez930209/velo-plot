@@ -15,9 +15,9 @@ export interface TimeScaleOptions {
 
 export interface BusinessDayMapping {
   /** X values for chart (consecutive indices on business days) */
-  scaledX: Float32Array;
+  scaledX: Float64Array;
   /** Original timestamp per scaled index (for tooltips / ticks) */
-  timeByIndex: Float32Array;
+  timeByIndex: Float64Array;
   /** Original index → scaled index (-1 if skipped) */
   sourceToScaled: Int32Array;
 }
@@ -45,7 +45,7 @@ export function mapToBusinessDayScale(
 ): BusinessDayMapping {
   const calendar = opts.calendar ?? "business-day";
   const n = times.length;
-  const scaledX = new Float32Array(n);
+  const scaledX = new Float64Array(n);
   const sourceToScaled = new Int32Array(n);
   sourceToScaled.fill(-1);
 
@@ -56,7 +56,7 @@ export function mapToBusinessDayScale(
     }
     return {
       scaledX,
-      timeByIndex: times instanceof Float32Array ? times : Float32Array.from(times),
+      timeByIndex: times instanceof Float64Array ? times : Float64Array.from(times),
       sourceToScaled,
     };
   }
@@ -77,7 +77,7 @@ export function mapToBusinessDayScale(
 
   return {
     scaledX,
-    timeByIndex: Float32Array.from(timeByIndex),
+    timeByIndex: Float64Array.from(timeByIndex),
     sourceToScaled,
   };
 }

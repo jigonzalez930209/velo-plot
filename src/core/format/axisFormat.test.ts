@@ -8,6 +8,7 @@ import {
   formatTooltipX,
   formatTooltipY,
 } from "./axisFormat";
+import { mapToBusinessDayScale } from "../time/TimeScale";
 
 describe("axisFormat", () => {
   describe("formatYTickValue", () => {
@@ -58,6 +59,20 @@ describe("axisFormat", () => {
     it("formatTimeTick produces non-numeric output", () => {
       const label = formatTimeTick(Date.UTC(2024, 0, 1));
       expect(Number.isNaN(Number(label))).toBe(true);
+    });
+
+    it("uses business-day mapping for logical tick indices", () => {
+      const times = Float64Array.from([Date.UTC(2024, 0, 5), Date.UTC(2024, 0, 8)]);
+      const mapping = mapToBusinessDayScale(times, { calendar: "business-day" });
+      const label = formatXTickValue(0, { type: "time" }, undefined, mapping);
+      expect(label).not.toMatch(/^0$/);
+      expect(label.length).toBeGreaterThan(4);
+    });
+
+    it("returns empty string for out-of-range business-day tick index", () => {
+      const times = Float64Array.from([Date.UTC(2024, 0, 5)]);
+      const mapping = mapToBusinessDayScale(times, { calendar: "business-day" });
+      expect(formatXTickValue(99, { type: "time" }, undefined, mapping)).toBe("");
     });
   });
 

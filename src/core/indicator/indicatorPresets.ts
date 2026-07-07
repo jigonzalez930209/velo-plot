@@ -11,6 +11,7 @@ import {
   emaAsync,
   smaAsync,
 } from "../../workers/indicatorsAsync";
+import { stochastic } from "../../plugins/analysis/indicators";
 import type { Series } from "../Series";
 
 export type IndicatorPresetName =
@@ -19,7 +20,8 @@ export type IndicatorPresetName =
   | "bollinger"
   | "bollingerBands"
   | "ema"
-  | "sma";
+  | "sma"
+  | "stochastic";
 
 export interface IndicatorPresetOptions {
   period?: number;
@@ -77,6 +79,29 @@ export function extractPriceSeries(source: Series): {
   return { x, prices };
 }
 
+/** Extract OHLC from candlestick series for stochastic and similar presets. */
+export function extractOhlcSeries(source: Series): {
+  x: Float32Array | Float64Array;
+  open: Float32Array | Float64Array;
+  high: Float32Array | Float64Array;
+  low: Float32Array | Float64Array;
+  close: Float32Array | Float64Array;
+} {
+  const data = source.getData();
+  const x = data.x;
+  if (!x?.length) {
+    throw new Error("[addIndicator] Source series has no X data");
+  }
+  const open = data.open ?? data.y;
+  const high = data.high ?? data.y;
+  const low = data.low ?? data.y;
+  const close = data.close ?? data.y;
+  if (!open?.length || !high?.length || !low?.length || !close?.length) {
+    throw new Error("[addIndicator] Source series has no OHLC data — use candlestick");
+  }
+  return { x, open, high, low, close };
+}
+
 /** Resolve source series from chart API surface. */
 export function resolveSourceSeries(
   chart: { getSeries(id: string): Series | undefined; getAllSeries(): Series[] },
@@ -107,6 +132,7 @@ export async function computeIndicatorPreset(
   x: Float32Array | Float64Array,
   prices: Float32Array | Float64Array,
   options: IndicatorPresetOptions = {},
+  source?: Series,
 ): Promise<ComputedIndicatorPreset> {
   const kind = normalizePreset(preset);
   const id = options.id ?? kind;
@@ -206,6 +232,33 @@ export async function computeIndicatorPreset(
         data: {
           x: xArr,
           lines: [{ id: "sma", y: values, color: "#4fc3f7", width: 1.5 }],
+        },
+      };
+    }
+
+    case "stochastic": {
+      if (!source) {
+        throw new Error("[addIndicator] stochastic requires a candlestick source series");
+      }
+      const ohlc = extractOhlcSeries(source);
+      const kPeriod = options.period ?? 14;
+      const dPeriod = options.signalPeriod ?? 3;
+      const result = stochastic(ohlc, kPeriod, dPeriod);
+      return {
+        id,
+        preset: "stochastic",
+        placement: "oscillator",
+        yRange: [0, 100],
+        data: {
+          x: xArr,
+          lines: [
+            { id: "k", y: result.values, color: "#42a5f5", width: 1.5 },
+            { id: "d", y: result.signal ?? result.values, color: "#ff9800", width: 1 },
+          ],
+          referenceLines: [
+            { y: 80, color: "rgba(239, 83, 80, 0.5)", dash: [4, 4] },
+            { y: 20, color: "rgba(38, 166, 154, 0.5)", dash: [4, 4] },
+          ],
         },
       };
     }

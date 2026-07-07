@@ -120,6 +120,24 @@ describe("autoScaleYOnly", () => {
     expect(ctx.viewBounds.yMin).toBeLessThan(2);
     expect(ctx.viewBounds.yMax).toBeGreaterThan(8);
   });
+
+  it("autoScaleYOnly skips axes with auto disabled", () => {
+    const setDomain = vi.fn();
+    const ctx = createScalingCtx({
+      yAxisOptionsMap: new Map([["default", { auto: false }]]),
+      yScales: new Map([["default", { setDomain, domain: [0, 50] as [number, number] }]]),
+    });
+    ctx.series.set("s1", mockSeries({ xMin: 0, xMax: 10, yMin: 1, yMax: 9 }));
+    autoScaleYOnly(ctx);
+    expect(setDomain).not.toHaveBeenCalled();
+  });
+
+  it("fitToData handles near-flat Y range from series", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("flat", mockSeries({ xMin: 0, xMax: 10, yMin: 5, yMax: 5.001 }));
+    expect(fitToData(ctx)).toBe(true);
+    expect(ctx.viewBounds.yMax).toBeGreaterThan(ctx.viewBounds.yMin);
+  });
 });
 
 describe("handleBoxZoom", () => {
@@ -144,6 +162,20 @@ describe("handleBoxZoom", () => {
     const zoom = vi.fn();
     handleBoxZoom(ctx, null, { x: 0, y: 0, width: 2, height: 2 }, zoom);
     expect(zoom).not.toHaveBeenCalled();
+  });
+
+  it("fitToData supports asymmetric padding object", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("s1", mockSeries({ xMin: 0, xMax: 100, yMin: 0, yMax: 50 }));
+    expect(fitToData(ctx, { padding: { x: 0, y: 0 } })).toBe(true);
+    expect(ctx.viewBounds.xMin).toBe(0);
+    expect(ctx.viewBounds.yMin).toBe(0);
+  });
+
+  it("fitToData skips series with non-finite bounds", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("bad", mockSeries({ xMin: NaN, xMax: 100, yMin: 0, yMax: 50 }));
+    expect(fitToData(ctx)).toBe(false);
   });
 
   it("returns selection rect while dragging", () => {

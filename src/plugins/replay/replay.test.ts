@@ -82,4 +82,36 @@ describe("PluginReplay", () => {
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });
+
+  it("onDestroy pauses playback and clears buffer", () => {
+    const plugin = PluginReplay({ seriesId: "candles", frameMs: 100 });
+    const { ctx } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as ReplayAPI;
+    api.play(1);
+    plugin.onDestroy!();
+    expect(api.isPlaying()).toBe(false);
+    expect(api.getLength()).toBe(0);
+  });
+
+  it("replays line series using y values only", () => {
+    const updateSeries = vi.fn();
+    const chart = {
+      getSeries: () => ({
+        getData: () => ({
+          x: Float32Array.from([0, 1, 2]),
+          y: Float32Array.from([10, 11, 12]),
+        }),
+      }),
+      updateSeries,
+    };
+    const plugin = PluginReplay({ seriesId: "line" });
+    plugin.onInit!({ chart } as unknown as PluginContext);
+    const api = plugin.api as ReplayAPI;
+    api.seek(1);
+    expect(updateSeries).toHaveBeenCalledWith(
+      "line",
+      expect.objectContaining({ y: expect.any(Float32Array) }),
+    );
+  });
 });

@@ -749,7 +749,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
         slowPeriod: opts.slowPeriod,
         signalPeriod: opts.signalPeriod,
         stdDev: opts.stdDev,
-      });
+      }, source);
 
       const chart = mountPane(paneConfig);
       return {

@@ -376,9 +376,50 @@ describe("ChartGroup selection sync", () => {
 
     expect(chartB.clearSelection).toHaveBeenCalled();
   });
+
+  it("falls back to getSelectedPoints when event payload is empty", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const selected = [{ seriesId: "s", indices: [1, 2] }];
+    const chartA = {
+      ...createMockChart("a", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }, handlers),
+      selectPoints: vi.fn(),
+      getSelectedPoints: vi.fn(() => selected),
+    };
+    const chartB = {
+      ...createMockChart("b", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }, handlers),
+      selectPoints: vi.fn(),
+    };
+
+    const group = new ChartGroup({ syncSelection: true, axis: "x" });
+    group.addAll(chartA, chartB);
+
+    chartA.emit("selectionChange", {});
+    expect(chartB.selectPoints).toHaveBeenCalledWith(selected);
+  });
 });
 
 describe("ChartGroup helpers and cursor sync", () => {
+  let rafCallbacks: FrameRequestCallback[] = [];
+
+  beforeEach(() => {
+    rafCallbacks = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      rafCallbacks.push(cb);
+      return rafCallbacks.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function flushRaf() {
+    const pending = [...rafCallbacks];
+    rafCallbacks = [];
+    pending.forEach((cb) => cb(0));
+  }
+
   it("createChartGroup and linkCharts register charts", () => {
     const a = createMockChart("a", { xMin: 0, xMax: 1, yMin: 0, yMax: 1 });
     const b = createMockChart("b", { xMin: 0, xMax: 1, yMin: 0, yMax: 1 });
@@ -445,5 +486,79 @@ describe("ChartGroup helpers and cursor sync", () => {
     expect(b.zoom).toHaveBeenCalledWith(
       expect.objectContaining({ x: [5, 95], y: [1, 9], animate: false }),
     );
+  });
+
+  it("ignores zoom with invalid x span", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", { xMin: 0, xMax: 100, yMin: 0, yMax: 50 }, handlers);
+    const b = createMockChart("b", { xMin: 0, xMax: 100, yMin: 0, yMax: 10 }, handlers);
+    const group = new ChartGroup({ axis: "x" });
+    group.addAll(a, b);
+    a.emit("zoom", { x: [10, 10] as [number, number], y: [0, 50] as [number, number] });
+    flushRaf();
+    expect(b.zoom).not.toHaveBeenCalled();
+  });
+
+  it("master-only mode blocks slave zoom propagation", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const master = createMockChart("master", { xMin: 0, xMax: 100, yMin: 0, yMax: 50 }, handlers);
+    const slave = createMockChart("slave", { xMin: 0, xMax: 100, yMin: 0, yMax: 10 }, handlers);
+    const group = new ChartGroup({ axis: "x", masterId: "master", bidirectional: false });
+    group.addAll(master, slave);
+    slave.emit("zoom", { x: [1, 2] as [number, number], y: [0, 1] as [number, number] });
+    flushRaf();
+    expect(master.zoom).not.toHaveBeenCalled();
+    master.emit("zoom", { x: [10, 90] as [number, number], y: [0, 50] as [number, number] });
+    flushRaf();
+    expect(slave.zoom).toHaveBeenCalled();
+  });
+
+  it("propagates pan on y-only axis sync", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", { xMin: 0, xMax: 10, yMin: 0, yMax: 100 }, handlers);
+    const b = createMockChart("b", { xMin: 0, xMax: 10, yMin: 0, yMax: 50 }, handlers);
+    const group = new ChartGroup({ axis: "y", syncPan: true });
+    group.addAll(a, b);
+    a.emit("pan", { deltaX: 5, deltaY: -3 });
+    flushRaf();
+    expect(b.zoom).toHaveBeenCalledWith(
+      expect.objectContaining({ y: [0, 100], animate: false }),
+    );
+  });
+
+  it("bidirectional false without master allows both charts to sync zoom", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", { xMin: 0, xMax: 100, yMin: 0, yMax: 50 }, handlers);
+    const b = createMockChart("b", { xMin: 0, xMax: 100, yMin: 0, yMax: 10 }, handlers);
+    const group = new ChartGroup({ axis: "x", bidirectional: false });
+    group.addAll(a, b);
+    b.emit("zoom", { x: [5, 95] as [number, number], y: [0, 10] as [number, number] });
+    flushRaf();
+    expect(a.zoom).toHaveBeenCalled();
+  });
+
+  it("batch, clearAllSelections, resetAll, and has work", () => {
+    const a = createMockChart("a", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 });
+    const b = {
+      ...createMockChart("b", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }),
+      clearSelection: vi.fn(),
+      fit: vi.fn(),
+    };
+    const group = new ChartGroup();
+    group.addAll(a, b);
+    expect(group.has(a)).toBe(true);
+    const result = group.batch(() => 42);
+    expect(result).toBe(42);
+    group.clearAllSelections();
+    expect(b.clearSelection).toHaveBeenCalled();
+    group.resetAll();
+    expect(b.fit).toHaveBeenCalled();
+    group.remove({ getId: () => "missing" } as any);
+    expect(group.size()).toBe(2);
+  });
+
+  it("syncZoom no-ops when state unchanged", () => {
+    const group = new ChartGroup({ syncZoom: true });
+    expect(group.syncZoom(true)).toBe(group);
   });
 });

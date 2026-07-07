@@ -258,8 +258,8 @@ export function buildIndicatorSeries(options: IndicatorSeriesOptions): SeriesOpt
     }
   }
 
-  const baseline = data.baseline ?? 0;
-  if (n >= 2) {
+  if (data.baseline !== undefined && n >= 2) {
+    const baseline = data.baseline;
     out.push({
       id: `${id}-baseline`,
       type: "line",

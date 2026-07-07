@@ -2,6 +2,8 @@
  * Shared axis tick and tooltip value formatting.
  */
 import type { AxisOptions } from "../../types";
+import type { BusinessDayMapping } from "../time/TimeScale";
+import { formatBusinessDayTick } from "../time/applyTimeScale";
 
 const PREFIXDivisors: Record<string, number> = {
   n: 1e-9,
@@ -82,7 +84,13 @@ export function formatXTickValue(
   value: number,
   options?: AxisOptions,
   domainSpan?: number,
+  businessDayMapping?: BusinessDayMapping | null,
 ): string {
+  if (options?.type === "time" && businessDayMapping) {
+    const label = formatBusinessDayTick(value, businessDayMapping);
+    if (label) return label;
+    return "";
+  }
   if (options?.type === "time") {
     return formatTimeTick(value, domainSpan);
   }

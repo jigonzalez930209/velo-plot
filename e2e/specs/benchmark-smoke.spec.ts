@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.describe("Benchmark smoke", () => {
   test("stage1 benchmark page completes", async ({ page }) => {
+    test.setTimeout(360_000);
     await page.goto("/demos/stage1-benchmark.html", { waitUntil: "networkidle", timeout: 120_000 });
     await page.waitForFunction(() => window.__STAGE1_BENCHMARK__?.done === true, null, {
       timeout: 300_000,

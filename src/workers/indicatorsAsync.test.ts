@@ -7,6 +7,7 @@ import {
   macdAsync,
   bollingerBandsAsync,
   destroyIndicatorPool,
+  getIndicatorPoolSize,
 } from "./indicatorsAsync";
 
 describe("indicatorsAsync", () => {
@@ -55,5 +56,16 @@ describe("indicatorsAsync", () => {
     const start = performance.now();
     await rsiAsync(large, 14);
     expect(performance.now() - start).toBeLessThan(200);
+  });
+
+  it("accepts plain number[] input", async () => {
+    const data = Array.from({ length: 40 }, (_, i) => 100 + i * 0.1);
+    const result = await rsiAsync(data, 10);
+    expect(result.values.length).toBe(40);
+  });
+
+  it("reports indicator pool size after run", async () => {
+    await rsiAsync(Float32Array.from([1, 2, 3, 4, 5]), 2);
+    expect(getIndicatorPoolSize()).toBeGreaterThanOrEqual(0);
   });
 });

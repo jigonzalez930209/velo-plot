@@ -104,6 +104,7 @@ const stack = createStackedChart({
 | `macd` | oscillator pane | Histogram + MACD + signal |
 | `bollinger` | price overlay | Band fill + middle line |
 | `ema`, `sma` | price overlay | Single line on source series Y axis |
+| `stochastic` | oscillator pane | %K / %D lines with overbought/oversold refs |
 
 Calculations use the Stage 1 worker pool when available (`indicatorsAsync`).
 
@@ -155,7 +156,7 @@ for (const s of series) chart.addSeries(s);
 | `lines` | line series | One or more indicator lines |
 | `fills` | band series | Upper/lower envelope shading |
 | `markers` | scatter series | Peak/trough markers |
-| `baseline` | dashed line | Reference at Y (default `0`) |
+| `baseline` | dashed line | Optional reference at Y (e.g. `0` for MACD histogram) |
 | `referenceLines` | horizontal lines | Fixed Y levels (overbought, etc.) |
 
 ### Histogram

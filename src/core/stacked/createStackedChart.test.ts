@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { createStackedChart } from "./createStackedChart";
 import { STACKED_MAX_PANES } from "./types";
 
 describe("createStackedChart", () => {
@@ -6,16 +7,14 @@ describe("createStackedChart", () => {
     expect(STACKED_MAX_PANES).toBe(5);
   });
 
-  it("rejects empty pane list", async () => {
-    const { createStackedChart } = await import("./createStackedChart");
+  it("rejects empty pane list", () => {
     const container = { replaceChildren: () => {} } as unknown as HTMLDivElement;
     expect(() =>
       createStackedChart({ container, panes: [] }),
     ).toThrow(/1–5/);
   });
 
-  it("rejects more than 5 panes", async () => {
-    const { createStackedChart } = await import("./createStackedChart");
+  it("rejects more than 5 panes", () => {
     const container = { replaceChildren: () => {} } as unknown as HTMLDivElement;
     const panes = Array.from({ length: 6 }, (_, i) => ({
       id: `p${i}`,

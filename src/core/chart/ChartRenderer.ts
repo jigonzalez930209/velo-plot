@@ -45,6 +45,8 @@ export interface RenderContext {
   hoveredSeriesId: string | null;
   layout: import("../layout").LayoutOptions;
   latexAPI?: any;
+  getBusinessDayMapping?: () => import("../time/TimeScale").BusinessDayMapping | null;
+  getAlerts?: () => Array<{ price: number; direction?: string }>;
 }
 
 function setAxisRangeForRender(
@@ -428,6 +430,8 @@ export function renderOverlay(
 
   const isSpecialChart = hasPolarSeries || hasGaugeSeries || hasSankeySeries;
 
+  ctx.overlay.setBusinessDayMapping(ctx.getBusinessDayMapping?.() ?? null);
+
   // Draw appropriate grid
   if (hasPolarSeries && maxRadius > 0) {
     ctx.overlay.drawPolarGrid(
@@ -526,6 +530,11 @@ export function renderOverlay(
     const scale = ctx.yScales.get(axisId) || primaryYScale;
     ctx.overlay.drawCandlestickMarkers(plotArea, s, ctx.xScale, scale);
   });
+
+  const alerts = ctx.getAlerts?.() ?? [];
+  if (alerts.length) {
+    ctx.overlay.drawPriceAlertLines(plotArea, alerts, primaryYScale);
+  }
 
   // Draw Selection Box
   if (ctx.selectionRect) {

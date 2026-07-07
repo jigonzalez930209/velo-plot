@@ -536,4 +536,20 @@ describe("OverlayRenderer", () => {
     renderer.drawCandlestickMarkers(plotArea, lineSeries, xScale, yScale);
     expect(ctx.arc).not.toHaveBeenCalled();
   });
+
+  it("drawPriceAlertLines strokes horizontal alert levels", () => {
+    const { yScale } = makeScales();
+    renderer.drawPriceAlertLines(
+      plotArea,
+      [
+        { price: 25, direction: "below" },
+        { price: 75, direction: "above" },
+        { price: 50, direction: "cross" },
+      ],
+      yScale,
+    );
+    expect(ctx.beginPath).toHaveBeenCalled();
+    expect(ctx.stroke).toHaveBeenCalled();
+    expect(ctx.setLineDash).toHaveBeenCalled();
+  });
 });

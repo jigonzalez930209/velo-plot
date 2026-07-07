@@ -38,7 +38,19 @@ Experience real-time technical analysis indicators for financial charting. Selec
 
 ## Usage
 
+### High-level API (v2.0)
+
 ```typescript
+import { createStackedChart } from 'velo-plot/trading'
+
+await stack.addIndicator('rsi', { period: 14, pane: 'new' })
+await stack.addIndicator('macd', { pane: 'new' })
+await stack.addIndicator('stochastic', { period: 14, pane: 'new' })
+```
+
+See [Trading Indicators example](/examples/trading/indicators) and [addIndicator API](/api/trading-indicators).
+
+### Manual calculation API
 import { 
   sma, ema, bollingerBands, rsi, macd,
   type IndicatorResult, type OHLCData 

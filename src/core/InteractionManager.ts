@@ -78,6 +78,7 @@ export class InteractionManager {
   private isBoxZooming = false;
   private selectionStart = { x: 0, y: 0 };
   private lastMousePos = { x: 0, y: 0 };
+  private mouseDownPos = { x: 0, y: 0 };
   private mode: InteractionMode = 'pan';
 
   // Bound handlers for cleanup
@@ -286,6 +287,7 @@ export class InteractionManager {
     const rect = this.container.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
+    this.mouseDownPos = { x: mouseX, y: mouseY };
 
     const inPlotArea = mouseX >= plotArea.x && mouseX <= plotArea.x + plotArea.width && mouseY >= plotArea.y && mouseY <= plotArea.y + plotArea.height;
 
@@ -454,6 +456,21 @@ export class InteractionManager {
     }
     // Check if we were in a drag operation
     const wasDragging = this.isDragging || this.isBoxSelecting || this.isBoxZooming;
+
+    // Detect a stationary click (mousedown + mouseup without meaningful movement)
+    const movedDistance = Math.hypot(
+      mouseX - this.mouseDownPos.x,
+      mouseY - this.mouseDownPos.y
+    );
+    const plotArea = this.getPlotArea();
+    const inPlotArea =
+      mouseX >= plotArea.x &&
+      mouseX <= plotArea.x + plotArea.width &&
+      mouseY >= plotArea.y &&
+      mouseY <= plotArea.y + plotArea.height;
+    if (movedDistance < 4 && inPlotArea && !this.isBoxZooming) {
+      this.callbacks.onPointClick?.(mouseX, mouseY, e.ctrlKey, e.shiftKey);
+    }
 
     this.isDragging = false;
     this.panningAxisId = undefined;
