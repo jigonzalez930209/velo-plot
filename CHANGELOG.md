@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-07-07
+
+### Added — Trading Experience (Stage 2)
+
+- **`velo-plot/trading` bundle**: Tree-shaken entry for trading dashboards (stacked charts, indicators, drawings, replay, datafeed).
+- **Business-day time scale**: `xAxis.timeScale: { calendar: 'business-day' }` skips weekends; `mapToBusinessDayScale()` utility.
+- **`chart.addIndicator()` / `stack.addIndicator()`**: High-level presets — RSI, MACD, Bollinger, EMA, SMA, Stochastic.
+- **`PluginDrawingTools`**: Interactive trendline, horizontal, vertical, rectangle, Fibonacci retracement with undo/redo.
+- **Trade markers**: `series.setMarkers()` on candlestick series (buy/sell arrows).
+- **Position lines**: `chart.addPositionLine()` for entry, SL, TP levels.
+- **Price alerts**: `chart.addAlert()`, `chart.on('alert', ...)`, visual alert lines.
+- **`PluginReplay`**: Bar-by-bar playback with play/pause/step/seek.
+- **Heikin-Ashi**: `type: 'heikin-ashi'` series and `computeHeikinAshi()` helper.
+- **Hollow candles**: `style.hollow: true` on candlestick series.
+- **`DatafeedAdapter`**: UDF-inspired contract with `createMockDatafeed()` and `barsToOhlc()`.
+
+### Documentation
+
+- [Migration v1 → v2](/docs/guide/migration-v2.md)
+- Trading API reference: bundle, time scale, indicators, alerts, drawing tools, replay, datafeed
+- Examples for every Stage 2 feature (dashboard, session scale, indicators, drawings, heikin-ashi, hollow, markers, alerts, replay, datafeed)
+- 168 Playwright E2E scenarios across Chromium, Firefox, WebKit
+
+### Changed
+
+- Vitest coverage thresholds: 90% lines/statements, 88% functions, 75% branches (Stage 1+2 modules included).
+
 ## [1.16.0] - Unreleased
 
 ### Added
