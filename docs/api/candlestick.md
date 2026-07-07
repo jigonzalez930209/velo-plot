@@ -45,6 +45,29 @@ The `data` object for a candlestick series must contain the following `Float32Ar
 | `bearishColor` | `string` | `'#ef5350'` | Color for candles where `close < open` |
 | `barWidth` | `number` | `0.8` | Relative width of the candle body (0 to 1) |
 | `opacity` | `number` | `1.0` | Opacity of the candles |
+| `hollow` | `boolean` | `false` | When `true`, bullish bodies render as outlines (Stage 2) |
+
+## Heikin-Ashi series (Stage 2)
+
+```typescript
+chart.addSeries({
+  id: 'ha',
+  type: 'heikin-ashi',
+  data: { x: timestamps, open, high, low, close },
+})
+```
+
+Or transform manually with `computeHeikinAshi()` from `velo-plot/trading`. See [Heikin-Ashi example](/examples/trading-heikin-ashi).
+
+## Trade markers (Stage 2)
+
+```typescript
+chart.getSeries('btc-usd')?.setMarkers([
+  { time: timestamps[10], shape: 'arrowUp', position: 'belowBar', text: 'Buy' },
+])
+```
+
+See [Alerts & Markers API](/api/trading-alerts).
 
 ## Updating Data
 

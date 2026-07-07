@@ -104,6 +104,7 @@ const stack = createStackedChart({
 | `macd` | oscillator pane | Histogram + MACD + signal |
 | `bollinger` | price overlay | Band fill + middle line |
 | `ema`, `sma` | price overlay | Single line on source series Y axis |
+| `stochastic` | oscillator pane | %K / %D lines with overbought/oversold refs |
 
 Calculations use the Stage 1 worker pool when available (`indicatorsAsync`).
 
