@@ -74,7 +74,21 @@ The full library (`velo-plot` / `velo-plot/full`) exports the same trading APIs.
 
 ## Related examples
 
-- [Trading session time scale](./trading-session.md)
-- [Candlestick charts](./candlestick.md)
-- [Financial indicators](./indicators.md)
-- [Pane stack](./pane-stack.md)
+Stage 2 feature coverage — each item has a dedicated example and API page:
+
+| Feature | Example | API |
+|---------|---------|-----|
+| Business-day time scale | [Trading session](./trading-session.md) | [Time scale](/api/trading-time-scale) |
+| `addIndicator()` presets | [Trading indicators](./trading-indicators.md) | [addIndicator](/api/trading-indicators) |
+| Drawing tools + Fibonacci | [Drawing tools](./trading-drawing-tools.md) | [PluginDrawingTools](/api/plugin-drawing-tools) |
+| Trade markers | [Markers & positions](./trading-markers-positions.md) | [Alerts & markers](/api/trading-alerts) |
+| Position lines | [Markers & positions](./trading-markers-positions.md) | [Alerts & markers](/api/trading-alerts) |
+| Price alerts | [Price alerts](./trading-alerts.md) | [Alerts & markers](/api/trading-alerts) |
+| Heikin-Ashi | [Heikin-Ashi](./trading-heikin-ashi.md) | [Candlestick](/api/candlestick) |
+| Hollow candles | [Hollow candles](./trading-hollow-candles.md) | [Candlestick](/api/candlestick) |
+| Bar replay | [Bar replay](./trading-replay.md) | [PluginReplay](/api/plugin-replay) |
+| Mock datafeed | [Mock datafeed](./trading-datafeed.md) | [Datafeed](/api/datafeed) |
+| Full bundle | — | [Trading bundle](/api/trading-bundle) |
+| Migration from v1 | [Migration guide](/guide/migration-v2) | — |
+
+Also see [Candlestick charts](./candlestick.md), [Pane stack](./pane-stack.md), and [Financial indicators (manual API)](./indicators.md).

@@ -81,3 +81,9 @@ await stack.addIndicator('rsi', { period: 14, pane: 'new' })
 |--------|-------------|
 | `24x7` | Weekends only (default MVP) |
 | `NYSE` | Reserved for session-hour filtering (timezone-aware) |
+
+## Related
+
+- [API: Business-Day Time Scale](/api/trading-time-scale)
+- [Trading Dashboard](./trading-dashboard.md)
+- [Trading Indicators](./trading-indicators.md)
