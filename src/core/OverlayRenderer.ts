@@ -12,6 +12,7 @@ import type { PlotArea, CursorState, AxisOptions } from "../types";
 import type { ChartTitleOptions } from "./layout/types";
 import type { AxisLayoutOptions } from "./layout/types";
 import { formatXTickValue, formatYTickValue } from "./format/axisFormat";
+import type { BusinessDayMapping } from "./time/TimeScale";
 import { snapLineCoord, snapLabelCoord } from "./render/pixelSnap";
 
 // ============================================
@@ -22,10 +23,15 @@ export class OverlayRenderer {
   private ctx: CanvasRenderingContext2D;
   private theme: ChartTheme;
   private latexAPI: any = null;
+  private businessDayMapping: BusinessDayMapping | null = null;
 
   constructor(ctx: CanvasRenderingContext2D, theme: ChartTheme) {
     this.ctx = ctx;
     this.theme = theme;
+  }
+
+  setBusinessDayMapping(mapping: BusinessDayMapping | null): void {
+    this.businessDayMapping = mapping;
   }
 
   /**
@@ -1135,7 +1141,7 @@ export class OverlayRenderer {
   }
 
   private formatXTick(value: number, options?: AxisOptions, domainSpan?: number): string {
-    return formatXTickValue(value, options, domainSpan);
+    return formatXTickValue(value, options, domainSpan, this.businessDayMapping);
   }
 
   private formatYTick(value: number, options?: AxisOptions): string {
@@ -1218,5 +1224,34 @@ export class OverlayRenderer {
       }
       ctx.restore();
     }
+  }
+
+  /** Horizontal dashed lines for active price alerts (Stage 2.19). */
+  drawPriceAlertLines(
+    plotArea: PlotArea,
+    alerts: Array<{ price: number; direction?: string }>,
+    yScale: Scale,
+  ): void {
+    if (!alerts.length) return;
+    const { ctx } = this;
+    ctx.save();
+    for (const alert of alerts) {
+      const py = snapLabelCoord(yScale.transform(alert.price));
+      if (py < plotArea.y || py > plotArea.y + plotArea.height) continue;
+      ctx.strokeStyle =
+        alert.direction === "below"
+          ? "rgba(239, 68, 68, 0.7)"
+          : alert.direction === "above"
+            ? "rgba(34, 197, 94, 0.7)"
+            : "rgba(250, 204, 21, 0.8)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(plotArea.x, py);
+      ctx.lineTo(plotArea.x + plotArea.width, py);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    ctx.restore();
   }
 }
