@@ -30,7 +30,7 @@ export function resolveTimeScaleOpts(xAxis: AxisOptions): TimeScaleOptions {
 export function applyBusinessDayX(
   x: Float32Array | Float64Array,
   xAxis: AxisOptions,
-): { displayX: Float32Array; mapping: BusinessDayMapping } {
+): { displayX: Float64Array; mapping: BusinessDayMapping } {
   const mapping = mapToBusinessDayScale(x, resolveTimeScaleOpts(xAxis));
   return { displayX: mapping.scaledX, mapping };
 }
