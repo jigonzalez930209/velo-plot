@@ -116,4 +116,19 @@ describe("addIndicator", () => {
       addIndicatorToChart(chart, "rsi", { pane: "new", period: 14 }),
     ).rejects.toThrow("pane: 'new'");
   });
+
+  it("computeIndicatorPreset builds stochastic oscillator from OHLC source", async () => {
+    const source = makeCloseSeries(80);
+    const { x, prices } = extractPriceSeries(source);
+    const result = await computeIndicatorPreset("stochastic", x, prices, { period: 14 }, source);
+    expect(result.placement).toBe("oscillator");
+    expect(result.data.lines?.length).toBe(2);
+    expect(result.data.referenceLines?.length).toBe(2);
+  });
+
+  it("stochastic throws without candlestick source", async () => {
+    const x = Float32Array.from([0, 1, 2]);
+    const prices = Float32Array.from([1, 2, 3]);
+    await expect(computeIndicatorPreset("stochastic", x, prices)).rejects.toThrow("candlestick");
+  });
 });
