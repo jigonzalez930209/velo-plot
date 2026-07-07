@@ -34,6 +34,29 @@ export class OverlayRenderer {
     this.businessDayMapping = mapping;
   }
 
+  /** Filter X ticks to valid business-day indices (unique integers in range). */
+  private filterBusinessDayXTicks(ticks: number[]): number[] {
+    const mapping = this.businessDayMapping;
+    if (!mapping) return ticks;
+    const maxIdx = mapping.timeByIndex.length - 1;
+    if (maxIdx < 0) return [];
+    const seen = new Set<number>();
+    const result: number[] = [];
+    for (const tick of ticks) {
+      const idx = Math.round(tick);
+      if (idx >= 0 && idx <= maxIdx && !seen.has(idx)) {
+        seen.add(idx);
+        result.push(idx);
+      }
+    }
+    return result;
+  }
+
+  private resolveXTicks(xScale: Scale, tickCount: number): number[] {
+    const raw = xScale.ticks(tickCount);
+    return this.filterBusinessDayXTicks(raw);
+  }
+
   /**
    * Set LaTeX API for rendering mathematical expressions
    */
@@ -155,7 +178,7 @@ export class OverlayRenderer {
 
     const xTickCount = xAxisOptions?.tickCount ?? 8;
     const yTickCount = yAxisOptions?.tickCount ?? 6;
-    const xTicks = xScale.ticks(xTickCount);
+    const xTicks = this.resolveXTicks(xScale, xTickCount);
     const yTicks = yScale.ticks(yTickCount);
 
     // Major grid lines — batched into two strokes (vertical + horizontal)
@@ -302,7 +325,7 @@ export class OverlayRenderer {
     const { ctx } = this;
     const axis = this.theme.xAxis;
     const xTickCount = options?.tickCount ?? 8;
-    const xTicks = xScale.ticks(xTickCount);
+    const xTicks = this.resolveXTicks(xScale, xTickCount);
     const axisY = snapLineCoord(plotArea.y + plotArea.height);
     const label = options?.label;
     const showLine = options?.showLine !== false;
@@ -322,35 +345,60 @@ export class OverlayRenderer {
     if (showTicks || showLabels) {
       ctx.fillStyle = axis.labelColor;
       ctx.font = `${axis.labelSize}px ${axis.fontFamily}`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "top";
 
-      xTicks.forEach((tick) => {
+      const visibleTicks: Array<{ tick: number; x: number; label: string }> = [];
+      for (const tick of xTicks) {
         const x = snapLabelCoord(xScale.transform(tick));
         if (x >= plotArea.x && x <= plotArea.x + plotArea.width) {
-          if (showTicks) {
-            ctx.strokeStyle = axis.tickColor;
-            ctx.beginPath();
-            ctx.moveTo(x, axisY);
-            ctx.lineTo(x, axisY + axis.tickLength);
-            ctx.stroke();
-          }
-          if (showLabels) {
-            this.drawLatexOrText(
-              this.formatXTick(tick, options, domainSpan),
-              x,
-              axisY + axis.tickLength + 3,
-              {
-                fontSize: axis.labelSize,
-                fontFamily: axis.fontFamily,
-                color: axis.labelColor,
-                align: "center",
-                baseline: "top",
-              },
-            );
+          const tickLabel = showLabels
+            ? this.formatXTick(tick, options, domainSpan)
+            : "";
+          if (!showLabels || tickLabel) {
+            visibleTicks.push({ tick, x, label: tickLabel });
           }
         }
-      });
+      }
+
+      let rotateLabels = false;
+      if (showLabels && visibleTicks.length > 1) {
+        let maxLabelWidth = 0;
+        for (const item of visibleTicks) {
+          maxLabelWidth = Math.max(maxLabelWidth, ctx.measureText(item.label).width);
+        }
+        let minSpacing = Infinity;
+        for (let i = 1; i < visibleTicks.length; i++) {
+          minSpacing = Math.min(minSpacing, visibleTicks[i].x - visibleTicks[i - 1].x);
+        }
+        rotateLabels = maxLabelWidth + 8 > minSpacing;
+      }
+
+      const labelY = axisY + axis.tickLength + (rotateLabels ? 6 : 3);
+      const labelRotation = rotateLabels ? -Math.PI / 4 : undefined;
+
+      for (const item of visibleTicks) {
+        if (showTicks) {
+          ctx.strokeStyle = axis.tickColor;
+          ctx.beginPath();
+          ctx.moveTo(item.x, axisY);
+          ctx.lineTo(item.x, axisY + axis.tickLength);
+          ctx.stroke();
+        }
+        if (showLabels && item.label) {
+          this.drawLatexOrText(
+            item.label,
+            item.x,
+            labelY,
+            {
+              fontSize: axis.labelSize,
+              fontFamily: axis.fontFamily,
+              color: axis.labelColor,
+              align: rotateLabels ? "right" : "center",
+              baseline: rotateLabels ? "middle" : "top",
+              rotation: labelRotation,
+            },
+          );
+        }
+      }
     }
 
     if (label) {
