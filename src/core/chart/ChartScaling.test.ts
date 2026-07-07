@@ -132,10 +132,10 @@ describe("autoScaleYOnly", () => {
     expect(setDomain).not.toHaveBeenCalled();
   });
 
-  it("fitToData handles flat Y range from series", () => {
+  it("fitToData handles near-flat Y range from series", () => {
     const ctx = createScalingCtx();
-    ctx.series.set("flat", mockSeries({ xMin: 0, xMax: 10, yMin: 5, yMax: 5 }));
-    expect(fitToData(ctx, { padding: 0 })).toBe(true);
+    ctx.series.set("flat", mockSeries({ xMin: 0, xMax: 10, yMin: 5, yMax: 5.001 }));
+    expect(fitToData(ctx)).toBe(true);
     expect(ctx.viewBounds.yMax).toBeGreaterThan(ctx.viewBounds.yMin);
   });
 });

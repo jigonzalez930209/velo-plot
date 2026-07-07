@@ -93,4 +93,10 @@ describe("indicatorPresets helpers", () => {
     const result = await computeIndicatorPreset("sma", x, prices, { period: 5 });
     expect(result.data.lines?.[0].y.length).toBe(30);
   });
+
+  it("computeIndicatorPreset rejects unknown preset", async () => {
+    const x = Float32Array.from([0, 1, 2]);
+    const prices = Float32Array.from([1, 2, 3]);
+    await expect(computeIndicatorPreset("unknown" as any, x, prices)).rejects.toThrow(/Unknown preset/i);
+  });
 });

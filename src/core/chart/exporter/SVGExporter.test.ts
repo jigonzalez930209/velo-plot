@@ -194,4 +194,41 @@ describe("exportToSVG", () => {
       ),
     ).toThrow(/Y scale/i);
   });
+
+  it("renders bearish candlesticks and hides tick labels when requested", () => {
+    const bear = exportWithSeries([
+      mockSeries(
+        "candlestick",
+        {
+          x: Float32Array.from([50]),
+          y: Float32Array.from([0]),
+          open: Float32Array.from([30]),
+          high: Float32Array.from([32]),
+          low: Float32Array.from([20]),
+          close: Float32Array.from([22]),
+        },
+        { barWidth: 10 },
+      ),
+    ]);
+    expect(bear).toContain("#ef5350");
+
+    const xScale = new LinearScale();
+    xScale.setDomain(0, 100);
+    xScale.setRange(60, 460);
+    const yScale = new LinearScale();
+    yScale.setDomain(0, 60);
+    yScale.setRange(280, 40);
+    const hidden = exportToSVG(
+      [mockSeries("line", { x: Float32Array.from([0, 50]), y: Float32Array.from([1, 2]) }, { color: "#fff" })],
+      { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
+      { x: 60, y: 40, width: 400, height: 240 },
+      xScale,
+      new Map([["default", yScale]]),
+      theme,
+      520,
+      320,
+      { xAxis: { tickCount: 4, showLabels: false }, yAxis: { tickCount: 4, showLabels: false } },
+    );
+    expect(hidden).not.toContain("<text");
+  });
 });

@@ -3,6 +3,7 @@ import {
   isBusinessDay,
   mapToBusinessDayScale,
   businessDaySpanMs,
+  timeAtBusinessIndex,
 } from "./TimeScale";
 
 describe("TimeScale", () => {
@@ -35,5 +36,24 @@ describe("TimeScale", () => {
     const times = Float32Array.from([0, 86_400_000]);
     const mapped = mapToBusinessDayScale(times, { calendar: "continuous" });
     expect(businessDaySpanMs(mapped, 0, 1)).toBe(86_400_000);
+  });
+
+  it("maps non-finite timestamps to NaN on business-day calendar", () => {
+    const times = Float64Array.from([Date.UTC(2024, 0, 8), NaN, Date.UTC(2024, 0, 9)]);
+    const mapped = mapToBusinessDayScale(times, { calendar: "business-day" });
+    expect(Number.isNaN(mapped.scaledX[1])).toBe(true);
+    expect(mapped.timeByIndex.length).toBe(2);
+  });
+
+  it("businessDaySpanMs falls back when indices are out of range", () => {
+    const times = Float64Array.from([Date.UTC(2024, 0, 8)]);
+    const mapped = mapToBusinessDayScale(times, { calendar: "business-day" });
+    expect(businessDaySpanMs(mapped, 99, 100)).toBe(86_400_000);
+  });
+
+  it("timeAtBusinessIndex returns undefined for missing index", () => {
+    const times = Float64Array.from([Date.UTC(2024, 0, 8)]);
+    const mapped = mapToBusinessDayScale(times, { calendar: "business-day" });
+    expect(timeAtBusinessIndex(mapped, 5)).toBeUndefined();
   });
 });

@@ -536,4 +536,29 @@ describe("ChartGroup helpers and cursor sync", () => {
     flushRaf();
     expect(a.zoom).toHaveBeenCalled();
   });
+
+  it("batch, clearAllSelections, resetAll, and has work", () => {
+    const a = createMockChart("a", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 });
+    const b = {
+      ...createMockChart("b", { xMin: 0, xMax: 10, yMin: 0, yMax: 10 }),
+      clearSelection: vi.fn(),
+      fit: vi.fn(),
+    };
+    const group = new ChartGroup();
+    group.addAll(a, b);
+    expect(group.has(a)).toBe(true);
+    const result = group.batch(() => 42);
+    expect(result).toBe(42);
+    group.clearAllSelections();
+    expect(b.clearSelection).toHaveBeenCalled();
+    group.resetAll();
+    expect(b.fit).toHaveBeenCalled();
+    group.remove({ getId: () => "missing" } as any);
+    expect(group.size()).toBe(2);
+  });
+
+  it("syncZoom no-ops when state unchanged", () => {
+    const group = new ChartGroup({ syncZoom: true });
+    expect(group.syncZoom(true)).toBe(group);
+  });
 });

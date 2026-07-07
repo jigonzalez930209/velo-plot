@@ -25,6 +25,7 @@ describe("candlestickMarkers", () => {
   it("resolveMarkerY respects position", () => {
     expect(resolveMarkerY("aboveBar", 12, 8, 10)).toBe(12);
     expect(resolveMarkerY("belowBar", 12, 8, 10)).toBe(8);
+    expect(resolveMarkerY("inBar", 12, 8, 10)).toBe(10);
   });
 });
 
