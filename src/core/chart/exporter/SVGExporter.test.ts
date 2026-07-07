@@ -150,4 +150,48 @@ describe("exportToSVG", () => {
     expect(svg).not.toContain("<polyline");
     expect(svg).not.toContain("stroke-dasharray");
   });
+
+  it("renders step modes and area series", () => {
+    const before = exportWithSeries([
+      mockSeries(
+        "step",
+        { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
+        { color: "#0f0", stepMode: "before" },
+      ),
+    ]);
+    expect(before).toContain("<polyline");
+
+    const center = exportWithSeries([
+      mockSeries(
+        "step",
+        { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
+        { color: "#0f0", stepMode: "center" },
+      ),
+    ]);
+    expect(center).toContain("<polyline");
+
+    const area = exportWithSeries([
+      mockSeries(
+        "area",
+        { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
+        { color: "#aaf" },
+      ),
+    ]);
+    expect(area).toContain("<polygon");
+  });
+
+  it("throws when no Y scale is available", () => {
+    expect(() =>
+      exportToSVG(
+        [],
+        { xMin: 0, xMax: 1, yMin: 0, yMax: 1 },
+        { x: 0, y: 0, width: 100, height: 100 },
+        new LinearScale(),
+        new Map(),
+        theme,
+        100,
+        100,
+      ),
+    ).toThrow(/Y scale/i);
+  });
 });
