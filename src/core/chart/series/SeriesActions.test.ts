@@ -133,8 +133,8 @@ describe("SeriesActions lifecycle", () => {
       viewBounds: { xMin: 90, xMax: 100, yMin: 0, yMax: 50 },
       yAxisOptionsMap: new Map([["y", { auto: true }]]),
     });
-    addSeries(ctx, lineSeries("s", 100));
-    appendData(ctx, "s", [100, 101], [200, 202]);
+    addSeries(ctx, lineSeries("s", 101));
+    appendData(ctx, "s", [101, 102], [200, 202]);
     expect(ctx.viewBounds.xMax).toBeGreaterThan(100);
     expect(ctx.autoScaleYOnly).toHaveBeenCalled();
   });
@@ -172,5 +172,28 @@ describe("SeriesActions lifecycle", () => {
     addSeries(ctx, { ...lineSeries("b"), style: {} });
     expect(ctx.series.get("a")?.getStyle().color).toBe("#ff0000");
     expect(ctx.series.get("b")?.getStyle().color).toBe("#00ff00");
+  });
+
+  it("addSeries expands indicator type into multiple series", () => {
+    const ctx = makeCtx();
+    addSeries(ctx, {
+      id: "ind",
+      type: "indicator",
+      data: {
+        x: Float32Array.from([0, 1, 2]),
+        lines: [{ id: "l1", y: Float32Array.from([1, 2, 3]), color: "#fff" }],
+      },
+    });
+    expect(ctx.series.has("ind-l1")).toBe(true);
+  });
+
+  it("skips heikin-ashi transform when OHLC is incomplete", () => {
+    const ctx = makeCtx();
+    addSeries(ctx, {
+      id: "ha",
+      type: "heikin-ashi" as any,
+      data: { x: Float32Array.from([0, 1]), y: Float32Array.from([1, 2]) },
+    });
+    expect(ctx.series.get("ha")?.getType()).toBe("heikin-ashi");
   });
 });

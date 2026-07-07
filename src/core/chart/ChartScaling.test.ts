@@ -146,6 +146,20 @@ describe("handleBoxZoom", () => {
     expect(zoom).not.toHaveBeenCalled();
   });
 
+  it("fitToData supports asymmetric padding object", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("s1", mockSeries({ xMin: 0, xMax: 100, yMin: 0, yMax: 50 }));
+    expect(fitToData(ctx, { padding: { x: 0, y: 0 } })).toBe(true);
+    expect(ctx.viewBounds.xMin).toBe(0);
+    expect(ctx.viewBounds.yMin).toBe(0);
+  });
+
+  it("fitToData skips series with non-finite bounds", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("bad", mockSeries({ xMin: NaN, xMax: 100, yMin: 0, yMax: 50 }));
+    expect(fitToData(ctx)).toBe(false);
+  });
+
   it("returns selection rect while dragging", () => {
     const ctx = createScalingCtx();
     const zoom = vi.fn();

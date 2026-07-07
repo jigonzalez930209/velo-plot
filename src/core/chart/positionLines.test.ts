@@ -14,4 +14,14 @@ describe("positionLines", () => {
     expect(a.lineDash).toEqual([6, 4]);
     expect(a.color).toBe("#ef4444");
   });
+
+  it("builds take-profit with dashed line and custom label", () => {
+    const a = buildPositionLineAnnotation(
+      { price: 110, style: "tp", label: "Target", color: "#fff" },
+      "tp1",
+    );
+    expect(a.lineDash).toEqual([4, 4]);
+    expect(a.label).toBe("Target");
+    expect(a.color).toBe("#fff");
+  });
 });
