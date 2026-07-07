@@ -155,6 +155,21 @@ describe("stage1BrowserBench baseline", () => {
     expect(SMOKE_FLOORS["candlestick-500k"]).toBe(25);
   });
 
+  it("effectiveBenchmarkFps keeps wall clock when headless has enough frames", () => {
+    const result = {
+      avgFps: 45,
+      renderFps: 120,
+      minFps: 40,
+      maxFps: 50,
+      avgFrameTime: 22,
+      frameCount: 60,
+      duration: 2500,
+      pointsRendered: 1e6,
+      throughput: 45e6,
+    };
+    expect(effectiveBenchmarkFps(result, true)).toBe(45);
+  });
+
   it("buildStage1Report aggregates scenario results", async () => {
     const { buildStage1Report } = await import("./stage1BrowserBench");
     const report = buildStage1Report([
