@@ -44,5 +44,5 @@ During replay, only bars up to the current index are visible. Useful for backtes
 
 ## Related
 
-- [Replay example](/examples/trading-replay)
-- [Trading Dashboard](/examples/trading-dashboard)
+- [Replay example](/examples/trading/replay)
+- [Trading Dashboard](/examples/trading/dashboard)

@@ -65,7 +65,7 @@ On `createStackedChart`, use `stack.addIndicator()` and `stack.getChart('price')
 ## Related
 
 - [Migration v1 → v2](/guide/migration-v2)
-- [Trading Dashboard example](/examples/trading-dashboard)
+- [Trading Dashboard example](/examples/trading/dashboard)
 - [Time Scale API](/api/trading-time-scale)
 - [High-level Indicators](/api/trading-indicators)
 - [Alerts & Position Lines](/api/trading-alerts)

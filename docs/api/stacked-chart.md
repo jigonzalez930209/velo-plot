@@ -91,7 +91,7 @@ await stack.addIndicator('macd', { pane: 'new' })
 await stack.addIndicator('bollinger', { period: 20, sourceSeriesId: 'ohlc' }) // overlay on price
 ```
 
-See [High-level Indicators](/api/trading-indicators) and [Trading Dashboard example](/examples/trading-dashboard).
+See [High-level Indicators](/api/trading-indicators) and [Trading Dashboard example](/examples/trading/dashboard).
 
 ## Options
 

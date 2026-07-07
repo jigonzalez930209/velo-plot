@@ -156,7 +156,7 @@ for (const s of series) chart.addSeries(s);
 | `lines` | line series | One or more indicator lines |
 | `fills` | band series | Upper/lower envelope shading |
 | `markers` | scatter series | Peak/trough markers |
-| `baseline` | dashed line | Reference at Y (default `0`) |
+| `baseline` | dashed line | Optional reference at Y (e.g. `0` for MACD histogram) |
 | `referenceLines` | horizontal lines | Fixed Y levels (overbought, etc.) |
 
 ### Histogram

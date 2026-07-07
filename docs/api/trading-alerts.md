@@ -70,6 +70,6 @@ Alerts evaluate on `updateSeries` / streaming updates. Alert levels render as da
 
 ## Related
 
-- [Trade Markers & Positions example](/examples/trading-markers-positions)
-- [Price Alerts example](/examples/trading-alerts)
+- [Trade Markers & Positions example](/examples/trading/markers-positions)
+- [Price Alerts example](/examples/trading/alerts)
 - [Candlestick API](/api/candlestick)

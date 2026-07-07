@@ -57,7 +57,7 @@ chart.addSeries({
 })
 ```
 
-Or transform manually with `computeHeikinAshi()` from `velo-plot/trading`. See [Heikin-Ashi example](/examples/trading-heikin-ashi).
+Or transform manually with `computeHeikinAshi()` from `velo-plot/trading`. See [Heikin-Ashi example](/examples/trading/heikin-ashi).
 
 ## Trade markers (Stage 2)
 

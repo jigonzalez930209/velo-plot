@@ -60,5 +60,5 @@ isBusinessDay(Date.UTC(2024, 0, 6)) // false (Saturday)
 
 ## Related
 
-- [Trading Session example](/examples/trading-session)
+- [Trading Session example](/examples/trading/session)
 - [Trading Bundle](/api/trading-bundle)

@@ -79,6 +79,6 @@ Calculations use the Stage 1 worker pool when available. See also [Async Indicat
 
 ## Related
 
-- [Trading Indicators example](/examples/trading-indicators)
-- [Trading Dashboard](/examples/trading-dashboard)
+- [Trading Indicators example](/examples/trading/indicators)
+- [Trading Dashboard](/examples/trading/dashboard)
 - [Migration v1 → v2](/guide/migration-v2)

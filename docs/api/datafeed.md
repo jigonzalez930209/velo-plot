@@ -96,5 +96,5 @@ unsubscribe()
 
 ## Related
 
-- [Datafeed example](/examples/trading-datafeed)
+- [Datafeed example](/examples/trading/datafeed)
 - [Real-time Streaming](/api/plugin-streaming)
