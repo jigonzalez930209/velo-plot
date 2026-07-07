@@ -11,7 +11,10 @@ export type DrawingMode =
   | "trendline"
   | "horizontal"
   | "vertical"
-  | "rectangle";
+  | "rectangle"
+  | "fibonacci";
+
+const FIB_LEVELS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
 
 export interface PluginDrawingToolsConfig {
   /** Default stroke color */
@@ -158,6 +161,21 @@ export function PluginDrawingTools(
             fillColor: stroke + "22",
             interactive: true,
           });
+        } else if (state.mode === "fibonacci") {
+          const yMin = Math.min(p0.y, y);
+          const yMax = Math.max(p0.y, y);
+          for (const level of FIB_LEVELS) {
+            const fy = yMax - (yMax - yMin) * level;
+            ctx.chart.addAnnotation({
+              type: "horizontal-line",
+              y: fy,
+              color: stroke,
+              lineDash: level === 0 || level === 1 ? undefined : [4, 4],
+              label: `${(level * 100).toFixed(1)}%`,
+              labelPosition: "right",
+              interactive: true,
+            });
+          }
         }
       };
 

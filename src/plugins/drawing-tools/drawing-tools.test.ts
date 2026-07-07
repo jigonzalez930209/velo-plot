@@ -83,4 +83,50 @@ describe("PluginDrawingTools", () => {
     plugin.onDestroy!(ctx);
     expect(chart.off).toHaveBeenCalledWith("click", expect.any(Function));
   });
+
+  it("adds rectangle after two clicks", () => {
+    const plugin = PluginDrawingTools();
+    const { ctx, getClickHandler, annotations } = createContext();
+    plugin.onInit!(ctx);
+    (plugin.api as DrawingToolsAPI).setMode("rectangle");
+    getClickHandler()?.({ point: { x: 1, y: 2 } });
+    getClickHandler()?.({ point: { x: 9, y: 8 } });
+    expect(annotations[0].type).toBe("rectangle");
+  });
+
+  it("adds fibonacci retracement levels", () => {
+    const plugin = PluginDrawingTools();
+    const { ctx, getClickHandler, annotations } = createContext();
+    plugin.onInit!(ctx);
+    (plugin.api as DrawingToolsAPI).setMode("fibonacci");
+    getClickHandler()?.({ point: { x: 1, y: 20 } });
+    getClickHandler()?.({ point: { x: 5, y: 80 } });
+    expect(annotations.length).toBeGreaterThanOrEqual(5);
+    expect(annotations.every((a) => a.type === "horizontal-line")).toBe(true);
+  });
+
+  it("redo restores undone annotation", () => {
+    const plugin = PluginDrawingTools();
+    const { ctx, getClickHandler } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as DrawingToolsAPI;
+    api.setMode("vertical");
+    getClickHandler()?.({ point: { x: 5, y: 1 } });
+    expect(ctx.chart.getAnnotations()).toHaveLength(1);
+    api.undo();
+    expect(ctx.chart.getAnnotations()).toHaveLength(0);
+    api.redo();
+    expect(ctx.chart.getAnnotations()).toHaveLength(1);
+  });
+
+  it("clear removes all annotations", () => {
+    const plugin = PluginDrawingTools();
+    const { ctx, getClickHandler } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as DrawingToolsAPI;
+    api.setMode("horizontal");
+    getClickHandler()?.({ point: { x: 1, y: 10 } });
+    api.clear();
+    expect(ctx.chart.getAnnotations()).toHaveLength(0);
+  });
 });
