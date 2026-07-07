@@ -68,6 +68,12 @@ describe("axisFormat", () => {
       expect(label).not.toMatch(/^0$/);
       expect(label.length).toBeGreaterThan(4);
     });
+
+    it("returns empty string for out-of-range business-day tick index", () => {
+      const times = Float64Array.from([Date.UTC(2024, 0, 5)]);
+      const mapping = mapToBusinessDayScale(times, { calendar: "business-day" });
+      expect(formatXTickValue(99, { type: "time" }, undefined, mapping)).toBe("");
+    });
   });
 
   describe("formatTooltip helpers", () => {

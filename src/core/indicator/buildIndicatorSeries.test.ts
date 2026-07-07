@@ -14,7 +14,20 @@ describe("buildIndicatorSeries", () => {
     const ids = series.map((s) => s.id);
     expect(ids).toContain("macd-hist-pos");
     expect(ids).toContain("macd-hist-neg");
-    expect(ids).toContain("macd-baseline");
+    expect(ids).not.toContain("macd-baseline");
+  });
+
+  it("renders baseline only when explicitly set", () => {
+    const series = buildIndicatorSeries({
+      id: "macd",
+      type: "indicator",
+      data: {
+        x: new Float32Array([1, 2, 3]),
+        histogram: { y: new Float32Array([2, -1, 3]) },
+        baseline: 0,
+      },
+    });
+    expect(series.map((s) => s.id)).toContain("macd-baseline");
   });
 
   it("includes lines, fills, and markers", () => {

@@ -590,6 +590,17 @@ export class ChartImpl implements Chart {
         onInteraction: (event) => {
           this.pluginManager.notifyInteraction(event);
         },
+        onPointClick: (pixelX, pixelY, ctrlKey, shiftKey) => {
+          const dataX = this.pixelToDataX(pixelX);
+          const dataY = this.pixelToDataY(pixelY);
+          this.events.emit("click", {
+            point: { x: dataX, y: dataY },
+            pixelX,
+            pixelY,
+            ctrlKey,
+            shiftKey,
+          } as any);
+        },
       },
       () => this.getPlotArea(),
       (axisId) => this.getInteractedBounds(axisId),

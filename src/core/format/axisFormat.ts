@@ -89,6 +89,7 @@ export function formatXTickValue(
   if (options?.type === "time" && businessDayMapping) {
     const label = formatBusinessDayTick(value, businessDayMapping);
     if (label) return label;
+    return "";
   }
   if (options?.type === "time") {
     return formatTimeTick(value, domainSpan);
