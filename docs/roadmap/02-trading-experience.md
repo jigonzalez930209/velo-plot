@@ -153,13 +153,13 @@ stack.getChart('price').on('alert', (e) => console.log(e))
 
 ## Exit checklist (v2.1.0)
 
-- [ ] Business-day time scale with at least one market session preset
-- [ ] `addIndicator()` for RSI, MACD, Bollinger, EMA, SMA
-- [ ] Drawing tools: trendline, horizontal, rectangle + undo/redo
-- [ ] Trade markers on candlestick series
-- [ ] Replay plugin MVP (play/pause/step)
-- [ ] Price alert events
-- [ ] Heikin-Ashi or hollow candles (at least one)
-- [ ] Trading example app in docs (price + volume + RSI + MACD)
-- [ ] `velo-plot/trading` bundle exported and documented
-- [ ] Migration guide v1.x → v2.0 published
+- [x] Business-day time scale with at least one market session preset
+- [x] `addIndicator()` for RSI, MACD, Bollinger, EMA, SMA
+- [x] Drawing tools: trendline, horizontal, rectangle + undo/redo
+- [x] Trade markers on candlestick series
+- [x] Replay plugin MVP (play/pause/step)
+- [x] Price alert events
+- [x] Heikin-Ashi or hollow candles (at least one)
+- [x] Trading example app in docs (price + volume + RSI + MACD)
+- [x] `velo-plot/trading` bundle exported and documented
+- [x] Migration guide v1.x → v2.0 published
