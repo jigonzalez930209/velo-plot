@@ -8,6 +8,7 @@ export default defineConfig({
       entry: {
         'velo-plot': resolve(__dirname, 'src/index.core.ts'),
         'velo-plot.full': resolve(__dirname, 'src/index.ts'),
+        'trading': resolve(__dirname, 'src/trading/index.ts'),
         'react': resolve(__dirname, 'src/react/index.ts'),
         'plugins/3d': resolve(__dirname, 'src/plugins/3d/index.ts'),
         'plugins/gpu': resolve(__dirname, 'src/plugins/gpu/index.ts'),
