@@ -184,7 +184,7 @@ describe("SeriesActions lifecycle", () => {
         lines: [{ id: "l1", y: Float32Array.from([1, 2, 3]), color: "#fff" }],
       },
     });
-    expect(ctx.series.has("ind-l1")).toBe(true);
+    expect(ctx.series.has("l1")).toBe(true);
   });
 
   it("skips heikin-ashi transform when OHLC is incomplete", () => {
