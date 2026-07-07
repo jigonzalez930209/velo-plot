@@ -36,3 +36,18 @@ pnpm test:e2e:headed          # visible browser windows
 | `test:e2e:setup` | `pnpm build` + `test:e2e:install` |
 
 CI sets `CI=true` so `test:e2e:install` automatically uses `--with-deps` on Ubuntu runners.
+
+## Coverage policy
+
+| Layer | Scope | Command |
+|-------|--------|---------|
+| Unit + integration | Core, stacked, indicators, Stage 2 trading, workers | `pnpm test:coverage` |
+| E2E catalog sync | Playwright ids ↔ harness scenarios | `e2e/scenario-catalog.test.ts` |
+| Browser scenarios | 54 harness scenarios × 3 browsers | `pnpm test:e2e` |
+
+Thresholds (global): **80%** lines/statements, **75%** functions, **70%** branches.
+
+New features must add:
+1. Unit tests under `src/**/*.test.ts`
+2. Harness scenario in `docs/public/e2e/scenarios/`
+3. Id in `e2e/scenario-ids.ts` (catalog test fails if missing)
