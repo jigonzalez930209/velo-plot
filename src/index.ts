@@ -580,7 +580,16 @@ export {
   type TimeScaleOptions,
   type BusinessDayMapping,
 } from "./core/time/TimeScale";
+export {
+  isBusinessDayScaleActive,
+  applyBusinessDayX,
+  formatBusinessDayTick,
+} from "./core/time/applyTimeScale";
 export { computeHeikinAshi } from "./core/chart/heikinAshi";
+export { buildPositionLineAnnotation, type PositionLineOptions } from "./core/chart/positionLines";
+export type { DatafeedAdapter, Bar, SymbolInfo } from "./trading/datafeed";
+export { barsToOhlc } from "./trading/datafeed";
+export { createMockDatafeed } from "./trading/mockDatafeed";
 export type {
   CandlestickMarker,
   CandlestickMarkerPosition,

@@ -106,6 +106,7 @@ export type SeriesType =
   | "bar"
   | "heatmap"
   | "candlestick"
+  | "heikin-ashi"
   | "polar"
   | "radar"
   | "boxplot"
