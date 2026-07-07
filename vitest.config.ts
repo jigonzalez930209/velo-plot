@@ -46,7 +46,13 @@ export default defineConfig({
         "src/plugins/replay/index.ts",
         "src/testing/stage1BrowserBench.ts",
       ],
-      exclude: ["src/**/*.test.ts", "e2e/**/*.test.ts", "**/types.ts", "src/index.ts"],
+      exclude: [
+        "src/**/*.test.ts",
+        "e2e/**/*.test.ts",
+        "**/types.ts",
+        "src/index.ts",
+        "src/trading/index.ts",
+      ],
       thresholds: {
         lines: 80,
         functions: 75,
