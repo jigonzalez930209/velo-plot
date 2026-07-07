@@ -87,4 +87,4 @@ await stack.addIndicator('macd', { pane: 'new' })
 stack.getChart('price').setDrawingMode('trendline')
 ```
 
-See [Trading dashboard example](../examples/trading-dashboard.md).
+See [Trading dashboard example](../examples/trading/dashboard.md).
