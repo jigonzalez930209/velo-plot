@@ -48,6 +48,8 @@ export type { PriceAlertOptions } from "../core/chart/ChartAlerts";
 export type { PositionLineOptions } from "../core/chart/positionLines";
 
 // Trading plugins
+export { PluginAnnotations } from "../plugins/annotations";
+export type { Annotation, AnnotationType } from "../plugins/annotations";
 export { PluginDrawingTools } from "../plugins/drawing-tools";
 export type { DrawingMode, DrawingToolsAPI } from "../plugins/drawing-tools";
 export { PluginReplay } from "../plugins/replay";
@@ -67,6 +69,14 @@ export {
   type HistoryRequest,
 } from "./datafeed";
 export { createMockDatafeed } from "./mockDatafeed";
+export {
+  generateBusinessDayOhlcv,
+  generateContinuousOhlcv,
+  findLowestBarIndex,
+  findHighestBarIndex,
+  type OhlcvData,
+  type OhlcvOptions,
+} from "./ohlcvGenerator";
 
 // Essential types
 export type {
