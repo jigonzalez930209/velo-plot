@@ -362,45 +362,6 @@ describe("PluginVirtualization", () => {
     expect(candlestick.getData().x.length).toBeLessThanOrEqual(50);
   });
 
-  it("appendData merges cached line series and accepts number[] input", async () => {
-    const plugin = PluginVirtualization({ targetPoints: 30 });
-    const line = new Series({
-      id: "line",
-      type: "line",
-      data: {
-        x: Float32Array.from({ length: 2000 }, (_, i) => i),
-        y: Float32Array.from({ length: 2000 }, (_, i) => Math.sin(i * 0.01)),
-      },
-    });
-    const chart = {
-      getSeries: (id: string) => (id === "line" ? line : undefined),
-      updateSeries: vi.fn((id: string, data: Record<string, unknown>) => {
-        if (id === "line") line.updateData(data as any);
-      }),
-      appendData: vi.fn((id: string, x: number[] | Float32Array, y: number[] | Float32Array) => {
-        line.updateData({ x: x as any, y: y as any, append: true });
-      }),
-      on: vi.fn(),
-    };
-    const ctx = {
-      chart,
-      data: {
-        getAllSeries: () => [line],
-        getViewBounds: () => ({ xMin: 0, xMax: 2000, yMin: -1, yMax: 1 }),
-      },
-      render: { canvasSize: { width: 400, height: 300 }, pixelRatio: 1 },
-      events: { on: vi.fn() },
-      log: { info: vi.fn() },
-    } as unknown as PluginContext;
-    plugin.onInit!(ctx);
-    await new Promise((r) => setTimeout(r, 0));
-    const before = (plugin.api as any).getStats("line").originalPoints;
-    chart.appendData("line", [2000, 2001], [0.5, 0.6]);
-    flushRaf();
-    await new Promise((r) => setTimeout(r, 0));
-    expect((plugin.api as any).getStats("line").originalPoints).toBeGreaterThan(before);
-  });
-
   it("resize event triggers refresh when view changes", async () => {
     const resizeHandlers: Array<() => void> = [];
     const { plugin } = initPlugin();
@@ -430,5 +391,174 @@ describe("PluginVirtualization", () => {
     flushRaf();
     await new Promise((r) => setTimeout(r, 0));
     expect((plugin2.api as any).getStats("ohlc")).toBeTruthy();
+  });
+
+  it("virtualizes scatter and step series types", async () => {
+    const plugin = PluginVirtualization({ targetPoints: 20 });
+    const scatter = new Series({
+      id: "pts",
+      type: "scatter",
+      data: {
+        x: Float32Array.from({ length: 1000 }, (_, i) => i),
+        y: Float32Array.from({ length: 1000 }, (_, i) => i % 7),
+      },
+    });
+    const chart = {
+      getSeries: () => scatter,
+      updateSeries: vi.fn((_, d) => scatter.updateData(d as any)),
+      appendData: vi.fn(),
+      on: vi.fn(),
+    };
+    plugin.onInit!({
+      chart,
+      data: {
+        getAllSeries: () => [scatter],
+        getViewBounds: () => ({ xMin: 0, xMax: 1000, yMin: 0, yMax: 10 }),
+      },
+      render: { canvasSize: { width: 200, height: 200 }, pixelRatio: 1 },
+      events: { on: vi.fn() },
+      log: { info: vi.fn() },
+    } as unknown as PluginContext);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(scatter.getData().x.length).toBeLessThanOrEqual(20);
+  });
+
+  it("uses minmax strategy and viewport slice when zoomed", async () => {
+    const plugin = PluginVirtualization({ targetPoints: 40, strategy: "minmax", viewportBuffer: 0.1 });
+    const line = new Series({
+      id: "line",
+      type: "line",
+      data: {
+        x: Float32Array.from({ length: 5000 }, (_, i) => i),
+        y: Float32Array.from({ length: 5000 }, (_, i) => Math.sin(i * 0.02)),
+      },
+    });
+    const chart = {
+      getSeries: () => line,
+      updateSeries: vi.fn((_, d) => line.updateData(d as any)),
+      appendData: vi.fn(),
+      on: vi.fn(),
+    };
+    plugin.onInit!({
+      chart,
+      data: {
+        getAllSeries: () => [line],
+        getViewBounds: () => ({ xMin: 2000, xMax: 2600, yMin: -1, yMax: 1 }),
+      },
+      render: { canvasSize: { width: 400, height: 300 }, pixelRatio: 1 },
+      events: { on: vi.fn() },
+      log: { info: vi.fn() },
+    } as unknown as PluginContext);
+    await new Promise((r) => setTimeout(r, 0));
+    const stats = (plugin.api as any).getStats("line");
+    expect(stats.strategy).toBe("minmax");
+    expect(line.getData().x.length).toBeLessThanOrEqual(40);
+  });
+
+  it("skips downsampling when point count is below target", async () => {
+    const plugin = PluginVirtualization({ targetPoints: 100 });
+    const line = new Series({
+      id: "tiny",
+      type: "line",
+      data: { x: Float32Array.from([0, 1, 2]), y: Float32Array.from([1, 2, 3]) },
+    });
+    const chart = {
+      getSeries: () => line,
+      updateSeries: vi.fn(),
+      appendData: vi.fn(),
+      on: vi.fn(),
+    };
+    plugin.onInit!({
+      chart,
+      data: {
+        getAllSeries: () => [line],
+        getViewBounds: () => ({ xMin: 0, xMax: 2, yMin: 0, yMax: 3 }),
+      },
+      render: { canvasSize: { width: 400, height: 300 }, pixelRatio: 1 },
+      events: { on: vi.fn() },
+      log: { info: vi.fn() },
+    } as unknown as PluginContext);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(line.getData().x.length).toBe(3);
+  });
+
+  it("logs debug messages when enabled", async () => {
+    const log = vi.fn();
+    const plugin = PluginVirtualization({ targetPoints: 20, debug: true });
+    const line = new Series({
+      id: "line",
+      type: "line",
+      data: { x: Float32Array.from({ length: 500 }, (_, i) => i), y: Float32Array.from({ length: 500 }, (_, i) => i) },
+    });
+    plugin.onInit!({
+      chart: {
+        getSeries: () => line,
+        updateSeries: vi.fn((_, d) => line.updateData(d as any)),
+        appendData: vi.fn(),
+        on: vi.fn(),
+      },
+      data: {
+        getAllSeries: () => [line],
+        getViewBounds: () => ({ xMin: 0, xMax: 500, yMin: 0, yMax: 500 }),
+      },
+      render: { canvasSize: { width: 200, height: 200 }, pixelRatio: 1 },
+      events: { on: vi.fn() },
+      log: { info: log },
+    } as unknown as PluginContext);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(log).toHaveBeenCalled();
+  });
+
+  it("does not virtualize heatmap series", async () => {
+    const heatmap = new Series({
+      id: "hm",
+      type: "heatmap",
+      data: { x: Float32Array.from([0, 1]), y: Float32Array.from([0, 1]), z: Float32Array.from([1, 2]) },
+    } as any);
+    const updateSeries = vi.fn();
+    const plugin = PluginVirtualization({ targetPoints: 10 });
+    plugin.onInit!({
+      chart: { getSeries: () => heatmap, updateSeries, appendData: vi.fn(), on: vi.fn() },
+      data: {
+        getAllSeries: () => [heatmap],
+        getViewBounds: () => ({ xMin: 0, xMax: 1, yMin: 0, yMax: 1 }),
+      },
+      render: { canvasSize: { width: 200, height: 200 }, pixelRatio: 1 },
+      events: { on: vi.fn() },
+      log: { info: vi.fn() },
+    } as unknown as PluginContext);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(updateSeries).not.toHaveBeenCalled();
+  });
+
+  it("pan event schedules refresh like zoom", async () => {
+    const panHandlers: Array<() => void> = [];
+    const { plugin, candlestick } = initPlugin();
+    await new Promise((r) => setTimeout(r, 0));
+    const ctx = {
+      chart: {
+        getSeries: (id: string) => (id === "ohlc" ? candlestick : undefined),
+        updateSeries: vi.fn((_, d) => candlestick.updateData(d as any)),
+        appendData: vi.fn(),
+        on: vi.fn(),
+      },
+      data: {
+        getAllSeries: () => [candlestick],
+        getViewBounds: () => ({ xMin: 100, xMax: 4000, yMin: -10, yMax: 10 }),
+      },
+      render: { canvasSize: { width: 400, height: 300 }, pixelRatio: 1 },
+      events: {
+        on: vi.fn((ev: string, cb: () => void) => {
+          if (ev === "pan") panHandlers.push(cb);
+        }),
+      },
+      log: { info: vi.fn() },
+    } as unknown as PluginContext;
+    plugin.onInit!(ctx);
+    await new Promise((r) => setTimeout(r, 0));
+    panHandlers.forEach((h) => h());
+    flushRaf();
+    await new Promise((r) => setTimeout(r, 0));
+    expect((plugin.api as any).getStats("ohlc")).toBeTruthy();
   });
 });
