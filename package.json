@@ -182,6 +182,8 @@
     "test:watch": "vitest",
     "test:dom": "vitest run .dom.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:artifacts": "E2E_FULL_ARTIFACTS=1 playwright test",
+    "test:e2e:report": "playwright show-report test-results/e2e/report",
     "test:e2e:install": "node scripts/playwright-install.mjs",
     "test:e2e:install:deps": "PLAYWRIGHT_INSTALL_DEPS=1 node scripts/playwright-install.mjs",
     "test:e2e:setup": "pnpm build && pnpm test:e2e:install",

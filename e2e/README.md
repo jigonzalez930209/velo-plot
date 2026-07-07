@@ -20,6 +20,8 @@ pnpm test:e2e:install:deps
 
 ```bash
 pnpm test:e2e                 # all 3 browsers
+pnpm test:e2e:artifacts       # same + trace/screenshot/video on every test
+pnpm test:e2e:report          # open HTML report after a run
 pnpm test:e2e:chromium        # single project
 pnpm test:e2e:firefox
 pnpm test:e2e:webkit
@@ -36,6 +38,18 @@ pnpm test:e2e:headed          # visible browser windows
 | `test:e2e:setup` | `pnpm build` + `test:e2e:install` |
 
 CI sets `CI=true` so `test:e2e:install` automatically uses `--with-deps` on Ubuntu runners.
+
+## Artifacts (local review)
+
+After `pnpm test:e2e` (or `pnpm test:e2e:artifacts` for full traces/videos on every test):
+
+| Path | Contents |
+|------|----------|
+| `test-results/e2e/report/` | HTML report — open `index.html` or run `pnpm test:e2e:report` |
+| `test-results/e2e/results.json` | Machine-readable summary |
+| `test-results/e2e/artifacts/` | Per-test folders (screenshots, traces `.zip`, videos on failure) |
+
+The whole `test-results/` tree is gitignored.
 
 ## Coverage policy
 
