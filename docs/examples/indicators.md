@@ -48,7 +48,7 @@ await stack.addIndicator('macd', { pane: 'new' })
 await stack.addIndicator('stochastic', { period: 14, pane: 'new' })
 ```
 
-See [Trading Indicators example](/examples/trading-indicators) and [addIndicator API](/api/trading-indicators).
+See [Trading Indicators example](/examples/trading/indicators) and [addIndicator API](/api/trading-indicators).
 
 ### Manual calculation API
 import { 

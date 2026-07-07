@@ -65,6 +65,6 @@ All arrays must have the same length.
 - **Auto-Scaling**: Automatically calculates the min/max across all OHLC fields.
 - **Responsive**: Colors and widths can be updated dynamically.
 - **SVG Export**: High-quality vector export for reports and printing.
-- **Hollow style** (v2.0): `style.hollow: true` — see [Hollow Candles](./trading-hollow-candles.md).
-- **Heikin-Ashi** (v2.0): `type: 'heikin-ashi'` — see [Heikin-Ashi](./trading-heikin-ashi.md).
-- **Trade markers** (v2.0): `series.setMarkers([...])` — see [Markers & Positions](./trading-markers-positions.md).
+- **Hollow style** (v2.0): `style.hollow: true` — see [Hollow Candles](/examples/trading/hollow-candles).
+- **Heikin-Ashi** (v2.0): `type: 'heikin-ashi'` — see [Heikin-Ashi](/examples/trading/heikin-ashi).
+- **Trade markers** (v2.0): `series.setMarkers([...])` — see [Markers & Positions](/examples/trading/markers-positions).

@@ -94,7 +94,7 @@ TradingView-style stack with sync presets, drag resize, and composite indicators
 
 Multi-pane trading layout with indicators, drawings, alerts, replay, and business-day time scale.
 
-[View full example →](/examples/trading-dashboard)
+[View full example →](/examples/trading/)
 
 ---
 
@@ -167,10 +167,11 @@ Interactive tools for selecting and analyzing specific data regions.
 | [Tooltips](/examples/tooltips) | Tooltip system | Themes & Animations |
 | [Export & Media](/examples/export-utilities) | Media Suite | Snapshot/Video/Data |
 | [ROI Selection](/examples/roi-tools) | Data Region Selection | Rect/Lasso/Polygon |
-| [Trading Dashboard](/examples/trading-dashboard) | Full Stage 2 layout | `velo-plot/trading` |
-| [Trading Session](/examples/trading-session) | Business-day time scale | `timeScale.calendar` |
-| [Trading Indicators](/examples/trading-indicators) | `addIndicator()` presets | RSI, MACD, Stochastic |
-| [Drawing Tools](/examples/trading-drawing-tools) | Trendline, Fibonacci | `PluginDrawingTools` |
+| [Trading (v2)](/examples/trading/) | All Stage 2 demos | `velo-plot/trading` |
+| [Trading Dashboard](/examples/trading/dashboard) | Full multi-pane layout | RSI + MACD + drawings |
+| [Trading Session](/examples/trading/session) | Business-day time scale | `timeScale.calendar` |
+| [Trading Indicators](/examples/trading/indicators) | `addIndicator()` presets | RSI, MACD, Stochastic |
+| [Drawing Tools](/examples/trading/drawing-tools) | Trendline, Fibonacci | `PluginDrawingTools` |
 | [Offscreen](/examples/offscreen) | Smooth Rendering | `OffscreenCanvas` |
 
 ## Code Snippets
