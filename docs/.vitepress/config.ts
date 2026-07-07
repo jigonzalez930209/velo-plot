@@ -62,6 +62,7 @@ export default defineConfig({
             { text: "Multi-Pane Layouts", link: "/guide/multi-pane" },
             { text: "Series & Data", link: "/guide/series" },
             { text: "Integration Guide", link: "/guide/react" },
+            { text: "Migration v1 → v2", link: "/guide/migration-v2" },
           ],
         },
         {
@@ -213,6 +214,8 @@ export default defineConfig({
           items: [
             { text: "Heatmaps", link: "/examples/heatmap" },
             { text: "Candlestick", link: "/examples/candlestick" },
+            { text: "Trading Dashboard", link: "/examples/trading-dashboard" },
+            { text: "Trading Session Scale", link: "/examples/trading-session" },
             { text: "Multi-Pane Stack", link: "/examples/pane-stack" },
             { text: "Error Bars", link: "/examples/error-bars" },
             { text: "Scatter Symbols", link: "/examples/scatter-symbols" },
