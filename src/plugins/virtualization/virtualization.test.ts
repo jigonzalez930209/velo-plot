@@ -135,4 +135,68 @@ describe("PluginVirtualization", () => {
     expect(updateSeries).not.toHaveBeenCalled();
     expect(candlestick.getData().x.length).toBe(5000);
   });
+
+  it("hooks appendData and downsamples appended points", async () => {
+    const { plugin, chart, candlestick } = initPlugin();
+    await new Promise((r) => setTimeout(r, 0));
+    updates.length = 0;
+    chart.appendData("ohlc", [5000, 5001], [1, 2]);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(updates.length).toBeGreaterThan(0);
+    expect(candlestick.getData().x.length).toBeGreaterThan(5000);
+  });
+
+  it("refresh on zoom event re-applies virtualization", async () => {
+    const zoomHandlers: Array<() => void> = [];
+    const plugin = PluginVirtualization({ targetPoints: 30, debug: false });
+    const candlestick = new Series({ id: "ohlc", type: "candlestick", data: makeOhlc(3000) });
+    const chart = {
+      getSeries: (id: string) => (id === "ohlc" ? candlestick : undefined),
+      updateSeries: vi.fn((id: string, data: Record<string, unknown>) => {
+        updates.push({ id, ...data });
+        candlestick.updateData(data as any);
+      }),
+      appendData: vi.fn(),
+      on: vi.fn(),
+    };
+    const ctx = {
+      chart,
+      data: {
+        getAllSeries: () => [candlestick],
+        getViewBounds: () => ({ xMin: 0, xMax: 3000, yMin: -10, yMax: 10 }),
+      },
+      render: { canvasSize: { width: 400, height: 300 }, pixelRatio: 1 },
+      events: {
+        on: vi.fn((ev: string, cb: () => void) => {
+          if (ev === "zoom") zoomHandlers.push(cb);
+        }),
+      },
+      log: { info: vi.fn() },
+    } as unknown as PluginContext;
+    plugin.onInit!(ctx);
+    await new Promise((r) => setTimeout(r, 0));
+    updates.length = 0;
+    zoomHandlers.forEach((h) => h());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(updates.some((u) => u.id === "ohlc")).toBe(true);
+  });
+
+  it("updateConfig and getAllStats expose plugin state", async () => {
+    const { plugin } = initPlugin();
+    await new Promise((r) => setTimeout(r, 0));
+    (plugin.api as any).updateConfig({ targetPoints: 25 });
+    await new Promise((r) => setTimeout(r, 0));
+    const all = (plugin.api as any).getAllStats();
+    expect(all.length).toBeGreaterThan(0);
+    expect((plugin.api as any).isEnabled()).toBe(true);
+  });
+
+  it("onDestroy restores chart methods", async () => {
+    const { plugin, chart } = initPlugin();
+    const original = chart.updateSeries;
+    await new Promise((r) => setTimeout(r, 0));
+    const ctx = { chart, data: { getAllSeries: () => [] }, events: { on: vi.fn() }, log: { info: vi.fn() } };
+    plugin.onDestroy!(ctx as any);
+    expect(chart.updateSeries).toBe(original);
+  });
 });
