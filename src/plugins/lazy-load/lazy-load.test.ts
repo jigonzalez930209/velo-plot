@@ -126,9 +126,11 @@ describe("PluginLazyLoad", () => {
     const api = (ctx.chart as any).lazyLoad;
     api.registerSeries("s1", makeProvider(10_000));
     await api.loadRange("s1", 0, 1000);
-    api.unregisterSeries("s1");
+    expect(api.getLoadingStatus("s1").loadedPoints).toBeGreaterThan(0);
     api.clear();
     expect(api.getLoadingStatus("s1").loadedPoints).toBe(0);
+    api.unregisterSeries("s1");
+    expect(api.getLoadingStatus("s1")).toBeNull();
   });
 
   it("onDestroy removes lazyLoad API from chart", async () => {
@@ -141,5 +143,54 @@ describe("PluginLazyLoad", () => {
     plugin.onDestroy!(ctx);
     expect((ctx.chart as any).lazyLoad).toBeUndefined();
     expect((ctx.chart as any).setDataWindow).toBeUndefined();
+  });
+
+  it("setDataWindow targets a single series and loadVisible loads viewport", async () => {
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 500, xMax: 1500, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 500, autoLoad: false });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    api.registerSeries("s1", makeProvider(20_000));
+    api.registerSeries("s2", makeProvider(20_000));
+    await (ctx.chart as any).setDataWindow({ from: 1000, to: 1200, seriesId: "s1" });
+    expect(api.getLoadingStatus("s1").loadedPoints).toBeGreaterThan(0);
+    expect(api.getLoadingStatus("s2").loadedPoints).toBe(0);
+    await api.loadVisible();
+    expect(api.getLoadingStatus("s2").loadedPoints).toBeGreaterThan(0);
+  });
+
+  it("updateConfig and disabled plugin skip setDataWindow", async () => {
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 100, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, enabled: false });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    api.registerSeries("s1", makeProvider(1000));
+    await (ctx.chart as any).setDataWindow({ from: 0, to: 100 });
+    expect(api.getLoadingStatus("s1").loadedPoints).toBe(0);
+    api.updateConfig({ enabled: true });
+    await (ctx.chart as any).setDataWindow({ from: 0, to: 100 });
+    expect(api.getLoadingStatus("s1").loadedPoints).toBeGreaterThan(0);
+  });
+
+  it("registerSeries fires onLoadStart and debug logging", async () => {
+    const onLoadStart = vi.fn();
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 1000, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false, debug: true, onLoadStart });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    api.registerSeries("s1", makeProvider(5000));
+    expect(onLoadStart).toHaveBeenCalledWith(expect.objectContaining({ seriesId: "s1", totalPoints: 5000 }));
+    expect(log).toHaveBeenCalled();
+    log.mockRestore();
   });
 });

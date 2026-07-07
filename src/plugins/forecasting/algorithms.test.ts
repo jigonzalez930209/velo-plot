@@ -58,4 +58,8 @@ describe("calculateForecast", () => {
     expect(result.yValues).toHaveLength(4);
     expect(result.method).toBe("holtWinters");
   });
+
+  it("throws for unsupported forecast method", () => {
+    expect(() => calculateForecast(x, y, "arima" as any, 2)).toThrow(/not implemented/i);
+  });
 });
