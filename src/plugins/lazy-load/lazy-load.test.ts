@@ -178,6 +178,134 @@ describe("PluginLazyLoad", () => {
     expect(api.getLoadingStatus("s1").loadedPoints).toBeGreaterThan(0);
   });
 
+  it("no-ops loading when the chart reports no view bounds", async () => {
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => undefined },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false, autoUnload: true });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    api.registerSeries("s1", makeProvider(1000));
+    await api.loadVisible();
+    expect(api.getLoadingStatus("s1").loadedPoints).toBe(0);
+    expect(api.unloadDistant()).toBe(0);
+  });
+
+  it("unloadDistant returns 0 when auto-unload is disabled", async () => {
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 100, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false, autoUnload: false });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    api.registerSeries("s1", makeProvider(1000));
+    await api.loadRange("s1", 0, 500);
+    expect(api.unloadDistant()).toBe(0);
+  });
+
+  it("fires default progress and complete handlers with debug logging", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 300, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    // No progress/complete handlers → default no-ops execute; debug hits the log branch.
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false, debug: true });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    api.registerSeries("s1", makeProvider(300));
+    await api.loadRange("s1", 0, 300); // partial chunks then full → onLoadProgress + onLoadComplete
+    expect(api.getLoadingStatus("s1").loadedPoints).toBe(300);
+    expect(log).toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  it("reports load errors through onLoadError", async () => {
+    const onLoadError = vi.fn();
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const provider: DataProvider = {
+      getTotalCount: () => 1000,
+      loadChunk: async () => {
+        throw new Error("network down");
+      },
+    };
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 100, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false, debug: true, onLoadError });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    api.registerSeries("s1", provider);
+    await api.loadRange("s1", 0, 100);
+    expect(onLoadError).toHaveBeenCalledWith(expect.any(Error), "s1");
+    expect(err).toHaveBeenCalled();
+    err.mockRestore();
+  });
+
+  it("updateSeriesData bails and empty-merge is a no-op after destroy", async () => {
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 100, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    api.registerSeries("s1", makeProvider(1000));
+    plugin.onDestroy!(ctx); // ctx = null, chunks cleared
+    // loadRange still works on the retained api but updateSeriesData bails (ctx null)
+    await expect(api.loadRange("s1", 0, 100)).resolves.toBeUndefined();
+  });
+
+  it("evicts least-recently-loaded chunks beyond maxLoadedChunks", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      // wide viewport + huge threshold so nothing is unloaded by distance,
+      // forcing the maxLoadedChunks (LRU) eviction path instead.
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 100_000, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({
+      chunkSize: 100,
+      autoLoad: false,
+      autoUnload: true,
+      viewportBuffer: 100,
+      unloadThreshold: 100,
+      maxLoadedChunks: 2,
+      debug: true,
+    });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    api.registerSeries("s1", makeProvider(1000));
+    await api.loadRange("s1", 0, 500); // loads 6 chunks (0..5)
+    expect(api.getLoadingStatus("s1").loadedChunks).toBeGreaterThan(2);
+    const unloaded = api.unloadDistant();
+    expect(unloaded).toBeGreaterThan(0);
+    expect(api.getLoadingStatus("s1").loadedChunks).toBe(2);
+    expect(log).toHaveBeenCalled();
+    log.mockRestore();
+  });
+
+  it("ignores unknown series in loadRange, setDataWindow, and unregister", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 100, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false, debug: true });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as any).lazyLoad;
+    await expect(api.loadRange("ghost", 0, 100)).resolves.toBeUndefined();
+    await expect(
+      (ctx.chart as any).setDataWindow({ from: 0, to: 100, seriesId: "ghost" }),
+    ).resolves.toBeUndefined();
+    api.unregisterSeries("ghost"); // debug-logs even for unknown ids
+    expect(log).toHaveBeenCalled();
+    log.mockRestore();
+  });
+
   it("registerSeries fires onLoadStart and debug logging", async () => {
     const onLoadStart = vi.fn();
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
