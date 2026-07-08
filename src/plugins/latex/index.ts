@@ -58,6 +58,18 @@ export function PluginLaTeX(config: PluginLaTeXConfig = {}): ChartPlugin<PluginL
 
   const finalConfig = { ...defaultConfig, ...config };
 
+  // Bounded caches prevent unbounded memory growth when many distinct
+  // expressions are rendered over the lifetime of a chart (task 3.11).
+  const MAX_CACHE_ENTRIES = 1000;
+
+  /** Evict the oldest entry once the cache exceeds its cap (FIFO). */
+  function capCache<K, V>(cache: Map<K, V>): void {
+    if (cache.size > MAX_CACHE_ENTRIES) {
+      const oldest = cache.keys().next().value;
+      if (oldest !== undefined) cache.delete(oldest);
+    }
+  }
+
   // Cache for parsed LaTeX
   const parseCache = new Map<string, ReturnType<typeof parseLaTeX>>();
   // Cache for measured dimensions
@@ -83,6 +95,7 @@ export function PluginLaTeX(config: PluginLaTeXConfig = {}): ChartPlugin<PluginL
     if (!parsed) {
       parsed = parseLaTeX(latex);
       parseCache.set(latex, parsed);
+      capCache(parseCache);
     }
     return parsed;
   }
@@ -148,9 +161,19 @@ export function PluginLaTeX(config: PluginLaTeXConfig = {}): ChartPlugin<PluginL
 
     if (finalConfig.enableCache) {
       measureCache.set(cacheKey, dims);
+      capCache(measureCache);
     }
 
     return dims;
+  }
+
+  /** Expose cache sizes for leak verification / diagnostics. */
+  function getCacheStats(): { parseCache: number; measureCache: number; maxEntries: number } {
+    return {
+      parseCache: parseCache.size,
+      measureCache: measureCache.size,
+      maxEntries: MAX_CACHE_ENTRIES,
+    };
   }
 
   // API exposed to chart
@@ -158,6 +181,7 @@ export function PluginLaTeX(config: PluginLaTeXConfig = {}): ChartPlugin<PluginL
     render,
     measure,
     clearCache,
+    getCacheStats,
   };
 
   return {
