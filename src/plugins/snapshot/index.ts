@@ -91,11 +91,25 @@ export function PluginSnapshot(
           return svg;
         }
 
-        // High-res re-render if scale > 1
-        // We temporarily boost the device pixel ratio to force a higher resolution render
+        // High-res re-render if scale > 1.
+        // We temporarily lock the device pixel ratio to force a higher-resolution
+        // render. Using an explicit override (instead of setDPR) is essential:
+        // a plain setDPR gets reverted by the very next resize() call, so the
+        // backing stores would stay at screen resolution and every preset would
+        // look identical / pixelated. The override survives resize().
         if (scale > 1) {
-            chart.setDPR(originalDPR * scale);
+            if (typeof chart.setDevicePixelRatioOverride === 'function') {
+                chart.setDevicePixelRatioOverride(originalDPR * scale);
+            } else {
+                chart.setDPR(originalDPR * scale);
+            }
+            // Force a synchronous full render at the boosted DPR before capture.
+            if (typeof chart.render === 'function') {
+                chart.render();
+            }
             // Wait for DOM and GL updates
+            await new Promise(r => requestAnimationFrame(r));
+            // Second frame ensures the resized backing store has actually been painted.
             await new Promise(r => requestAnimationFrame(r));
             // Small delay to ensure all overlays (which might have their own throttles) are ready
             await new Promise(r => setTimeout(r, 100));
@@ -149,7 +163,11 @@ export function PluginSnapshot(
     } finally {
         // 4. Restore original resolution
         if (scale > 1) {
-            chart.setDPR(originalDPR);
+            if (typeof chart.setDevicePixelRatioOverride === 'function') {
+                chart.setDevicePixelRatioOverride(null);
+            } else {
+                chart.setDPR(originalDPR);
+            }
         }
     }
   }
