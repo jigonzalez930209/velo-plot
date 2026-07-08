@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { buildIndicatorSeries, detectIndicatorMarkers } from "./buildIndicatorSeries";
+import {
+  buildIndicatorSeries,
+  createIndicatorSeries,
+  detectIndicatorMarkers,
+} from "./buildIndicatorSeries";
 
 describe("buildIndicatorSeries", () => {
   it("expands histogram into positive and negative bar series", () => {
@@ -97,6 +101,197 @@ describe("buildIndicatorSeries", () => {
     });
 
     expect(series.some((s) => String(s.id).includes("b-zone"))).toBe(true);
+  });
+
+  it("treats an unknown color-zone reference as zero", () => {
+    const series = buildIndicatorSeries({
+      id: "ghostref",
+      type: "indicator",
+      data: {
+        x: new Float32Array([0, 1, 2, 3]),
+        lines: [
+          {
+            id: "line",
+            y: new Float32Array([1, -1, 1, -1]),
+            colorZones: { ref: "missing", aboveColor: "#0f0", belowColor: "#f00" },
+          },
+        ],
+      },
+    });
+    expect(series.some((s) => String(s.id).includes("line-zone"))).toBe(true);
+  });
+
+  it("clamps color-zone reference index to zero past the ref line length", () => {
+    const series = buildIndicatorSeries({
+      id: "shortref",
+      type: "indicator",
+      data: {
+        x: new Float32Array([0, 1, 2, 3]),
+        lines: [
+          { id: "a", y: new Float32Array([0, 0]) }, // shorter than "b"
+          {
+            id: "b",
+            y: new Float32Array([1, -1, 1, -1]),
+            colorZones: { ref: "a", aboveColor: "#0f0", belowColor: "#f00" },
+          },
+        ],
+      },
+    });
+    expect(series.some((s) => String(s.id).includes("b-zone"))).toBe(true);
+  });
+
+  it("accepts a numeric color-zone reference level", () => {
+    const series = buildIndicatorSeries({
+      id: "numref",
+      type: "indicator",
+      data: {
+        x: new Float32Array([0, 1, 2, 3]),
+        lines: [
+          {
+            id: "line",
+            y: new Float32Array([60, 40, 80, 20]),
+            // numeric ref → resolveLineRefY returns the literal number
+            colorZones: { ref: 50, aboveColor: "#0f0", belowColor: "#f00" },
+          },
+        ],
+      },
+    });
+    expect(series.some((s) => String(s.id).includes("line-zone"))).toBe(true);
+  });
+
+  it("drops single-point color-zone segments", () => {
+    const series = buildIndicatorSeries({
+      id: "solo",
+      type: "indicator",
+      data: {
+        x: new Float32Array([0]),
+        lines: [
+          {
+            id: "one",
+            y: new Float32Array([5]),
+            colorZones: { ref: "zero", aboveColor: "#0f0", belowColor: "#f00" },
+          },
+        ],
+      },
+    });
+    // a lone point produces a length-1 segment which is skipped
+    expect(series.some((s) => String(s.id).includes("one-zone"))).toBe(false);
+  });
+
+  it("honors an explicit histogram bar width", () => {
+    const series = buildIndicatorSeries({
+      id: "h",
+      type: "indicator",
+      data: {
+        x: new Float32Array([0, 1, 2]),
+        histogram: { y: new Float32Array([1, -1, 2]), barWidth: 6 },
+      },
+    });
+    const pos = series.find((s) => s.id === "h-hist-pos");
+    expect((pos!.style as { barWidth?: number }).barWidth).toBe(6);
+  });
+
+  it("skips the baseline for a single-point series and defaults extra line colors", () => {
+    const series = buildIndicatorSeries({
+      id: "b1",
+      type: "indicator",
+      data: {
+        x: new Float32Array([0]),
+        lines: [{ y: new Float32Array([1]) }, { y: new Float32Array([2]) }],
+        baseline: 0, // n < 2 → no baseline series
+      },
+    });
+    expect(series.some((s) => s.id === "b1-baseline")).toBe(false);
+    // second line falls back to the "#e040fb" default color
+    const second = series.find((s) => s.id === "b1-line-1");
+    expect((second!.style as { color?: string }).color).toBe("#e040fb");
+  });
+
+  it("emits both peak and trough marker series", () => {
+    const series = buildIndicatorSeries({
+      id: "pk",
+      type: "indicator",
+      data: {
+        x: new Float32Array([0, 1, 2, 3]),
+        lines: [{ y: new Float32Array([1, 2, 1, 2]) }],
+        markers: [
+          { x: 1, y: 2, kind: "peak" },
+          { x: 2, y: 1, kind: "trough" },
+        ],
+      },
+    });
+    expect(series.some((s) => s.id === "pk-peaks")).toBe(true);
+    expect(series.some((s) => s.id === "pk-troughs")).toBe(true);
+  });
+
+  it("coerces plain number[] arrays via toF32", () => {
+    const series = buildIndicatorSeries({
+      id: "n",
+      type: "indicator",
+      data: {
+        x: [0, 1, 2] as unknown as Float32Array,
+        lines: [{ y: [1, 2, 3] as unknown as Float32Array }],
+      },
+    });
+    expect(series.some((s) => s.type === "line")).toBe(true);
+  });
+
+  it("accepts Float64Array data without copying", () => {
+    const series = buildIndicatorSeries({
+      id: "f64",
+      type: "indicator",
+      data: {
+        x: Float64Array.from([0, 1, 2]),
+        lines: [{ y: Float64Array.from([1, 2, 3]) }],
+      },
+    });
+    expect(series.some((s) => s.type === "line")).toBe(true);
+  });
+
+  it("produces no color-zone segments for an empty line", () => {
+    const series = buildIndicatorSeries({
+      id: "empty",
+      type: "indicator",
+      data: {
+        x: new Float32Array(0),
+        lines: [
+          {
+            id: "z",
+            y: new Float32Array(0),
+            colorZones: { ref: "zero", aboveColor: "#0f0", belowColor: "#f00" },
+          },
+        ],
+      },
+    });
+    expect(series.some((s) => String(s.id).includes("z-zone"))).toBe(false);
+  });
+
+  it("colors a single below-reference point", () => {
+    const series = buildIndicatorSeries({
+      id: "below",
+      type: "indicator",
+      data: {
+        x: new Float32Array([0]),
+        lines: [
+          {
+            id: "b",
+            y: new Float32Array([-5]), // below the zero reference
+            colorZones: { ref: "zero", aboveColor: "#0f0", belowColor: "#f00" },
+          },
+        ],
+      },
+    });
+    // single point still yields a length-1 (dropped) segment; no throw and no zone line
+    expect(series.some((s) => String(s.id).includes("b-zone"))).toBe(false);
+  });
+
+  it("createIndicatorSeries delegates to buildIndicatorSeries", () => {
+    const opts = {
+      id: "c",
+      type: "indicator" as const,
+      data: { x: new Float32Array([0, 1]), lines: [{ y: new Float32Array([1, 2]) }] },
+    };
+    expect(createIndicatorSeries(opts)).toEqual(buildIndicatorSeries(opts));
   });
 });
 
