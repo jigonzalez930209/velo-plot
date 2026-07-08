@@ -74,6 +74,11 @@ export interface Chart {
   getActiveRenderer(): "webgl" | "webgpu";
   /** Set device pixel ratio and trigger re-render */
   setDPR(dpr: number): void;
+  /**
+   * Lock the device pixel ratio to an explicit value (or clear with `null`).
+   * Survives subsequent `resize()` calls; required for high-resolution export.
+   */
+  setDevicePixelRatioOverride?(dpr: number | null): void;
   render(): void;
   on<K extends keyof ChartEventMap>(
     event: K,

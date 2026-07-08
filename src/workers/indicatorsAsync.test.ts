@@ -8,6 +8,7 @@ import {
   bollingerBandsAsync,
   destroyIndicatorPool,
   getIndicatorPoolSize,
+  computeIndicatorSync,
 } from "./indicatorsAsync";
 
 describe("indicatorsAsync", () => {
@@ -67,5 +68,71 @@ describe("indicatorsAsync", () => {
   it("reports indicator pool size after run", async () => {
     await rsiAsync(Float32Array.from([1, 2, 3, 4, 5]), 2);
     expect(getIndicatorPoolSize()).toBeGreaterThanOrEqual(0);
+  });
+
+  describe("computeIndicatorSync parameter defaults", () => {
+    const data = Float32Array.from({ length: 60 }, (_, i) => 100 + Math.sin(i * 0.2) * 4);
+    const base = { id: "t", type: "indicator" as const, data };
+
+    it("applies default periods when omitted for rsi/sma/ema", () => {
+      for (const indicator of ["rsi", "sma", "ema"] as const) {
+        const r = computeIndicatorSync({ ...base, indicator });
+        expect(r.values.length).toBe(data.length);
+        expect(r.indicator).toBe(indicator);
+      }
+    });
+
+    it("applies default periods for macd", () => {
+      const r = computeIndicatorSync({ ...base, indicator: "macd" });
+      expect(r.signal?.length).toBe(data.length);
+      expect(r.histogram?.length).toBe(data.length);
+    });
+
+    it("applies default period and stdDev for bollingerBands", () => {
+      const r = computeIndicatorSync({ ...base, indicator: "bollingerBands" });
+      expect(r.upper?.length).toBe(data.length);
+      expect(r.lower?.length).toBe(data.length);
+    });
+
+    it("throws for an unknown indicator", () => {
+      expect(() =>
+        computeIndicatorSync({ ...base, indicator: "unknown" as never }),
+      ).toThrow(/Unknown indicator/);
+    });
+  });
+
+  it("spawns real workers when Worker is available", async () => {
+    // A minimal Worker mock so the pool takes the worker (factory) path instead
+    // of the sync fallback, exercising the worker factory closure.
+    class MockIndicatorWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(task: { id: string; indicator: string; data: Float32Array; period?: number }) {
+        queueMicrotask(() => {
+          this.onmessage?.({
+            data: {
+              id: task.id,
+              type: "indicator-result",
+              indicator: task.indicator,
+              values: rsi(task.data, task.period ?? 14),
+              duration: 0,
+            },
+          } as MessageEvent);
+        });
+      }
+      terminate() {}
+    }
+    const original = globalThis.Worker;
+    // @ts-expect-error test override
+    globalThis.Worker = MockIndicatorWorker;
+    destroyIndicatorPool();
+    try {
+      const result = await rsiAsync(Float32Array.from({ length: 30 }, (_, i) => i), 14);
+      expect(result.values.length).toBe(30);
+      expect(getIndicatorPoolSize()).toBe(2);
+    } finally {
+      destroyIndicatorPool();
+      globalThis.Worker = original;
+    }
   });
 });

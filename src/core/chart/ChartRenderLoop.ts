@@ -72,6 +72,11 @@ export class ChartRenderLoop {
     this.ctx.renderer = renderer;
   }
 
+  /** Swap the X scale (e.g. broken-axis plugin) — the context holds a snapshot. */
+  setXScale(scale: Scale): void {
+    this.ctx.xScale = scale;
+  }
+
   /**
    * Check if init has started
    */

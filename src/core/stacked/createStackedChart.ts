@@ -71,12 +71,11 @@ function computeAlignedRightMargin(panes: StackedPaneConfig[], baseRight: number
   return baseRight + maxExtra;
 }
 
-function paneFlexStyle(ratio: number | string, direction: StackDirection): string {
+// Pane ratios are always numeric (see initialPaneRatio), so this only handles
+// the numeric flex-grow form.
+function paneFlexStyle(ratio: number, direction: StackDirection): string {
   const minDim = direction === "horizontal" ? "min-width:0;" : "min-height:0;";
-  if (typeof ratio === "number") {
-    return `flex:${ratio} 1 0;${minDim}`;
-  }
-  return `flex:1 1 ${ratio};${minDim}`;
+  return `flex:${ratio} 1 0;${minDim}`;
 }
 
 function expandPaneSeries(series?: SeriesOptions[]): SeriesOptions[] {
@@ -116,8 +115,8 @@ function buildPaneChartOptions(
   const margins = isHorizontal
     ? {
         top: alignedMargins.top,
-        right: isLast ? alignedMargins.right : compactMargin.left ?? 0,
-        left: compactY ? (compactMargin.left ?? 4) : alignedMargins.left,
+        right: isLast ? alignedMargins.right : compactMargin.left,
+        left: compactY ? compactMargin.left : alignedMargins.left,
         bottom: alignedMargins.bottom,
       }
     : {
@@ -246,8 +245,6 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     if (existingWidth > 0) {
       container.style.width = `${existingWidth}px`;
       container.style.minWidth = `${existingWidth}px`;
-    } else if (!container.style.width) {
-      container.style.minWidth = "480px";
     }
     container.style.height = existingHeight > 0 ? `${existingHeight}px` : "320px";
     container.style.minHeight = container.style.height;

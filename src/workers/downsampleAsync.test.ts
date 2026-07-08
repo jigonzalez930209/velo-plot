@@ -49,4 +49,70 @@ describe("downsampleAsync", () => {
     await downsampleAsync(x, y, 4);
     expect(getDownsamplePoolSize()).toBe(0);
   });
+
+  it("reports size 0 when the pool has not been created", () => {
+    destroyDownsamplePool();
+    expect(getDownsamplePoolSize()).toBe(0);
+  });
+
+  describe("worker responses", () => {
+    let responder: (task: Record<string, unknown>) => Record<string, unknown>;
+
+    class MockDownsampleWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(task: Record<string, unknown>) {
+        queueMicrotask(() => {
+          this.onmessage?.({ data: responder(task) } as MessageEvent);
+        });
+      }
+      terminate() {}
+    }
+
+    const x = Float32Array.from([0, 1, 2, 3]);
+    const y = Float32Array.from([1, 2, 3, 4]);
+
+    function withWorker(fn: () => Promise<void>) {
+      return async () => {
+        const original = globalThis.Worker;
+        // @ts-expect-error test override
+        globalThis.Worker = MockDownsampleWorker;
+        destroyDownsamplePool();
+        try {
+          await fn();
+        } finally {
+          destroyDownsamplePool();
+          globalThis.Worker = original;
+        }
+      };
+    }
+
+    it(
+      "spawns real workers and returns downsample results",
+      withWorker(async () => {
+        responder = (task) => ({ id: task.id, type: "downsample-result", x, y });
+        const result = await downsampleAsync(x, y, 4);
+        expect(result.x.length).toBe(4);
+        expect(getDownsamplePoolSize()).toBe(2);
+      }),
+    );
+
+    it(
+      "throws on an unexpected downsample response type",
+      withWorker(async () => {
+        responder = (task) => ({ id: task.id, type: "ohlc-downsample-result", x });
+        await expect(downsampleAsync(x, y, 4)).rejects.toThrow(/Unexpected downsample/);
+      }),
+    );
+
+    it(
+      "throws on an unexpected ohlc response type",
+      withWorker(async () => {
+        responder = (task) => ({ id: task.id, type: "downsample-result", x, y });
+        await expect(
+          ohlcDownsampleAsync(x, x, x, x, x, 4),
+        ).rejects.toThrow(/Unexpected OHLC downsample/);
+      }),
+    );
+  });
 });

@@ -49,7 +49,8 @@ export type LaTeXNodeType =
   | 'sqrt'
   | 'symbol'
   | 'operator'
-  | 'group';
+  | 'group'
+  | 'matrix';
 
 /**
  * Base LaTeX node in the AST
@@ -60,6 +61,10 @@ export interface LaTeXNode {
   children?: LaTeXNode[];
   numerator?: LaTeXNode[];
   denominator?: LaTeXNode[];
+  /** Matrix rows -> cells -> node lists (for the 'matrix' node type). */
+  rows?: LaTeXNode[][][];
+  /** Left/right delimiter characters for matrix environments. */
+  delimiters?: [string, string];
 }
 
 /**
@@ -108,6 +113,11 @@ export interface LaTeXPluginAPI {
    * Clear the rendering cache
    */
   clearCache(): void;
+
+  /**
+   * Report cache sizes (for leak verification / diagnostics).
+   */
+  getCacheStats?(): { parseCache: number; measureCache: number; maxEntries: number };
 
   /**
    * Index signature for compatibility

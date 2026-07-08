@@ -390,7 +390,9 @@ export function PluginVirtualization(
     if (updatedSeries) {
       const cached = restoreOriginal(id);
       if (cached?.y && config.reuseOriginalData) {
-        cacheOriginal(id, {
+        // Replace (not cacheOriginal, which no-ops on an existing entry) so the
+        // full-resolution cache grows with the appended points.
+        originalData.set(id, {
           x: appendTyped(cached.x, x),
           y: appendTyped(cached.y, y),
         });

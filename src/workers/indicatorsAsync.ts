@@ -31,6 +31,67 @@ interface IndicatorTaskResult extends IndicatorResult {
 
 let pool: WorkerPool<IndicatorTaskPayload, IndicatorTaskResult> | null = null;
 
+/**
+ * Synchronous indicator computation shared by the sync fallback path.
+ * Exported so the parameter defaults and dispatch can be unit-tested directly.
+ */
+export function computeIndicatorSync(task: IndicatorTaskPayload): IndicatorTaskResult {
+  const start = performance.now();
+  switch (task.indicator) {
+    case "rsi":
+      return {
+        id: task.id,
+        type: "indicator-result",
+        indicator: "rsi",
+        values: rsi(task.data, task.period ?? 14),
+        duration: performance.now() - start,
+      };
+    case "sma":
+      return {
+        id: task.id,
+        type: "indicator-result",
+        indicator: "sma",
+        values: sma(task.data, task.period ?? 14),
+        duration: performance.now() - start,
+      };
+    case "ema":
+      return {
+        id: task.id,
+        type: "indicator-result",
+        indicator: "ema",
+        values: ema(task.data, task.period ?? 14),
+        duration: performance.now() - start,
+      };
+    case "macd": {
+      const result = macd(
+        task.data,
+        task.fastPeriod ?? 12,
+        task.slowPeriod ?? 26,
+        task.signalPeriod ?? 9,
+      );
+      return {
+        id: task.id,
+        type: "indicator-result",
+        indicator: "macd",
+        ...result,
+        duration: performance.now() - start,
+      };
+    }
+    case "bollingerBands": {
+      const result = bollingerBands(task.data, task.period ?? 20, task.stdDev ?? 2);
+      return {
+        id: task.id,
+        type: "indicator-result",
+        indicator: "bollingerBands",
+        ...result,
+        duration: performance.now() - start,
+      };
+    }
+    default:
+      throw new Error(`Unknown indicator: ${task.indicator}`);
+  }
+}
+
 function getPool(): WorkerPool<IndicatorTaskPayload, IndicatorTaskResult> {
   if (!pool) {
     pool = new WorkerPool<IndicatorTaskPayload, IndicatorTaskResult>(
@@ -38,62 +99,7 @@ function getPool(): WorkerPool<IndicatorTaskPayload, IndicatorTaskResult> {
       {
         poolSize: 2,
         syncFallback: true,
-        syncHandler(task) {
-          const start = performance.now();
-          switch (task.indicator) {
-            case "rsi":
-              return {
-                id: task.id,
-                type: "indicator-result",
-                indicator: "rsi",
-                values: rsi(task.data, task.period ?? 14),
-                duration: performance.now() - start,
-              };
-            case "sma":
-              return {
-                id: task.id,
-                type: "indicator-result",
-                indicator: "sma",
-                values: sma(task.data, task.period ?? 14),
-                duration: performance.now() - start,
-              };
-            case "ema":
-              return {
-                id: task.id,
-                type: "indicator-result",
-                indicator: "ema",
-                values: ema(task.data, task.period ?? 14),
-                duration: performance.now() - start,
-              };
-            case "macd": {
-              const result = macd(
-                task.data,
-                task.fastPeriod ?? 12,
-                task.slowPeriod ?? 26,
-                task.signalPeriod ?? 9,
-              );
-              return {
-                id: task.id,
-                type: "indicator-result",
-                indicator: "macd",
-                ...result,
-                duration: performance.now() - start,
-              };
-            }
-            case "bollingerBands": {
-              const result = bollingerBands(task.data, task.period ?? 20, task.stdDev ?? 2);
-              return {
-                id: task.id,
-                type: "indicator-result",
-                indicator: "bollingerBands",
-                ...result,
-                duration: performance.now() - start,
-              };
-            }
-            default:
-              throw new Error(`Unknown indicator: ${task.indicator}`);
-          }
-        },
+        syncHandler: computeIndicatorSync,
       },
     );
   }

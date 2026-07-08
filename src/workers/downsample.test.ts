@@ -63,4 +63,38 @@ describe("downsample", () => {
     expect(lowerBoundX(x, 10)).toBe(1);
     expect(upperBoundX(x, 30)).toBe(4);
   });
+
+  it("minMaxDownsample returns a copy when the bucket count is large", () => {
+    const x = Float32Array.from([0, 1, 2, 3]);
+    const y = Float32Array.from([5, 6, 7, 8]);
+    // bucketCount >= length / 2 → identity copy
+    const result = minMaxDownsample(x, y, 4);
+    expect(Array.from(result.x)).toEqual([0, 1, 2, 3]);
+    expect(Array.from(result.indices)).toEqual([0, 1, 2, 3]);
+  });
+
+  it("ohlcMinMaxDownsample returns a copy when target >= length", () => {
+    const x = Float32Array.from([0, 1, 2]);
+    const o = Float32Array.from([1, 2, 3]);
+    const result = ohlcMinMaxDownsample(x, o, o, o, o, 10);
+    expect(result.x.length).toBe(3);
+    expect(Array.from(result.indices)).toEqual([0, 1, 2]);
+  });
+
+  it("ohlcMinMaxDownsample skips empty buckets for sparse targets", () => {
+    // A large target relative to length forces some empty buckets (start>=end).
+    const n = 5;
+    const x = Float32Array.from({ length: n }, (_, i) => i);
+    const o = Float32Array.from({ length: n }, (_, i) => 100 + i);
+    const result = ohlcMinMaxDownsample(x, o, o, o, o, 4);
+    expect(result.x.length).toBeGreaterThan(0);
+    expect(result.x.length).toBeLessThanOrEqual(4);
+  });
+
+  it("sliceSeriesToViewport handles an empty series", () => {
+    const empty = sliceSeriesToViewport({ x: new Float32Array(0) }, 0, 10);
+    expect(empty.x.length).toBe(0);
+    expect(empty.start).toBe(0);
+    expect(empty.end).toBe(0);
+  });
 });

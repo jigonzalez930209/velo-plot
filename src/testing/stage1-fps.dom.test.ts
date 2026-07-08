@@ -155,6 +155,12 @@ describe("stage1BrowserBench baseline", () => {
     expect(SMOKE_FLOORS["candlestick-500k"]).toBe(25);
   });
 
+  it("effectiveBenchmarkFps defaults missing metrics to zero", () => {
+    // avgFps/renderFps/frameCount all undefined → each `?? 0` fallback fires.
+    expect(effectiveBenchmarkFps({} as never, true)).toBe(0);
+    expect(effectiveBenchmarkFps({} as never, false)).toBe(0);
+  });
+
   it("effectiveBenchmarkFps keeps wall clock when headless has enough frames", () => {
     const result = {
       avgFps: 45,

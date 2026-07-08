@@ -109,7 +109,9 @@ export async function downsampleAsync(
     algorithm,
   });
 
-  if (result.type === "error") throw new Error(result.error);
+  // Worker/pool failures surface as a rejected run() promise (sync fallback or
+  // reject), so a resolved value is always a success payload; we only guard the
+  // shape here.
   if (result.type !== "downsample-result") {
     throw new Error("Unexpected downsample worker response");
   }
@@ -141,7 +143,6 @@ export async function ohlcDownsampleAsync(
     targetBars,
   });
 
-  if (result.type === "error") throw new Error(result.error);
   if (result.type !== "ohlc-downsample-result") {
     throw new Error("Unexpected OHLC downsample worker response");
   }

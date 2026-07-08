@@ -274,12 +274,44 @@ export interface PatternFailedEvent {
 // API Types
 // ============================================
 
+/**
+ * Normalized directional signal emitted for a detected pattern so it can be
+ * consumed by the Stage 2 trading alert system.
+ */
+export interface PatternSignalEvent {
+  seriesId: string;
+  patternType: PatternType;
+  patternName: string;
+  direction: 'bullish' | 'bearish' | 'neutral';
+  confidence: number;
+  price: number;
+  x: number;
+  target?: number;
+  stopLoss?: number;
+  timestamp: number;
+}
+
 export interface PatternRecognitionAPI {
   /** Detect patterns in series data */
   detectPatterns(seriesId: string, data: PatternPoint[], parameters?: Partial<PatternDetectionParameters>): Promise<PatternDetectionResult>;
   
-  /** Register a custom pattern */
+  /** Register a declarative custom pattern (legacy signature) */
   registerCustomPattern(config: CustomPatternConfig): void;
+
+  /**
+   * Register a named custom pattern by id. The template can be a full
+   * definition (with a `validator`) or a declarative `CustomPatternConfig`.
+   */
+  register(
+    id: string,
+    template: (Partial<PatternDefinition> & { validator: PatternDefinition['validator'] }) | CustomPatternConfig
+  ): void;
+
+  /** Remove a previously registered custom pattern by id. */
+  unregister(id: string): boolean;
+
+  /** Subscribe to normalized trading signals. Returns an unsubscribe fn. */
+  onSignal(handler: (signal: PatternSignalEvent) => void): () => void;
   
   /** Get all registered patterns */
   getRegisteredPatterns(): PatternDefinition[];

@@ -135,6 +135,12 @@ export class ChartImpl implements Chart {
   private yAxisOptionsMap: Map<string, AxisOptions>;
   private primaryYAxisId: string;
   private dpr: number;
+  /**
+   * When set, overrides the device pixel ratio used by `resize()` instead of
+   * recomputing it from `window.devicePixelRatio`. Used by high-resolution
+   * export (snapshot) so the boosted DPR is not clobbered on the next resize.
+   */
+  private dprOverride: number | null = null;
   private backgroundColor: [number, number, number, number];
   private plotAreaBackground: [number, number, number, number];
   private renderer!: ChartSeriesRenderer;
@@ -197,6 +203,12 @@ export class ChartImpl implements Chart {
 
   setXScale(scale: Scale): void {
     this.xScale = scale;
+    // The sub-managers captured the previous scale by reference at construction,
+    // so propagate the swap or axis ticks + rendering would keep using the old
+    // (linear) scale — this is what made the broken-axis plugin appear inert.
+    this.axisManager?.setXScale(scale);
+    this.renderLoop?.setXScale(scale);
+    this.stateManager?.setXScale(scale);
     this.requestRender();
   }
 
@@ -224,6 +236,7 @@ export class ChartImpl implements Chart {
   get sync(): any { return this.pluginBridge.sync; }
   get brokenAxis(): any { return this.pluginBridge.brokenAxis; }
   get forecasting(): any { return this.pluginBridge.forecasting; }
+  get patterns(): any { return this.pluginBridge.patterns; }
   get latex(): any {
     return this.pluginBridge?.latex ?? this.getPluginAPI("velo-plot-latex");
   }
@@ -1412,6 +1425,24 @@ export class ChartImpl implements Chart {
   }
 
   /**
+   * Locks the device pixel ratio to an explicit value (or clears the lock with
+   * `null`). Unlike {@link setDPR}, this survives subsequent `resize()` calls,
+   * which is required for high-resolution export: the backing stores must stay
+   * enlarged while the snapshot is captured. Pass `null` to restore automatic
+   * DPR handling based on `window.devicePixelRatio`.
+   */
+  setDevicePixelRatioOverride(dpr: number | null): void {
+    this.dprOverride = dpr;
+    if (dpr !== null) {
+      this.dpr = dpr;
+      this.renderer.setDPR(dpr);
+      this.overlay.setTheme(this.theme);
+    }
+    this.resize();
+    this.requestRender();
+  }
+
+  /**
    * Update X axis configuration
    */
   updateXAxis(options: Partial<AxisOptions>): void {
@@ -1735,7 +1766,9 @@ export class ChartImpl implements Chart {
   resize(): void {
     if (this.isDestroyed || this.resizeSuspended || !this.renderer) return;
     const desiredDpr =
-      this.initialOptions.devicePixelRatio ?? window.devicePixelRatio;
+      this.dprOverride ??
+      this.initialOptions.devicePixelRatio ??
+      window.devicePixelRatio;
     if (Math.abs(desiredDpr - this.dpr) > 0.001) {
       this.dpr = desiredDpr;
       this.renderer.setDPR(this.dpr);

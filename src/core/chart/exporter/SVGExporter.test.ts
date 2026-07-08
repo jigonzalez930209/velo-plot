@@ -41,6 +41,21 @@ function mockSeries(
   } as unknown as Series;
 }
 
+function mockSeriesWithAxis(
+  type: string,
+  yAxisId: string,
+  data: Record<string, Float32Array>,
+  style: Record<string, unknown> = {},
+): Series {
+  return {
+    isVisible: () => true,
+    getYAxisId: () => yAxisId,
+    getData: () => data,
+    getStyle: () => style,
+    getType: () => type,
+  } as unknown as Series;
+}
+
 function exportWithSeries(series: Series[], gridVisible = true) {
   const xScale = new LinearScale();
   xScale.setDomain(0, 100);
@@ -193,6 +208,67 @@ describe("exportToSVG", () => {
         100,
       ),
     ).toThrow(/Y scale/i);
+  });
+
+  it("falls back to defaults for missing styles, theme props, and options", () => {
+    const minimalTheme = {
+      backgroundColor: "#000",
+      grid: { visible: true, majorColor: "#222" },
+      xAxis: { lineColor: "#ccc", labelColor: "#eee", labelSize: 10, fontFamily: "" },
+      yAxis: { lineColor: "#ccc", labelColor: "#eee", labelSize: 10, fontFamily: "" },
+    } as unknown as ChartTheme;
+
+    // Scales whose pixel range extends past the plot area so some ticks fall
+    // outside and hit the skip branches.
+    const xScale = new LinearScale();
+    xScale.setDomain(0, 100);
+    xScale.setRange(0, 520);
+    const yScale = new LinearScale();
+    yScale.setDomain(0, 60);
+    yScale.setRange(320, 0);
+    const altScale = new LinearScale();
+    altScale.setDomain(0, 60);
+    altScale.setRange(320, 0);
+
+    const svg = exportToSVG(
+      [
+        // explicit, resolvable y-axis id
+        mockSeriesWithAxis("line", "alt", { x: Float32Array.from([0, 100]), y: Float32Array.from([0, 60]) }, {}),
+        // unknown y-axis id, no primary → skipped
+        mockSeriesWithAxis("line", "ghost", { x: Float32Array.from([0, 100]), y: Float32Array.from([0, 60]) }, {}),
+        // empty data → skipped
+        mockSeries("line", { x: new Float32Array(0), y: new Float32Array(0) }, {}),
+        // series with no style props → default width/opacity/color
+        mockSeries("scatter", { x: Float32Array.from([25, 75]), y: Float32Array.from([15, 45]) }, {}),
+        mockSeries("bar", { x: Float32Array.from([20, 60]), y: Float32Array.from([10, 30]) }, {}),
+        mockSeries("candlestick", {
+          x: Float32Array.from([50]),
+          y: Float32Array.from([0]),
+          open: Float32Array.from([20]),
+          high: Float32Array.from([30]),
+          low: Float32Array.from([15]),
+          close: Float32Array.from([25]),
+        }, {}),
+        // band with no y2 → default zero baseline
+        mockSeries("band", { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([40, 50, 45]) }, {}),
+      ],
+      { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
+      { x: 60, y: 40, width: 400, height: 240 },
+      xScale,
+      new Map([
+        ["alt", altScale],
+        ["default", yScale],
+      ]),
+      minimalTheme,
+      520,
+      320,
+      {}, // no xAxis/yAxis options → tickCount + showLabels defaults
+    );
+
+    expect(svg).toContain("<polyline");
+    expect(svg).toContain("<circle");
+    expect(svg).toContain("<polygon");
+    expect(svg).toContain('font-family="sans-serif"');
   });
 
   it("renders bearish candlesticks and hides tick labels when requested", () => {

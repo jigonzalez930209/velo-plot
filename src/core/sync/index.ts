@@ -212,12 +212,6 @@ export class ChartGroup {
     return true;
   }
 
-  private canPropagateFrom(sourceId: string): boolean {
-    if (this.options.bidirectional) return true;
-    if (this.options.masterId) return sourceId === this.options.masterId;
-    return true;
-  }
-
   private hasValidViewBounds(bounds: Bounds): boolean {
     const xSpan = bounds.xMax - bounds.xMin;
     const ySpan = bounds.yMax - bounds.yMin;
@@ -277,7 +271,8 @@ export class ChartGroup {
 
   private handleZoom(sourceId: string, event: { x: Range; y: Range }): void {
     if (this.isUpdating) return;
-    if (!this.canPropagateFrom(sourceId)) return;
+    // No canPropagateFrom guard needed: zoom handlers are only attached to sync
+    // sources (see attachEventHandlers + isSyncSource), which use identical logic.
 
     const sourceChart = this.charts.get(sourceId);
     if (sourceChart && !this.hasValidViewBounds(sourceChart.getViewBounds())) return;
@@ -304,7 +299,7 @@ export class ChartGroup {
 
   private handlePan(sourceId: string, event: { deltaX: number; deltaY: number }): void {
     if (this.isUpdating) return;
-    if (!this.canPropagateFrom(sourceId)) return;
+    // Pan handlers are only attached to sync sources (see attachEventHandlers).
 
     const dx = (this.options.axis === 'x' || this.options.axis === 'xy') ? event.deltaX : 0;
     const dy = (this.options.axis === 'y' || this.options.axis === 'xy') ? event.deltaY : 0;

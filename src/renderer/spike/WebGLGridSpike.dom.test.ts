@@ -108,4 +108,60 @@ describe("WebGLGridSpike (DOM)", () => {
     const canvas = document.createElement("canvas");
     expect(() => new WebGLGridSpike(canvas)).toThrow(/WebGL not available/i);
   });
+
+  it("throws when createShader returns null", () => {
+    const gl = createMockWebGL();
+    gl.createShader = vi.fn(() => null);
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => gl as unknown as WebGLRenderingContext);
+    expect(() => new WebGLGridSpike(document.createElement("canvas"))).toThrow(/createShader/i);
+  });
+
+  it("falls back to a default message when the shader log is null", () => {
+    const gl = createMockWebGL();
+    gl.getShaderParameter = vi.fn(() => false);
+    gl.getShaderInfoLog = vi.fn(() => null);
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => gl as unknown as WebGLRenderingContext);
+    expect(() => new WebGLGridSpike(document.createElement("canvas"))).toThrow(
+      /shader compile failed/i,
+    );
+  });
+
+  it("throws when createProgram returns null", () => {
+    const gl = createMockWebGL();
+    gl.createProgram = vi.fn(() => null);
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => gl as unknown as WebGLRenderingContext);
+    expect(() => new WebGLGridSpike(document.createElement("canvas"))).toThrow(/createProgram/i);
+  });
+
+  it("falls back to a default message when the program log is null", () => {
+    const gl = createMockWebGL();
+    gl.getProgramParameter = vi.fn(() => false);
+    gl.getProgramInfoLog = vi.fn(() => null);
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => gl as unknown as WebGLRenderingContext);
+    expect(() => new WebGLGridSpike(document.createElement("canvas"))).toThrow(
+      /program link failed/i,
+    );
+  });
+
+  it("throws when createBuffer returns null", () => {
+    const gl = createMockWebGL();
+    gl.createBuffer = vi.fn(() => null);
+    HTMLCanvasElement.prototype.getContext = vi.fn(() => gl as unknown as WebGLRenderingContext);
+    expect(() => new WebGLGridSpike(document.createElement("canvas"))).toThrow(/createBuffer/i);
+  });
+
+  it("draw uses default color and line width when omitted", () => {
+    const canvas = document.createElement("canvas");
+    const spike = new WebGLGridSpike(canvas);
+    const segments = spike.draw({
+      plotArea: { x: 0, y: 0, width: 100, height: 100 },
+      xLines: [50],
+      yLines: [25, 75],
+      width: 200,
+      height: 200,
+      // no color, no lineWidth → default branches
+    });
+    expect(segments).toBe(3);
+    spike.destroy();
+  });
 });

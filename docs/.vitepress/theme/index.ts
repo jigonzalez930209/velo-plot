@@ -28,6 +28,8 @@ import VideoRecorderDemo from "./demos/VideoRecorderDemo.vue";
 import RoiDemo from "./demos/RoiDemo.vue";
 import OffscreenDemo from "./demos/OffscreenDemo.vue";
 import ForecastingDemo from "./demos/ForecastingDemo.vue";
+import PatternRecognitionDemo from "./demos/PatternRecognitionDemo.vue";
+import ContourDemo from "./demos/ContourDemo.vue";
 import InvertedAxisDemo from "./demos/InvertedAxisDemo.vue";
 import PaneStackDemo from "./demos/PaneStackDemo.vue";
 import TradingDashboardDemo from "./demos/trading/TradingDashboardDemo.vue";
@@ -76,6 +78,8 @@ export default {
     app.component('BrokenAxisDemo', BrokenAxisDemo)
     app.component('VirtualizationDemo', VirtualizationDemo)
     app.component('ForecastingDemo', ForecastingDemo)
+    app.component('PatternRecognitionDemo', PatternRecognitionDemo)
+    app.component('ContourDemo', ContourDemo)
     app.component('InvertedAxisDemo', InvertedAxisDemo)
     app.component('PaneStackDemo', PaneStackDemo)
     app.component('TradingDashboardDemo', TradingDashboardDemo)

@@ -21,7 +21,9 @@ export class NativeWebGLRenderer {
 
   setDPR(dpr: number): void {
     this.dpr = dpr;
-    this.resize();
+    // Backing-store sizing is orchestrated by ChartCore.resize() via resizeCanvases().
+    // Resizing here races ahead of the overlay canvas and leaves axes/grid at the
+    // old resolution during high-DPI export.
   }
 
   constructor(canvas: HTMLCanvasElement) {

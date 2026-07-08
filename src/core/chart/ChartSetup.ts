@@ -205,26 +205,49 @@ export function resizeCanvases(
   const cssW = `${Math.round(rect.width)}px`;
   const cssH = `${Math.round(rect.height)}px`;
 
-  const unchanged =
-    webglCanvas.width === w &&
-    webglCanvas.height === h &&
-    webglCanvas.style.width === cssW &&
-    webglCanvas.style.height === cssH;
+  const webglNeedsResize =
+    webglCanvas.width !== w ||
+    webglCanvas.height !== h ||
+    webglCanvas.style.width !== cssW ||
+    webglCanvas.style.height !== cssH;
 
-  if (unchanged) return false;
+  const overlayNeedsResize =
+    overlayCanvas.width !== w || overlayCanvas.height !== h;
 
-  [webglCanvas, overlayCanvas].forEach((c) => {
-    c.width = w;
-    c.height = h;
-    c.style.width = cssW;
-    c.style.height = cssH;
-  });
+  if (!webglNeedsResize && !overlayNeedsResize) {
+    // Keep transform in sync even when backing-store dimensions are unchanged.
+    overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    overlayCtx.imageSmoothingEnabled = true;
+    if ("imageSmoothingQuality" in overlayCtx) {
+      overlayCtx.imageSmoothingQuality = "high";
+    }
+    return false;
+  }
 
+  if (webglNeedsResize) {
+    webglCanvas.width = w;
+    webglCanvas.height = h;
+    webglCanvas.style.width = cssW;
+    webglCanvas.style.height = cssH;
+  }
+
+  if (overlayNeedsResize) {
+    overlayCanvas.width = w;
+    overlayCanvas.height = h;
+  }
+
+  // Keep overlay CSS dimensions aligned even when only the backing store changed.
+  overlayCanvas.style.width = cssW;
+  overlayCanvas.style.height = cssH;
+
+  // Must run AFTER any canvas dimension assignment — changing width/height resets
+  // the 2D context transform back to identity.
   overlayCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   overlayCtx.imageSmoothingEnabled = true;
   if ("imageSmoothingQuality" in overlayCtx) {
     overlayCtx.imageSmoothingQuality = "high";
   }
+
   return true;
 }
 

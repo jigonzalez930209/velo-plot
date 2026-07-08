@@ -272,6 +272,23 @@ describe("PluginDrawingTools", () => {
     expect(down.defaultPrevented).toBe(false);
   });
 
+  it("undo restores a non-empty previous snapshot", () => {
+    const plugin = PluginDrawingTools({ autoDeselect: false });
+    const { ctx, interact } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as DrawingToolsAPI;
+    api.setMode("vertical");
+    interact(plugin, createInteractionEvent("mousedown", 5, 1));
+    interact(plugin, createInteractionEvent("mousedown", 40, 1));
+    expect(ctx.chart.getAnnotations()).toHaveLength(2);
+    // prev snapshot here holds the first line, so the restore loop iterates.
+    expect(api.undo()).toBe(true);
+    expect(ctx.chart.getAnnotations()).toHaveLength(1);
+    // redo brings the second line back (next snapshot non-empty).
+    expect(api.redo()).toBe(true);
+    expect(ctx.chart.getAnnotations()).toHaveLength(2);
+  });
+
   it("redo restores undone annotation", () => {
     const plugin = PluginDrawingTools({ autoDeselect: false });
     const { ctx, interact } = createContext();

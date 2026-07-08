@@ -11,6 +11,13 @@ import {
 import { mapToBusinessDayScale } from "../time/TimeScale";
 
 describe("axisFormat", () => {
+  describe("applyPrefix", () => {
+    it("falls back to a divisor of 1 when the resolved prefix has no divisor", () => {
+      // small magnitude → autoPrefixFor returns "" which is not in the divisor map
+      expect(applyPrefix(42, "auto")).toBe("42.0");
+    });
+  });
+
   describe("formatYTickValue", () => {
     it("returns 0 for zero", () => {
       expect(formatYTickValue(0)).toBe("0");
@@ -114,6 +121,28 @@ describe("axisFormat", () => {
 
     it("auto prefix selects micro for small values", () => {
       expect(autoPrefixFor(0.0005)).toBe("µ");
+    });
+  });
+
+  describe("autoPrefixFor covers every magnitude band", () => {
+    it("selects each prefix tier", () => {
+      expect(autoPrefixFor(5_000)).toBe("k");
+      expect(autoPrefixFor(1e-8)).toBe("n");
+      expect(autoPrefixFor(0.5)).toBe("m");
+      expect(autoPrefixFor(0)).toBe("");
+      expect(autoPrefixFor(42)).toBe("");
+    });
+  });
+
+  describe("pickTimeFormatter granularity", () => {
+    it("uses day/month for a multi-week span", () => {
+      const label = formatTimeTick(Date.UTC(2024, 5, 15), 1000 * 60 * 60 * 24 * 30);
+      expect(Number.isNaN(Number(label))).toBe(true);
+    });
+
+    it("uses month/year for a multi-month span", () => {
+      const label = formatTimeTick(Date.UTC(2024, 5, 15), 1000 * 60 * 60 * 24 * 120);
+      expect(Number.isNaN(Number(label))).toBe(true);
     });
   });
 });

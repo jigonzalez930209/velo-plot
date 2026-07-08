@@ -27,6 +27,10 @@ describe("candlestickMarkers", () => {
     expect(resolveMarkerY("belowBar", 12, 8, 10)).toBe(8);
     expect(resolveMarkerY("inBar", 12, 8, 10)).toBe(10);
   });
+
+  it("findBarIndex returns -1 for an empty series", () => {
+    expect(findBarIndex(new Float32Array(0), 100)).toBe(-1);
+  });
 });
 
 describe("ChartAlertManager", () => {
@@ -120,5 +124,32 @@ describe("ChartAlertManager", () => {
     mgr.addAlert({ price: 1, direction: "above" });
     mgr.destroy();
     expect(mgr.getAlerts()).toHaveLength(0);
+  });
+
+  it("skips evaluation when the latest price is not finite", () => {
+    const emit = vi.fn();
+    const mgr = new ChartAlertManager({ emit } as any, () => seriesFactory([100, NaN]));
+    mgr.addAlert({ price: 50, direction: "above" });
+    mgr.evaluate();
+    expect(emit).not.toHaveBeenCalled();
+  });
+
+  it("uses the single price as its own previous value for cross alerts", () => {
+    const emit = vi.fn();
+    // one data point → prev falls back to latest; no cross can be detected
+    const mgr = new ChartAlertManager({ emit } as any, () => seriesFactory([100]));
+    mgr.addAlert({ price: 100, direction: "cross" });
+    mgr.evaluate();
+    expect(emit).not.toHaveBeenCalled();
+  });
+
+  it("does not emit when the condition is not met", () => {
+    const emit = vi.fn();
+    const mgr = new ChartAlertManager({ emit } as any, () => seriesFactory([90, 95]));
+    mgr.addAlert({ price: 100, direction: "above" });
+    mgr.evaluate();
+    expect(emit).not.toHaveBeenCalled();
+    // alert remains because it never triggered
+    expect(mgr.getAlerts()).toHaveLength(1);
   });
 });

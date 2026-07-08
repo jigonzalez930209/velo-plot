@@ -88,6 +88,17 @@ describe("addIndicator", () => {
     expect(pane.yRange).toEqual([0, 100]);
   });
 
+  it("buildIndicatorPaneFromPreset applies default id, height, label, and yRange", async () => {
+    const n = 60;
+    const x = Float32Array.from({ length: n }, (_, i) => i);
+    const prices = Float32Array.from({ length: n }, (_, i) => 100 + i * 0.1);
+    // ema is an overlay preset with no computed yRange → falls back to "auto"
+    const pane = await buildIndicatorPaneFromPreset("ema", x, prices, {});
+    expect(pane.id).toBe("ema"); // options.id omitted → computed.id
+    expect(pane.height).toBe(0.25); // options.height omitted → default
+    expect(pane.yRange).toBe("auto"); // no options.yRange, no computed.yRange
+  });
+
   it("computeIndicatorPreset builds EMA and SMA overlays", async () => {
     const n = 60;
     const x = Float32Array.from({ length: n }, (_, i) => i);

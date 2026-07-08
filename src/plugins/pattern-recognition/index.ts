@@ -57,7 +57,8 @@ import type {
   CustomPatternConfig,
   PatternDefinition,
   PatternValidationResult,
-  PatternDetectedEvent
+  PatternDetectedEvent,
+  PatternSignalEvent
 } from './types';
 
 import { BUILTIN_PATTERNS } from './patterns';
@@ -138,8 +139,93 @@ export function PluginPatternRecognition(
   // Pattern storage
   const patternMatches = new Map<string, PatternMatch[]>();
   const registeredPatterns = new Map<PatternType, PatternDefinition>(Object.entries(BUILTIN_PATTERNS) as [PatternType, PatternDefinition][]);
+  // Named custom patterns, keyed by their unique id (task 3.6).
+  const customPatterns = new Map<string, PatternDefinition>();
   const realtimeSeries = new Set<string>();
   const debounceTimers = new Map<string, any>();
+
+  /**
+   * Maps a pattern type to the directional trading bias it implies, so the
+   * signal can be consumed by the Stage 2 alert system (task 3.8).
+   */
+  const SIGNAL_DIRECTION: Record<PatternType, 'bullish' | 'bearish' | 'neutral'> = {
+    'head-shoulders': 'bearish',
+    'inverse-head-shoulders': 'bullish',
+    'double-top': 'bearish',
+    'double-bottom': 'bullish',
+    'triple-top': 'bearish',
+    'triple-bottom': 'bullish',
+    'ascending-triangle': 'bullish',
+    'descending-triangle': 'bearish',
+    'symmetrical-triangle': 'neutral',
+    'rising-wedge': 'bearish',
+    'falling-wedge': 'bullish',
+    'rectangle': 'neutral',
+    'flag': 'neutral',
+    'pennant': 'neutral',
+    'custom': 'neutral',
+  };
+
+  /**
+   * Scan a single pattern definition over the processed points with a sliding
+   * window, pushing valid matches. Returns true when maxPatterns is reached.
+   */
+  function scanPattern(
+    pattern: PatternDefinition,
+    patternKey: PatternType | string,
+    processedPoints: PatternPoint[],
+    params: PatternDetectionParameters,
+    seriesId: string,
+    matches: PatternMatch[],
+    patternsByType: Record<string, number>
+  ): boolean {
+    for (let i = params.minPatternSize; i <= Math.min(processedPoints.length, params.maxPatternSize); i++) {
+      const window = processedPoints.slice(Math.max(0, i - params.maxPatternSize), i);
+      if (window.length < pattern.minPoints) continue;
+      if (pattern.maxPoints && window.length > pattern.maxPoints) continue;
+
+      const validation = pattern.validator(window);
+      if (validation.valid && validation.confidence >= params.minConfidence) {
+        const match: PatternMatch = {
+          pattern,
+          confidence: validation.confidence,
+          location: {
+            startIndex: Math.max(0, i - params.maxPatternSize),
+            endIndex: i,
+            startPoint: window[0],
+            endPoint: window[window.length - 1],
+          },
+          validation,
+          timestamp: Date.now(),
+          seriesId,
+        };
+
+        if (!hasSignificantOverlap(match, matches, params.overlapTolerance)) {
+          matches.push(match);
+          patternsByType[patternKey] = (patternsByType[patternKey] || 0) + 1;
+          if (matches.length >= params.maxPatterns!) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /** Emit a normalized trading signal for a detected pattern. */
+  function emitSignal(match: PatternMatch): void {
+    const direction = SIGNAL_DIRECTION[match.pattern.type] ?? 'neutral';
+    ctx?.events.emit('pattern:signal', {
+      seriesId: match.seriesId,
+      patternType: match.pattern.type,
+      patternName: match.pattern.name,
+      direction,
+      confidence: match.confidence,
+      price: match.location.endPoint.y,
+      x: match.location.endPoint.x,
+      target: match.validation.measurements?.breakoutTarget,
+      stopLoss: match.validation.measurements?.stopLoss,
+      timestamp: match.timestamp,
+    });
+  }
   
   // ============================================
   // Pattern Detection Engine
@@ -159,51 +245,24 @@ export function PluginPatternRecognition(
     // Preprocess data - find peaks and valleys
     const processedPoints = preprocessData(dataPoints, params.sensitivity);
     
-    // Check each pattern type
+    // Check each requested built-in pattern type
+    let reachedLimit = false;
     for (const patternType of params.patternTypes) {
       const pattern = registeredPatterns.get(patternType);
       if (!pattern) continue;
-      
-      // Slide window through data
-      for (let i = params.minPatternSize; i <= Math.min(processedPoints.length, params.maxPatternSize); i++) {
-        const window = processedPoints.slice(Math.max(0, i - params.maxPatternSize), i);
-        
-        if (window.length < pattern.minPoints) continue;
-        if (pattern.maxPoints && window.length > pattern.maxPoints) continue;
-        
-        // Validate pattern
-        const validation = pattern.validator(window);
-        
-        if (validation.valid && validation.confidence >= params.minConfidence) {
-          const match: PatternMatch = {
-            pattern,
-            confidence: validation.confidence,
-            location: {
-              startIndex: Math.max(0, i - params.maxPatternSize),
-              endIndex: i,
-              startPoint: window[0],
-              endPoint: window[window.length - 1]
-            },
-            validation,
-            timestamp: Date.now(),
-            seriesId
-          };
-          
-          // Check for overlaps
-          if (!hasSignificantOverlap(match, matches, params.overlapTolerance)) {
-            matches.push(match);
-            patternsByType[patternType] = (patternsByType[patternType] || 0) + 1;
-            
-            // Limit number of patterns
-            if (matches.length >= params.maxPatterns!) {
-              break;
-            }
-          }
-        }
-      }
-      
-      if (matches.length >= params.maxPatterns!) {
+      if (scanPattern(pattern, patternType, processedPoints, params, seriesId, matches, patternsByType)) {
+        reachedLimit = true;
         break;
+      }
+    }
+
+    // Also scan named custom patterns when the caller opts into 'custom'
+    // (or provides no explicit list). Each custom pattern is keyed by its id.
+    if (!reachedLimit && customPatterns.size > 0 && params.patternTypes.includes('custom')) {
+      for (const [id, pattern] of customPatterns) {
+        if (scanPattern(pattern, id, processedPoints, params, seriesId, matches, patternsByType)) {
+          break;
+        }
       }
     }
     
@@ -217,6 +276,11 @@ export function PluginPatternRecognition(
     
     // Emit events for high-confidence patterns
     for (const match of matches) {
+      // Trading signal bridge (task 3.8): every match at or above the alert
+      // threshold emits a normalized directional signal.
+      if (match.confidence >= config.notifications.minAlertConfidence) {
+        emitSignal(match);
+      }
       if (match.confidence >= config.notifications.minAlertConfidence &&
           config.notifications.alertTypes.includes(match.pattern.type)) {
         ctx?.events.emit('pattern:detected', {
@@ -286,9 +350,58 @@ export function PluginPatternRecognition(
       maxPoints: customConfig.pointSequence.length,
       validator: (points) => validateCustomPattern(points, customConfig)
     };
-    
-    registeredPatterns.set('custom', pattern);
+
+    customPatterns.set(customConfig.id, pattern);
     ctx?.log.info(`Custom pattern registered: ${customConfig.id}`);
+  }
+
+  /**
+   * Register a named custom pattern (task 3.6).
+   *
+   * The template can be either a full {@link PatternDefinition} (with its own
+   * `validator`) or a declarative {@link CustomPatternConfig}. Multiple named
+   * patterns coexist because each is stored under its own id.
+   *
+   * @example
+   * chart.patterns.register('my-spike', {
+   *   name: 'Volatility Spike',
+   *   minPoints: 3,
+   *   validator: (pts) => ({ valid: true, confidence: 1, segments: [], keyPoints: pts })
+   * });
+   */
+  function register(
+    id: string,
+    template: (Partial<PatternDefinition> & { validator: PatternDefinition['validator'] }) | CustomPatternConfig
+  ): void {
+    if ('pointSequence' in template) {
+      registerCustomPattern({ ...(template as CustomPatternConfig), id });
+      return;
+    }
+
+    const def = template as Partial<PatternDefinition> & { validator: PatternDefinition['validator'] };
+    if (typeof def.validator !== 'function') {
+      ctx?.log.error(`Cannot register pattern '${id}': a validator function is required`);
+      return;
+    }
+    const pattern: PatternDefinition = {
+      id,
+      type: 'custom',
+      name: def.name ?? id,
+      description: def.description,
+      minPoints: def.minPoints ?? 3,
+      maxPoints: def.maxPoints,
+      validator: def.validator,
+      confidenceCalculator: def.confidenceCalculator,
+    };
+    customPatterns.set(id, pattern);
+    ctx?.log.info(`Custom pattern registered: ${id}`);
+  }
+
+  /** Remove a previously registered custom pattern. */
+  function unregister(id: string): boolean {
+    const removed = customPatterns.delete(id);
+    if (removed) ctx?.log.info(`Custom pattern removed: ${id}`);
+    return removed;
   }
   
   function validateCustomPattern(points: PatternPoint[], config: CustomPatternConfig): PatternValidationResult {
@@ -347,9 +460,17 @@ export function PluginPatternRecognition(
     detectPatterns,
     
     registerCustomPattern,
+
+    register,
+
+    unregister,
+
+    onSignal(handler: (signal: PatternSignalEvent) => void): () => void {
+      return ctx?.events.onPlugin('pattern:signal', (data) => handler(data as PatternSignalEvent)) ?? (() => {});
+    },
     
     getRegisteredPatterns(): PatternDefinition[] {
-      return Array.from(registeredPatterns.values());
+      return [...registeredPatterns.values(), ...customPatterns.values()];
     },
     
     getPatternMatches(seriesId: string): PatternMatch[] {
@@ -592,6 +713,7 @@ export function PluginPatternRecognition(
       patternMatches.clear();
       realtimeSeries.clear();
       registeredPatterns.clear();
+      customPatterns.clear();
     },
     
     api

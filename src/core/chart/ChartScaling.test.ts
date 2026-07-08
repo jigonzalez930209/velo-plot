@@ -4,11 +4,12 @@ import { fitToData, autoScaleAll, autoScaleYOnly, handleBoxZoom } from "./ChartS
 function mockSeries(
   bounds: { xMin: number; xMax: number; yMin: number; yMax: number } | null,
   visible = true,
+  yAxisId?: string,
 ) {
   return {
     isVisible: () => visible,
     getBounds: () => bounds,
-    getYAxisId: () => undefined,
+    getYAxisId: () => yAxisId,
     getType: () => "line",
   };
 }
@@ -183,5 +184,171 @@ describe("handleBoxZoom", () => {
     const zoom = vi.fn();
     const rect = { x: 10, y: 10, width: 50, height: 50 };
     expect(handleBoxZoom(ctx, rect, null, zoom)).toBe(rect);
+  });
+});
+
+describe("ChartScaling edge cases", () => {
+  it("autoScaleAll ignores invisible series and bails without valid data", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("hidden", mockSeries({ xMin: 0, xMax: 1, yMin: 0, yMax: 1 }, false));
+    autoScaleAll(ctx);
+    expect(ctx.requestRender).not.toHaveBeenCalled();
+  });
+
+  it("autoScaleAll handles a degenerate single-point series", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("pt", mockSeries({ xMin: 5, xMax: 5, yMin: 7, yMax: 7 }));
+    autoScaleAll(ctx);
+    expect(ctx.viewBounds.xMax).toBeGreaterThan(ctx.viewBounds.xMin);
+    expect(ctx.viewBounds.yMax).toBeGreaterThan(ctx.viewBounds.yMin);
+  });
+
+  it("autoScaleAll falls back to span 1 for a degenerate point at the origin", () => {
+    const ctx = createScalingCtx();
+    // Math.abs(0) * 0.1 === 0 (falsy) → the `|| 1` fallback span kicks in.
+    ctx.series.set("origin", mockSeries({ xMin: 0, xMax: 0, yMin: 0, yMax: 0 }));
+    autoScaleAll(ctx);
+    expect(ctx.viewBounds.xMax).toBeGreaterThan(ctx.viewBounds.xMin);
+    expect(ctx.viewBounds.yMax).toBeGreaterThan(ctx.viewBounds.yMin);
+  });
+
+  it("autoScaleAll tolerates a range that overflows to Infinity", () => {
+    const ctx = createScalingCtx();
+    // finite endpoints whose difference overflows: exercises the !isFinite guard.
+    ctx.series.set("huge", mockSeries({ xMin: -1e308, xMax: 1e308, yMin: -1e308, yMax: 1e308 }));
+    autoScaleAll(ctx);
+    expect(Number.isFinite(ctx.viewBounds.xMin)).toBe(true);
+    expect(Number.isFinite(ctx.viewBounds.xMax)).toBe(true);
+  });
+
+  it("autoScaleAll skips a second axis that has no data", () => {
+    const setDomain = vi.fn();
+    const ctx = createScalingCtx({
+      yAxisOptionsMap: new Map([
+        ["default", { auto: true }],
+        ["right", { auto: true }],
+      ]),
+      yScales: new Map([
+        ["default", { setDomain: vi.fn(), domain: [0, 50] as [number, number] }],
+        ["right", { setDomain, domain: [0, 1] as [number, number] }],
+      ]),
+    });
+    ctx.series.set("s1", mockSeries({ xMin: 0, xMax: 10, yMin: 1, yMax: 9 }));
+    autoScaleAll(ctx);
+    // 'right' axis got no series data, so its domain is never set.
+    expect(setDomain).not.toHaveBeenCalled();
+  });
+
+  it("fitToData combines bounds from two visible series", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("a", mockSeries({ xMin: 10, xMax: 40, yMin: 5, yMax: 20 }));
+    ctx.series.set("b", mockSeries({ xMin: 0, xMax: 90, yMin: 1, yMax: 60 }));
+    expect(fitToData(ctx, { padding: 0 })).toBe(true);
+    expect(ctx.viewBounds.xMin).toBe(0);
+    expect(ctx.viewBounds.xMax).toBe(90);
+  });
+
+  it("fitToData supports padding object with only x", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("s1", mockSeries({ xMin: 0, xMax: 100, yMin: 0, yMax: 50 }));
+    expect(fitToData(ctx, { padding: { x: 0 } })).toBe(true);
+  });
+
+  it("fitToData supports padding object with only y", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("s1", mockSeries({ xMin: 0, xMax: 100, yMin: 0, yMax: 50 }));
+    expect(fitToData(ctx, { padding: { y: 0 } })).toBe(true);
+  });
+
+  it("fitToData with explicit y only derives x from series", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("s1", mockSeries({ xMin: 3, xMax: 33, yMin: 0, yMax: 1 }));
+    expect(fitToData(ctx, { y: [0, 10], padding: 0 })).toBe(true);
+    expect(ctx.viewBounds.xMin).toBe(3);
+    expect(ctx.viewBounds.yMax).toBe(10);
+  });
+
+  it("fitToData skips an axis lacking options", () => {
+    const setDomain = vi.fn();
+    const ctx = createScalingCtx({
+      yAxisOptionsMap: new Map([["default", { auto: true }]]),
+      yScales: new Map([
+        ["default", { setDomain: vi.fn(), domain: [0, 50] as [number, number] }],
+        ["orphan", { setDomain, domain: [0, 1] as [number, number] }],
+      ]),
+    });
+    ctx.series.set("s1", mockSeries({ xMin: 0, xMax: 10, yMin: 1, yMax: 9 }, true, "orphan"));
+    expect(fitToData(ctx, { padding: 0 })).toBe(true);
+    // 'orphan' axis has no options entry, so its domain is left untouched.
+    expect(setDomain).not.toHaveBeenCalled();
+  });
+
+  it("fitToData handles a degenerate explicit x range", () => {
+    const ctx = createScalingCtx();
+    // Zero-width x range triggers the fallback range branch; default padding
+    // then produces a small non-zero span around the point.
+    expect(fitToData(ctx, { x: [5, 5], y: [0, 10] })).toBe(true);
+    expect(ctx.viewBounds.xMax).toBeGreaterThan(ctx.viewBounds.xMin);
+  });
+
+  it("fitToData falls back to span 1 for a degenerate range at the origin", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("origin", mockSeries({ xMin: 0, xMax: 0, yMin: 0, yMax: 0 }));
+    expect(fitToData(ctx)).toBe(true);
+    expect(ctx.viewBounds.xMax).toBeGreaterThan(ctx.viewBounds.xMin);
+    expect(ctx.viewBounds.yMax).toBeGreaterThan(ctx.viewBounds.yMin);
+  });
+
+  it("fitToData tolerates a series range that overflows to Infinity", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("huge", mockSeries({ xMin: -1e308, xMax: 1e308, yMin: -1e308, yMax: 1e308 }));
+    expect(fitToData(ctx)).toBe(true);
+    expect(Number.isFinite(ctx.viewBounds.xMin)).toBe(true);
+    expect(Number.isFinite(ctx.viewBounds.yMax)).toBe(true);
+  });
+
+  it("autoScaleYOnly no-ops for an empty series map", () => {
+    const ctx = createScalingCtx();
+    autoScaleYOnly(ctx);
+    expect(ctx.requestRender).not.toHaveBeenCalled();
+  });
+
+  it("autoScaleYOnly ignores invisible/non-finite series", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("hidden", mockSeries({ xMin: 0, xMax: 1, yMin: 0, yMax: 1 }, false));
+    ctx.series.set("bad", mockSeries({ xMin: 0, xMax: 1, yMin: NaN, yMax: 1 }));
+    autoScaleYOnly(ctx);
+    expect(ctx.requestRender).not.toHaveBeenCalled();
+  });
+
+  it("autoScaleYOnly handles a flat Y range and skips empty axes", () => {
+    const setDomain = vi.fn();
+    const ctx = createScalingCtx({
+      yAxisOptionsMap: new Map([
+        ["default", { auto: true }],
+        ["right", { auto: true }],
+      ]),
+      yScales: new Map([
+        ["default", { setDomain, domain: [0, 50] as [number, number] }],
+        ["right", { setDomain: vi.fn(), domain: [0, 1] as [number, number] }],
+      ]),
+    });
+    ctx.series.set("flat", mockSeries({ xMin: 0, xMax: 10, yMin: 4, yMax: 4 }));
+    autoScaleYOnly(ctx);
+    expect(setDomain).toHaveBeenCalled();
+  });
+
+  it("autoScaleYOnly falls back to span 1 for a flat range at the origin", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("origin", mockSeries({ xMin: 0, xMax: 10, yMin: 0, yMax: 0 }));
+    autoScaleYOnly(ctx);
+    expect(ctx.viewBounds.yMax).toBeGreaterThan(ctx.viewBounds.yMin);
+  });
+
+  it("autoScaleYOnly tolerates a Y range that overflows to Infinity", () => {
+    const ctx = createScalingCtx();
+    ctx.series.set("huge", mockSeries({ xMin: 0, xMax: 10, yMin: -1e308, yMax: 1e308 }));
+    autoScaleYOnly(ctx);
+    expect(Number.isFinite(ctx.viewBounds.yMin)).toBe(true);
   });
 });

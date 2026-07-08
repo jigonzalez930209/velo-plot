@@ -13,7 +13,8 @@ export type ForecastingMethod =
   | 'linear'        // Linear Trend Projection
   | 'expSmoothing'  // Simple Exponential Smoothing
   | 'holt'          // Holt's Linear Trend (Double Exponential Smoothing)
-  | 'holtWinters';  // Triple Exponential Smoothing (Seasonality)
+  | 'holtWinters'   // Triple Exponential Smoothing (Seasonality)
+  | 'arima';        // AutoRegressive Integrated Moving Average
 
 export interface ForecastingOptions {
   /** Method to use for forecasting */
@@ -39,6 +40,12 @@ export interface ForecastingParams {
   period?: number;
   /** Polynomial order for trend fitting (default: 1) */
   polynomialOrder?: number;
+  /** ARIMA autoregressive order (p, default: 1) */
+  p?: number;
+  /** ARIMA differencing order (d, default: 1) */
+  d?: number;
+  /** ARIMA moving-average order (q, default: 0) */
+  q?: number;
 }
 
 export interface ForecastingResult {
@@ -54,10 +61,13 @@ export interface ForecastingResult {
   method: ForecastingMethod;
   /** Metadata and fit statistics */
   metadata: {
-    mse?: number;      // Mean Squared Error
+    mse?: number;      // Mean Squared Error (in-sample, one-step)
+    rmse?: number;     // Root Mean Squared Error (residual sigma)
     mae?: number;      // Mean Absolute Error
     r2?: number;       // R-squared (for trend fitting)
     aic?: number;      // Akaike Information Criterion
+    /** Confidence level used to build the prediction band (e.g. 0.95) */
+    confidence?: number;
   };
 }
 
@@ -88,9 +98,10 @@ export interface PluginForecastingConfig {
 
 export interface ForecastingAPI {
   /**
-   * Forecast future values for a given dataset
+   * Forecast future values for a given dataset, or for a series by id when a
+   * string is passed (e.g. `forecast('s1', { method: 'arima', horizon: 50 })`).
    */
-  forecast(data: SeriesData | number[] | Float32Array, options: ForecastingOptions): ForecastingResult;
+  forecast(data: SeriesData | number[] | Float32Array | string, options: ForecastingOptions): ForecastingResult;
   
   /**
    * Forecast future values for a series by ID

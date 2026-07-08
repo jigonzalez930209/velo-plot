@@ -21,6 +21,11 @@ export interface AxisManagerContext {
 export class ChartAxisManager {
   constructor(private ctx: AxisManagerContext) {}
 
+  /** Swap the X scale (e.g. broken-axis plugin) so tick generation uses it. */
+  setXScale(scale: Scale): void {
+    this.ctx.xScale = scale;
+  }
+
   /**
    * Add a new Y axis dynamically
    */

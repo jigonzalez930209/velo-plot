@@ -173,6 +173,76 @@ describe("PluginCaching", () => {
     expect(caching.has("analysis:rsi")).toBe(false);
   });
 
+  it("estimates null and unhandled value types", () => {
+    const { caching } = init({ maxSize: 10_000 });
+    caching.set("nullish", null); // estimateSize → 0
+    caching.set("fn", () => {}); // typeof 'function' → default 100 estimate
+    expect(caching.has("nullish")).toBe(true);
+    expect(caching.getStats().currentSize).toBeGreaterThanOrEqual(100);
+  });
+
+  it("prune skips live entries and logs when debug is on", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const { caching } = init({ debug: true });
+    caching.set("keep", 1); // no ttl → survives prune
+    caching.set("live", 2, { ttl: 10_000 }); // ttl not yet expired
+    caching.set("dead", 3, { ttl: 5 });
+    vi.advanceTimersByTime(20);
+    expect(caching.prune()).toBe(1);
+    expect(caching.has("keep")).toBe(true);
+    expect(caching.has("live")).toBe(true);
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("Pruned"));
+    log.mockRestore();
+  });
+
+  it("invalidateByTags ignores untagged entries and no-match callbacks", () => {
+    const onInvalidate = vi.fn();
+    const { caching } = init({ onInvalidate });
+    caching.set("untagged", 1); // no tags → skipped by tag scan
+    caching.set("tagged", 2, { tags: ["bounds"] });
+    expect(caching.invalidateByTags(["analysis"])).toBe(0); // no match → callback not fired
+    expect(onInvalidate).not.toHaveBeenCalled();
+    expect(caching.has("untagged")).toBe(true);
+  });
+
+  it("evict logs freed entries when debug is on", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const { caching } = init({ maxSize: 50, strategy: "lru", debug: true });
+    caching.set("a", "x".repeat(20));
+    caching.set("b", "y".repeat(20));
+    caching.set("c", "z".repeat(20)); // forces eviction
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("Evicted"));
+    log.mockRestore();
+  });
+
+  it("logs on clear and tag invalidation when debug is on", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    const { caching } = init({ debug: true });
+    caching.set("a", 1, { tags: ["bounds"] });
+    caching.invalidateByTags(["bounds"]); // debug + matches → logs
+    caching.set("b", 2);
+    caching.clear(); // debug → logs cleared count
+    const messages = log.mock.calls.map((c) => String(c[0]));
+    expect(messages.some((m) => m.includes("Invalidated"))).toBe(true);
+    expect(messages.some((m) => m.includes("Cleared"))).toBe(true);
+    log.mockRestore();
+  });
+
+  it("onDataUpdate is inert when autoInvalidate is off or no cache types are active", () => {
+    const off = init({ autoInvalidate: false });
+    off.caching.set("bounds:x", 1, { tags: ["bounds"] });
+    off.plugin.onDataUpdate!(off.ctx, { seriesId: "x", mode: "replace", pointCount: 1 });
+    expect(off.caching.has("bounds:x")).toBe(true);
+
+    const noneActive = init({
+      autoInvalidate: true,
+      cacheTypes: { transforms: false, analysis: false, frames: false, bounds: false },
+    });
+    noneActive.caching.set("bounds:y", 1, { tags: ["bounds"] });
+    noneActive.plugin.onDataUpdate!(noneActive.ctx, { seriesId: "y", mode: "replace", pointCount: 1 });
+    expect(noneActive.caching.has("bounds:y")).toBe(true);
+  });
+
   it("estimates sizes for typed arrays and nested objects", () => {
     const { caching } = init({ maxSize: 10_000 });
     caching.set("arr", [1, { nested: true }]);

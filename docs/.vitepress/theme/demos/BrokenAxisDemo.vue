@@ -59,7 +59,9 @@ const initChart = async () => {
       style: { color: '#00f2fe', width: 1.5 }
   });
 
-  chart.zoom({ x: [-50, 1400], y: [-20, 20], animate: false });
+  // The broken-axis plugin constrains X to the (warped) data domain; we only
+  // set the Y range so the three bursts are comfortably framed.
+  chart.zoom({ y: [-20, 20], animate: false });
 };
 
 const toggleBroken = () => {

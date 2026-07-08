@@ -48,6 +48,11 @@ export interface StateManagerContext {
 export class ChartStateManager {
   constructor(private ctx: StateManagerContext) {}
 
+  /** Swap the X scale (e.g. broken-axis plugin) — the context holds a snapshot. */
+  setXScale(scale: Scale): void {
+    this.ctx.xScale = scale;
+  }
+
   /**
    * Export complete chart state
    */

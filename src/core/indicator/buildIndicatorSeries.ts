@@ -90,9 +90,11 @@ function splitLineIntoColorSegments(
       continue;
     }
 
+    // A sign change (above0 !== above1) guarantees the line and its reference
+    // cross, so the slope difference here is always non-zero. The clamp below is
+    // the safety net for any floating-point overshoot.
     const denom = y1 - y0 - (r1 - r0);
-    let t = denom !== 0 ? (r0 - y0) / denom : 0.5;
-    t = Math.max(0, Math.min(1, t));
+    const t = Math.max(0, Math.min(1, (r0 - y0) / denom));
     const xc = x[i - 1] + t * (x[i] - x[i - 1]);
     const yc = y0 + t * (y1 - y0);
     const colorBefore = above0 ? aboveColor : belowColor;
@@ -118,8 +120,8 @@ function pushColoredLineSeries(
   visible: boolean,
   segmentKey: string,
 ): void {
-  const zones = line.colorZones;
-  if (!zones) return;
+  // Caller guarantees colorZones is present (see the `if (line.colorZones)` guard).
+  const zones = line.colorZones!;
 
   const refAt = (i: number) => resolveLineRefY(zones.ref, i, lines);
   const segments = splitLineIntoColorSegments(

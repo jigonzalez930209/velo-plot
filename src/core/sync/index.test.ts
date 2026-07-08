@@ -562,3 +562,191 @@ describe("ChartGroup helpers and cursor sync", () => {
     expect(group.syncZoom(true)).toBe(group);
   });
 });
+
+describe("ChartGroup branch coverage", () => {
+  let rafCallbacks: FrameRequestCallback[] = [];
+  beforeEach(() => {
+    rafCallbacks = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      rafCallbacks.push(cb);
+      return rafCallbacks.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+  });
+  afterEach(() => vi.unstubAllGlobals());
+  const B = { xMin: 0, xMax: 100, yMin: 0, yMax: 50 };
+  function flushRaf() {
+    const pending = [...rafCallbacks];
+    rafCallbacks = [];
+    pending.forEach((cb) => cb(0));
+  }
+
+  it("exposes simple configuration accessors and mutators", () => {
+    const a = createMockChart("a", B);
+    const b = createMockChart("b", B);
+    const g = new ChartGroup();
+    g.addAll(a, b);
+    expect(g.getCharts()).toHaveLength(2);
+    expect(g.syncAxis("xy").getOptions().axis).toBe("xy");
+    expect(g.syncCursor(false).getOptions().syncCursor).toBe(false);
+    expect(g.syncSelection(true).getOptions().syncSelection).toBe(true);
+    expect(g.syncPan(true)).toBe(g); // unchanged → early return
+    g.syncPan(false); // changed → updateOptions
+    expect(g.getOptions().syncPan).toBe(false);
+    g.syncZoom(false); // changed → updateOptions
+    expect(g.getOptions().syncZoom).toBe(false);
+  });
+
+  it("warns when adding a duplicate chart", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const a = createMockChart("a", B);
+    const g = new ChartGroup();
+    g.add(a);
+    g.add(a);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("destroy cancels a pending raf timer", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", B, handlers);
+    const b = createMockChart("b", B, handlers);
+    const g = new ChartGroup({ axis: "x" });
+    g.addAll(a, b);
+    a.emit("zoom", { x: [10, 90], y: [0, 50] }); // schedules a raf
+    g.destroy();
+    expect(cancelAnimationFrame).toHaveBeenCalled();
+  });
+
+  it("destroy clears a pending debounce timer", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", { setTimeout, clearTimeout });
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", B, handlers);
+    const b = createMockChart("b", B, handlers);
+    const g = new ChartGroup({ axis: "x", debounce: 50 });
+    g.addAll(a, b);
+    a.emit("zoom", { x: [10, 90], y: [0, 50] });
+    g.destroy();
+    vi.advanceTimersByTime(50);
+    expect(b.zoom).not.toHaveBeenCalled();
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("fitAll with explicit x applies shared bounds to every chart", () => {
+    const a = { getId: () => "a", getViewBounds: () => ({ ...B }), fit: vi.fn(), zoom: vi.fn(), pan: vi.fn(), on: vi.fn(), off: vi.fn() };
+    const b = { getId: () => "b", getViewBounds: () => ({ ...B }), fit: vi.fn(), zoom: vi.fn(), pan: vi.fn(), on: vi.fn(), off: vi.fn() };
+    const g = new ChartGroup({ axis: "x" });
+    g.addAll(a, b);
+    g.fitAll({ x: [5, 95], padding: 10 });
+    expect(a.fit).toHaveBeenCalledWith({ x: [5, 95], padding: 10 });
+    expect(b.fit).toHaveBeenCalledWith({ x: [5, 95], padding: 10 });
+  });
+
+  it("fitAll without masterId derives shared X from the first chart", () => {
+    const a = { getId: () => "a", getViewBounds: () => ({ xMin: 10, xMax: 90, yMin: 0, yMax: 5 }), fit: vi.fn(), zoom: vi.fn(), pan: vi.fn(), on: vi.fn(), off: vi.fn() };
+    const b = { getId: () => "b", getViewBounds: () => ({ ...B }), fit: vi.fn(), zoom: vi.fn(), pan: vi.fn(), on: vi.fn(), off: vi.fn() };
+    const g = new ChartGroup({ axis: "x" });
+    g.addAll(a, b);
+    g.fitAll();
+    // With no masterId the first chart both seeds shared X and is re-fit in the loop.
+    expect(a.fit).toHaveBeenCalled();
+    expect(b.fit).toHaveBeenCalledWith(expect.objectContaining({ x: [10, 90] }));
+  });
+
+  it("fitAll tolerates a master with invalid bounds and charts without fit", () => {
+    const master = { getId: () => "m", getViewBounds: () => ({ xMin: 0, xMax: Infinity, yMin: 0, yMax: 0 }), fit: vi.fn(), zoom: vi.fn(), pan: vi.fn(), on: vi.fn(), off: vi.fn() };
+    const noFit = createMockChart("nf", B); // no fit method
+    const withFit = { getId: () => "wf", getViewBounds: () => ({ ...B }), fit: vi.fn(), zoom: vi.fn(), pan: vi.fn(), on: vi.fn(), off: vi.fn() };
+    const g = new ChartGroup({ axis: "x", masterId: "m" });
+    g.addAll(master, noFit, withFit);
+    g.fitAll();
+    // master fit ran; invalid bounds → no shared X; non-fit chart skipped; wf fit ran
+    expect(master.fit).toHaveBeenCalled();
+    expect(withFit.fit).toHaveBeenCalledWith({ padding: undefined });
+  });
+
+  it("syncTo without an exclude id and inside a batch", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", B, handlers);
+    const b = createMockChart("b", B, handlers);
+    const g = new ChartGroup({ axis: "x" });
+    g.addAll(a, b);
+    g.syncTo({ xMin: 5, xMax: 95 }); // no excludeChartId → '' fallback
+    expect(a.zoom).toHaveBeenCalled();
+    expect(b.zoom).toHaveBeenCalled();
+    // propagateZoom is a no-op while a batch is in progress
+    (a.zoom as ReturnType<typeof vi.fn>).mockClear();
+    g.batch(() => g.syncTo({ xMin: 1, xMax: 2 }));
+    expect(a.zoom).not.toHaveBeenCalled();
+  });
+
+  it("event handlers are inert while updating (batch)", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = { ...createMockChart("a", B, handlers), setExternalCursor: vi.fn() };
+    const b = { ...createMockChart("b", B, handlers), setExternalCursor: vi.fn(), selectPoints: vi.fn() };
+    const g = new ChartGroup({ axis: "x", syncCursor: true, syncSelection: true });
+    g.addAll(a, b);
+    g.batch(() => {
+      a.emit("zoom", { x: [10, 90], y: [0, 50] });
+      a.emit("pan", { deltaX: 5, deltaY: 0 });
+      a.emit("hover", { point: { x: 1, y: 2 } });
+      a.emit("selectionChange", { selected: [{ seriesId: "s", indices: [0] }] });
+    });
+    flushRaf();
+    expect(b.zoom).not.toHaveBeenCalled();
+    expect(b.setExternalCursor).not.toHaveBeenCalled();
+    expect(b.selectPoints).not.toHaveBeenCalled();
+  });
+
+  it("pan with zero delta on the active axis does nothing", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", B, handlers);
+    const b = createMockChart("b", B, handlers);
+    const g = new ChartGroup({ axis: "x", syncPan: true });
+    g.addAll(a, b);
+    a.emit("pan", { deltaX: 0, deltaY: 5 }); // axis x → dx=0, dy forced 0
+    flushRaf();
+    expect(b.zoom).not.toHaveBeenCalled();
+  });
+
+  it("selection falls back to empty array without a source getter", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", B, handlers); // no getSelectedPoints
+    const b = { ...createMockChart("b", B, handlers), clearSelection: vi.fn(), selectPoints: vi.fn() };
+    const g = new ChartGroup({ syncSelection: true, axis: "x" });
+    g.addAll(a, b);
+    a.emit("selectionChange", {}); // no payload, no getter → []
+    expect(b.clearSelection).toHaveBeenCalled();
+  });
+
+  it("coalesces duplicate raf-scheduled zoom actions", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", B, handlers);
+    const b = createMockChart("b", B, handlers);
+    const g = new ChartGroup({ axis: "x" });
+    g.addAll(a, b);
+    a.emit("zoom", { x: [10, 90], y: [0, 50] });
+    a.emit("zoom", { x: [20, 80], y: [0, 50] }); // same key → dedup, no second raf
+    flushRaf();
+    expect(b.zoom).toHaveBeenCalledTimes(1);
+  });
+
+  it("debounce resets the timer when actions arrive quickly", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("window", { setTimeout, clearTimeout });
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", B, handlers);
+    const b = createMockChart("b", B, handlers);
+    const g = new ChartGroup({ axis: "x", debounce: 50 });
+    g.addAll(a, b);
+    a.emit("zoom", { x: [10, 90], y: [0, 50] });
+    vi.advanceTimersByTime(20);
+    a.emit("zoom", { x: [20, 80], y: [0, 50] }); // clears prior timer
+    vi.advanceTimersByTime(50);
+    expect(b.zoom).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+});

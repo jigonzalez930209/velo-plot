@@ -39,6 +39,45 @@ Renders the result on the chart overlay. This is extremely efficient as it avoid
 - `intervalOpacity`: Control the transparency of the confidence band.
 - `lineStyle`: Customize the appearance of the prediction curve.
 
+### `visualizePredictions(result, config)`
+Intent-revealing alias for `visualizeResults`, for the prediction-overlay use
+case.
+
+### `trainModel(modelId, { x, y })`
+Trains a small native regression model on the fly. Creates a native
+linear-regression model if `modelId` does not exist yet. Returns fit
+diagnostics for a residual plot:
+
+```typescript
+const fit = chart.ml.trainModel('trend', {
+  x: [[0], [1], [2], [3], [4]],   // feature rows
+  y: [2.1, 3.9, 6.2, 7.8, 10.1],  // targets
+})
+// fit -> { coefficients, intercept, fitted, residuals, r2, rmse }
+chart.addSeries({ id: 'residuals', type: 'scatter', data: { x: fit.fitted, y: fit.residuals } })
+```
+
+### `listModels()`
+Returns the descriptors of all registered models.
+
+## Model audit (supported native models)
+
+velo-plot ships **native, dependency-free** models. External frameworks
+(TensorFlow.js, ONNX) can be bridged via `registerModel`.
+
+| Native model type | Capability | Limits |
+|-------------------|-----------|--------|
+| `linear-regression` | OLS fit via normal equations (general N×N inverse) | Linear relationships only; no regularisation |
+| `neural-network` | Feed-forward inference (relu/sigmoid/tanh) | **Inference only** — no native backprop training |
+| `signal-processor` | Low/high/band-pass filtering | First-order (EMA-based) filters |
+
+**Statistics helpers** (`chart.ml.stats`): `fft` (naive O(n²) DFT — fine for
+small windows), `mean`, `standardDeviation`, `correlation`.
+
+> Honest scope note: the native NN performs inference only. For training deep
+> models, load weights from an external framework and bridge via
+> `registerModel`. Native `trainModel` covers linear/multivariate regression.
+
 ## Scientific Application
 
 Specifically designed for:

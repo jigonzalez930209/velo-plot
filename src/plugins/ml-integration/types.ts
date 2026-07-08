@@ -51,11 +51,28 @@ export interface PluginMLIntegrationConfig {
   defaultVisualization?: VisualizationConfig;
 }
 
+export interface TrainingResult {
+  coefficients: number[];
+  intercept: number;
+  fitted: number[];
+  residuals: number[];
+  r2: number;
+  rmse: number;
+}
+
 export interface MLIntegrationAPI {
   registerModel(model: MLModelAPI): void;
   runInference(modelId: string, seriesId: string): Promise<PredictionResult>;
   visualizeResults(result: PredictionResult, config?: VisualizationConfig): string;
+  /** Intent-revealing alias for visualizeResults (prediction overlay). */
+  visualizePredictions?(result: PredictionResult, config?: VisualizationConfig): string;
   clearResults(visualizationId?: string): void;
+  /** Train a small regression model on the fly, returning fit diagnostics. */
+  trainModel?(modelId: string, data: { x: number[][]; y: number[] }): TrainingResult;
+  /** Retrieve the last training diagnostics for a model. */
+  getTrainingResult?(modelId: string): TrainingResult | null;
+  /** List registered model descriptors. */
+  listModels?(): ModelConfig[];
   stats: NativeStatsAPI;
 }
 

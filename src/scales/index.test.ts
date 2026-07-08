@@ -37,6 +37,23 @@ describe("LinearScale", () => {
     scale.domain = [5, 5];
     expect(scale.ticks()).toEqual([]);
   });
+
+  it("uses a step of 1 for a reversed (non-positive range) domain", () => {
+    const scale = new LinearScale();
+    scale.setDomain(10, 5); // stored as [10, 5] → niceStep sees a negative range
+    expect(scale.ticks()).toEqual([]);
+  });
+
+  it("rounds the step up to 10× magnitude for large normalized steps", () => {
+    const scale = new LinearScale();
+    // range 80 / 10 ticks → rawStep 8 → normalized 8 (>= 7) → step 10
+    scale.setDomain(0, 80);
+    const ticks = scale.ticks(10);
+    expect(ticks).toContain(10);
+    expect(ticks).toContain(80);
+    // consecutive ticks are 10 apart
+    expect(ticks[1] - ticks[0]).toBe(10);
+  });
 });
 
 describe("LogScale", () => {

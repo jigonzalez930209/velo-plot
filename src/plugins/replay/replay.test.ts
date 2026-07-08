@@ -94,6 +94,34 @@ describe("PluginReplay", () => {
     expect(api.getLength()).toBe(0);
   });
 
+  it("play/step/seek are inert without a loaded buffer", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const plugin = PluginReplay({ seriesId: "missing" });
+    const chart = { getSeries: vi.fn(() => undefined), updateSeries: vi.fn() };
+    plugin.onInit!({ chart } as unknown as PluginContext);
+    const api = plugin.api as ReplayAPI;
+    expect(() => {
+      api.play(1);
+      api.step(2);
+      api.seek(1);
+    }).not.toThrow();
+    expect(api.isPlaying()).toBe(false);
+    expect(chart.updateSeries).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it("restarts the timer when play is called twice", () => {
+    const plugin = PluginReplay({ seriesId: "candles", frameMs: 100 });
+    const { ctx } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as ReplayAPI;
+    api.seek(0);
+    api.play(1);
+    api.play(2); // second call clears the existing timer first
+    expect(api.isPlaying()).toBe(true);
+    api.pause();
+  });
+
   it("replays line series using y values only", () => {
     const updateSeries = vi.fn();
     const chart = {

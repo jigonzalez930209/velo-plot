@@ -37,6 +37,44 @@ describe("WorkerPool", () => {
     expect(a).not.toBe(b);
   });
 
+  it("defaults syncFallback to true when the option is omitted", async () => {
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error test override
+    globalThis.Worker = undefined;
+
+    const pool = new WorkerPool<{ id: string; value: number }, number>(
+      () => new Worker(""),
+      { syncHandler: (t) => t.value * 10 }, // no syncFallback → default true
+    );
+    await expect(pool.run({ id: "d1", value: 4 })).resolves.toBe(40);
+
+    globalThis.Worker = originalWorker;
+  });
+
+  it("rejects pending tasks on worker error when sync fallback is disabled", async () => {
+    class FailingWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(_task: { id: string }) {
+        queueMicrotask(() => {
+          this.onerror?.({ type: "error", message: "boom" } as unknown as Event);
+        });
+      }
+      terminate() {}
+    }
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error mock constructor
+    globalThis.Worker = FailingWorker;
+
+    const pool = new WorkerPool<{ id: string }, unknown>(
+      () => new FailingWorker() as unknown as Worker,
+      { poolSize: 1, syncFallback: false },
+    );
+    await expect(pool.run({ id: "e1" })).rejects.toThrow("boom");
+    pool.destroy();
+    globalThis.Worker = originalWorker;
+  });
+
   it("rejects when destroyed", async () => {
     const pool = new WorkerPool<{ id: string; value: number }, number>(
       () => new Worker(""),

@@ -91,9 +91,182 @@ function renderNode(node: LaTeXNode, ctx: LaTeXRenderContext): LaTeXDimensions {
     case 'group':
       return renderNodes(node.children || [], ctx);
 
+    case 'matrix':
+      return renderMatrix(node.rows || [], node.delimiters || ['', ''], ctx);
+
     default:
       return { width: 0, height: 0, baseline: 0 };
   }
+}
+
+/**
+ * Render a matrix environment (\begin{pmatrix}...\end{pmatrix}).
+ * The matrix is vertically centered on the current baseline.
+ */
+function renderMatrix(
+  rows: LaTeXNode[][][],
+  delimiters: [string, string],
+  ctx: LaTeXRenderContext
+): LaTeXDimensions {
+  const nRows = rows.length;
+  const nCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+  if (nRows === 0 || nCols === 0) {
+    return { width: 0, height: 0, baseline: 0 };
+  }
+
+  const cellPadX = ctx.fontSize * 0.35;
+  const cellPadY = ctx.fontSize * 0.25;
+  const delimW = ctx.fontSize * 0.35;
+
+  // Measure every cell
+  const cellDims: LaTeXDimensions[][] = rows.map((r) => r.map((cell) => measureNodes(cell, ctx)));
+
+  const colW = new Array(nCols).fill(0);
+  const rowAsc = new Array(nRows).fill(0);
+  const rowDesc = new Array(nRows).fill(0);
+
+  for (let r = 0; r < nRows; r++) {
+    for (let c = 0; c < rows[r].length; c++) {
+      const d = cellDims[r][c];
+      colW[c] = Math.max(colW[c], d.width);
+      rowAsc[r] = Math.max(rowAsc[r], d.baseline);
+      rowDesc[r] = Math.max(rowDesc[r], d.height - d.baseline);
+    }
+  }
+  const rowH = rowAsc.map((a, i) => a + rowDesc[i]);
+
+  const totalH = rowH.reduce((s, h) => s + h, 0) + cellPadY * 2 * nRows;
+  const contentW = colW.reduce((s, w) => s + w, 0) + cellPadX * 2 * nCols;
+  const totalW = contentW + delimW * 2;
+
+  const top = ctx.y - totalH / 2;
+
+  // Delimiters
+  drawDelimiter(ctx, delimiters[0], ctx.x, top, totalH, delimW, 'left');
+  drawDelimiter(ctx, delimiters[1], ctx.x + totalW - delimW, top, totalH, delimW, 'right');
+
+  // Cells
+  let cellTop = top + cellPadY;
+  for (let r = 0; r < nRows; r++) {
+    let cellX = ctx.x + delimW + cellPadX;
+    for (let c = 0; c < nCols; c++) {
+      const cell = rows[r][c];
+      if (cell) {
+        const d = cellDims[r][c];
+        const x = cellX + (colW[c] - d.width) / 2;
+        const baselineY = cellTop + rowAsc[r];
+        renderNodes(cell, { ...ctx, x, y: baselineY });
+      }
+      cellX += colW[c] + cellPadX * 2;
+    }
+    cellTop += rowH[r] + cellPadY * 2;
+  }
+
+  return { width: totalW, height: totalH, baseline: totalH / 2 };
+}
+
+/**
+ * Draw a stretchable matrix delimiter using geometric strokes.
+ */
+function drawDelimiter(
+  ctx: LaTeXRenderContext,
+  ch: string,
+  x: number,
+  top: number,
+  height: number,
+  width: number,
+  side: 'left' | 'right'
+): void {
+  if (!ch) return;
+  const c = ctx.ctx;
+  c.save();
+  c.strokeStyle = ctx.color;
+  c.lineWidth = Math.max(1, ctx.fontSize * 0.05);
+  c.lineCap = 'round';
+  c.lineJoin = 'round';
+
+  const bottom = top + height;
+  const tipInset = width * 0.7;
+
+  const drawParen = (open: boolean) => {
+    c.beginPath();
+    if (open) {
+      c.moveTo(x + width, top);
+      c.quadraticCurveTo(x, (top + bottom) / 2, x + width, bottom);
+    } else {
+      c.moveTo(x, top);
+      c.quadraticCurveTo(x + width, (top + bottom) / 2, x, bottom);
+    }
+    c.stroke();
+  };
+
+  const drawBracket = (open: boolean) => {
+    c.beginPath();
+    if (open) {
+      c.moveTo(x + tipInset, top);
+      c.lineTo(x, top);
+      c.lineTo(x, bottom);
+      c.lineTo(x + tipInset, bottom);
+    } else {
+      c.moveTo(x + width - tipInset, top);
+      c.lineTo(x + width, top);
+      c.lineTo(x + width, bottom);
+      c.lineTo(x + width - tipInset, bottom);
+    }
+    c.stroke();
+  };
+
+  const drawBar = (offset: number) => {
+    c.beginPath();
+    c.moveTo(x + offset, top);
+    c.lineTo(x + offset, bottom);
+    c.stroke();
+  };
+
+  const drawBrace = (open: boolean) => {
+    const midY = (top + bottom) / 2;
+    const bx = open ? x + width : x;
+    const tx = open ? x : x + width;
+    c.beginPath();
+    c.moveTo(bx, top);
+    c.quadraticCurveTo(tx, top + height * 0.25, (bx + tx) / 2, top + height * 0.4);
+    c.quadraticCurveTo(tx, midY - 1, tx, midY);
+    c.quadraticCurveTo(tx, midY + 1, (bx + tx) / 2, bottom - height * 0.4);
+    c.quadraticCurveTo(tx, bottom - height * 0.25, bx, bottom);
+    c.stroke();
+  };
+
+  switch (ch) {
+    case '(':
+      drawParen(true);
+      break;
+    case ')':
+      drawParen(false);
+      break;
+    case '[':
+      drawBracket(true);
+      break;
+    case ']':
+      drawBracket(false);
+      break;
+    case '{':
+      drawBrace(true);
+      break;
+    case '}':
+      drawBrace(false);
+      break;
+    case '|':
+      drawBar(side === 'left' ? width * 0.5 : width * 0.5);
+      break;
+    case '‖':
+      drawBar(width * 0.3);
+      drawBar(width * 0.7);
+      break;
+    default:
+      break;
+  }
+
+  c.restore();
 }
 
 /**

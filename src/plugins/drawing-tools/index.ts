@@ -159,7 +159,7 @@ export function PluginDrawingTools(
       high: d.high,
       low: d.low,
       close: d.close,
-      dataToPixelX: (dx) => ctx!.coords.dataToPixelX(dx),
+      dataToPixelX: ctx.coords.dataToPixelX,
       dataToPixelY: (dy) => ctx!.coords.dataToPixelY(dy),
       enabled: true,
     });

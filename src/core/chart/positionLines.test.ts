@@ -24,4 +24,12 @@ describe("positionLines", () => {
     expect(a.label).toBe("Target");
     expect(a.color).toBe("#fff");
   });
+
+  it("defaults to the entry style when style is omitted", () => {
+    const a = buildPositionLineAnnotation({ price: 100 }, "d1");
+    expect(a.label).toBe("Entry");
+    expect(a.color).toBe("#38bdf8");
+    expect(a.lineDash).toBeUndefined();
+    expect(a.interactive).toBe(false);
+  });
 });

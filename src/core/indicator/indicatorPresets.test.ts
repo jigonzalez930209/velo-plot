@@ -99,4 +99,61 @@ describe("indicatorPresets helpers", () => {
     const prices = Float32Array.from([1, 2, 3]);
     await expect(computeIndicatorPreset("unknown" as any, x, prices)).rejects.toThrow(/Unknown preset/i);
   });
+
+  it("extractPriceSeries falls back to y when candlestick close is absent", () => {
+    const s = new Series({
+      id: "c2",
+      type: "candlestick",
+      data: { x: Float32Array.from([0, 1]), y: Float32Array.from([5, 6]) },
+    } as never);
+    const { prices } = extractPriceSeries(s);
+    expect(prices[1]).toBe(6);
+  });
+
+  it("extractOhlcSeries throws without x data", () => {
+    const s = new Series({
+      id: "e",
+      type: "candlestick",
+      data: { x: new Float32Array(0), y: new Float32Array(0) },
+    } as never);
+    expect(() => extractOhlcSeries(s)).toThrow(/no X data/i);
+  });
+
+  it("extractOhlcSeries falls back to y for missing OHLC fields", () => {
+    const s = new Series({
+      id: "c3",
+      type: "candlestick",
+      data: { x: Float32Array.from([0, 1]), y: Float32Array.from([5, 6]) },
+    } as never);
+    const ohlc = extractOhlcSeries(s);
+    expect(ohlc.open[0]).toBe(5);
+    expect(ohlc.close[1]).toBe(6);
+  });
+
+  it("resolveSourceSeries returns the series found by id", () => {
+    const s = line(5);
+    const chart = { getSeries: (id: string) => (id === "l" ? s : undefined), getAllSeries: () => [] };
+    expect(resolveSourceSeries(chart, "l")).toBe(s);
+  });
+
+  it("computes every preset with default options", async () => {
+    const n = 60;
+    const x = Float32Array.from({ length: n }, (_, i) => i);
+    const prices = Float32Array.from({ length: n }, (_, i) => 100 + Math.sin(i * 0.2) * 5);
+    for (const preset of ["rsi", "macd", "bollinger", "ema", "sma"] as const) {
+      const r = await computeIndicatorPreset(preset, x, prices);
+      expect(r.data.x.length).toBe(n);
+    }
+    // stochastic needs an OHLC source series
+    const src = candlestick(n);
+    const stoch = await computeIndicatorPreset("stochastic", x, prices, {}, src);
+    expect(stoch.placement).toBe("oscillator");
+    expect(stoch.yRange).toEqual([0, 100]);
+  });
+
+  it("throws when stochastic is computed without a source", async () => {
+    const x = Float32Array.from({ length: 20 }, (_, i) => i);
+    const prices = Float32Array.from({ length: 20 }, (_, i) => 100 + i);
+    await expect(computeIndicatorPreset("stochastic", x, prices)).rejects.toThrow(/candlestick source/i);
+  });
 });

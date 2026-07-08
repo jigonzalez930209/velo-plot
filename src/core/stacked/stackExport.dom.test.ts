@@ -168,6 +168,25 @@ describe("exportStackImage (DOM)", () => {
     expect(setDPR).toHaveBeenLastCalledWith(2);
   });
 
+  it("uses setDevicePixelRatioOverride when available for high-res export", async () => {
+    const container = layoutEl(0, 0, 100, 100);
+    const pane = layoutEl(0, 0, 100, 100);
+    const setDevicePixelRatioOverride = vi.fn();
+    const setDPR = vi.fn();
+    const render = vi.fn();
+    const chart = mockChart({ getDPR: () => 2, setDevicePixelRatioOverride, setDPR, render });
+
+    await exportStackImage(container, [pane], [chart], [], "#111", {
+      resolution: "4k",
+    });
+
+    // Boost via the override (survives resize), never via plain setDPR.
+    expect(setDevicePixelRatioOverride).toHaveBeenCalledWith(8);
+    // Restored by clearing the override.
+    expect(setDevicePixelRatioOverride).toHaveBeenLastCalledWith(null);
+    expect(setDPR).not.toHaveBeenCalled();
+  });
+
   it("skips dividers when includeDividers is false", async () => {
     const container = layoutEl(0, 0, 100, 100);
     const pane = layoutEl(0, 0, 100, 100);
