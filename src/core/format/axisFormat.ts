@@ -29,7 +29,7 @@ export function applyPrefix(
   prefix: NonNullable<AxisOptions["prefix"]>,
 ): string {
   const resolved = prefix === "auto" ? autoPrefixFor(value) : prefix;
-  const divisor = PREFIXDivisors[resolved] ?? 1;
+  const divisor = PREFIXDivisors[resolved];
   const scaled = value / divisor;
   return `${scaled.toPrecision(3)}${resolved}`;
 }
@@ -75,7 +75,7 @@ export function toScientificUnicode(value: number, precision: number): string {
 
   const unicodeExp = exponent
     .replace("+", "")
-    .replace(/[0-9\-]/g, (char) => superscriptMap[char] || char);
+    .replace(/[0-9\-]/g, (char) => superscriptMap[char]);
 
   return `${mantissa}e${unicodeExp}`;
 }
