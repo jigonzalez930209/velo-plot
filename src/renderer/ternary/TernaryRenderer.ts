@@ -18,8 +18,13 @@ import type { TernaryData, TernaryOptions, CartesianPoint } from './types';
  * y = b * sqrt(3)/2
  */
 export function ternaryToCartesian(a: number, b: number, c: number): CartesianPoint {
-  // Normalize to ensure a + b + c = 1
+  // Normalize to ensure a + b + c = 1.
   const sum = a + b + c;
+  // A zero (or non-finite) sum is an invalid composition. Return NaN so the
+  // point is skipped downstream instead of producing a divide-by-zero artefact.
+  if (!(sum > 0) || !Number.isFinite(sum)) {
+    return { x: NaN, y: NaN };
+  }
   const bN = b / sum;
   const cN = c / sum;
 
@@ -195,6 +200,9 @@ export function renderTernaryPoints(
   const points = convertTernaryData(data);
 
   for (const pt of points) {
+    // Skip invalid compositions (e.g. zero-sum) that yielded NaN coordinates.
+    if (!Number.isFinite(pt.x) || !Number.isFinite(pt.y)) continue;
+
     const canvasX = centerX + (pt.x - 0.5) * size;
     const canvasY = centerY - (pt.y - Math.sqrt(3) / 6) * size;
 
