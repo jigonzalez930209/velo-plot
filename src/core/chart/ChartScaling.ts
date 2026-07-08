@@ -150,10 +150,8 @@ export function fitToData(
   } else {
     const MAX_VAL = 1e15;
     const MIN_VAL = -1e15;
-    let hasY = false;
     yAxisBounds.forEach((bounds, id) => {
       if (bounds.min === Infinity) return;
-      hasY = true;
       const opts = ctx.yAxisOptionsMap.get(id);
       const scale = ctx.yScales.get(id);
       if (!opts || !scale) return;
@@ -168,7 +166,6 @@ export function fitToData(
         ctx.viewBounds.yMax = newMax;
       }
     });
-    if (!options.y && !hasY && !hasX) return false;
   }
 
   if (hasX && xMin !== undefined && xMax !== undefined) {
