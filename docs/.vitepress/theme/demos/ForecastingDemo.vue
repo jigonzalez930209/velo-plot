@@ -14,6 +14,7 @@ const horizon = ref(48)
 const alpha = ref(0.3)
 const beta = ref(0.1)
 const gamma = ref(0.1)
+const fitInfo = ref<{ rmse?: number; r2?: number; confidence?: number } | null>(null)
 
 let chart: any = null
 
@@ -92,23 +93,27 @@ async function runForecast() {
         const options = {
             method: selectedMethod.value,
             horizon: horizon.value,
+            // Real confidence bands derived from in-sample residual sigma.
+            confidence: 0.95,
             params: {
                 alpha: alpha.value,
                 beta: beta.value,
                 gamma: gamma.value,
-                period: 12
+                period: 12,
+                // ARIMA(1,1,1) defaults, ignored by the other methods.
+                p: 1,
+                d: 1,
+                q: 1
             }
         }
         
         const result = await chart.forecasting.forecastSeries('raw-data', options)
-        
-        // Add artificial confidence intervals for some methods for visual impact
-        if (selectedMethod.value === 'holtWinters') {
-            result.lowerBound = result.yValues.map((v: number, i: number) => v - 5 - i * 0.2)
-            result.upperBound = result.yValues.map((v: number, i: number) => v + 5 + i * 0.2)
-        } else if (selectedMethod.value === 'linear') {
-            result.lowerBound = result.yValues.map((v: number, i: number) => v - 10 - i * 0.5)
-            result.upperBound = result.yValues.map((v: number, i: number) => v + 10 + i * 0.5)
+
+        // The plugin now returns native lowerBound/upperBound and fit metrics.
+        fitInfo.value = {
+            rmse: result.metadata?.rmse,
+            r2: result.metadata?.r2,
+            confidence: result.metadata?.confidence
         }
 
         chart.forecasting.visualize(result)
@@ -140,6 +145,7 @@ onUnmounted(() => {
           <option value="linear">Linear Projection (Trend)</option>
           <option value="holt">Double Exp Smoothing (Trend)</option>
           <option value="holtWinters">Triple Exp Smoothing (Seasonal)</option>
+          <option value="arima">ARIMA (1,1,1)</option>
         </select>
       </div>
       
@@ -163,7 +169,12 @@ onUnmounted(() => {
     <div ref="chartContainer" class="main-chart" :style="{ height: height || '450px' }"></div>
     
     <div class="bottom-info">
-      <p>Forecasting uses <strong>Holt-Winters (Triple Exponential Smoothing)</strong> for seasonal data and <strong>Recurrent Projections</strong> for trends.</p>
+      <p v-if="fitInfo">
+        95% confidence band ·
+        <strong>RMSE</strong> {{ fitInfo.rmse != null ? fitInfo.rmse.toFixed(2) : '—' }}
+        <template v-if="fitInfo.r2 != null"> · <strong>R²</strong> {{ fitInfo.r2.toFixed(3) }}</template>
+      </p>
+      <p>Bands are computed from in-sample residuals (native SMA/WMA/EMA/Holt/Holt-Winters/ARIMA), not synthetic.</p>
     </div>
   </div>
 </template>

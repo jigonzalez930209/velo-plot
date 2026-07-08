@@ -2,7 +2,7 @@
   <div class="latex-demo-container">
     <div class="demo-controls">
       <h3>LaTeX Core Integration</h3>
-      <p>This demo showcases 100% native LaTeX rendering integrated into the chart's core elements.</p>
+      <p>100% native LaTeX rendering (300+ symbols, matrices, and <code>\mathbb</code>/<code>\mathcal</code>/<code>\mathfrak</code> alphabets) across titles, axes, tooltips, and annotations.</p>
       
       <div class="test-sections">
         <div class="test-card">
@@ -77,6 +77,12 @@ const presets = {
     x: 'x \\to \\infty',
     y: '\\frac{dy}{dx}',
     tooltip: '\\sum_{n=0}^{\\infty} \\frac{x^n}{n!}'
+  },
+  'Linear Algebra': {
+    title: '\\mathbf{A}\\vec{x} = \\lambda\\vec{x}, \\quad \\mathbf{A} = \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}',
+    x: '\\text{Basis } \\mathcal{B} \\subset \\mathbb{R}^n',
+    y: '\\text{Image } T: \\mathbb{R}^n \\to \\mathbb{R}^m',
+    tooltip: '\\det(\\mathbf{A}) = ad - bc\n\\mathfrak{g} = \\mathrm{Lie}(G)'
   }
 };
 
@@ -140,6 +146,15 @@ async function initChart() {
     position: { x: 2, y: 0.5 },
     latex: true,
     style: { fontSize: 32, color: 'rgba(255, 255, 255, 0.3)' }
+  });
+
+  // Matrix environment + blackboard alphabet (Stage 3 LaTeX expansion).
+  chart.addAnnotation({
+    type: 'text',
+    text: 'M = \\begin{bmatrix} 1 & 0 \\\\ 0 & 1 \\end{bmatrix} \\in \\mathbb{R}^{2\\times 2}',
+    position: { x: 4.5, y: 1.9 },
+    latex: true,
+    style: { fontSize: 20, color: '#22d3ee' }
   });
 
   // Enable cursor with LaTeX tooltips

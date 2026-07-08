@@ -10,6 +10,7 @@ const { isDark } = useData()
 const chartContainer = ref<HTMLElement | null>(null)
 const isInitialized = ref(false)
 const isPredicting = ref(false)
+const fit = ref<{ r2?: number; rmse?: number; slope?: number; intercept?: number } | null>(null)
 
 let chart: any = null
 let mlApi: any = null
@@ -27,7 +28,7 @@ onMounted(async () => {
   }
 
   try {
-    const { createChart, PluginMLIntegration, PluginTools, calculateStats, linearRegression } = await import('@src/index')
+    const { createChart, PluginMLIntegration, PluginTools } = await import('@src/index')
     
     chart = createChart({
       container: chartContainer.value!,
@@ -47,44 +48,6 @@ onMounted(async () => {
     
     await chart.use(mlPlugin)
     mlApi = mlPlugin.api
-    
-    // Register a Real Statistical Predictor
-    mlApi.registerModel({
-        id: 'trend-predictor',
-        name: 'Scientific Trend Predictor',
-        type: 'regression',
-        async predict(data: { x: number[], y: number[] }) {
-            // Simulate processing time
-            await new Promise(r => setTimeout(r, 600));
-            
-            // Use engine's linear regression for internal model
-            const result = linearRegression({
-                x: new Float32Array(data.x),
-                y: new Float32Array(data.y)
-            });
-            
-            const lastX = data.x[data.x.length - 1];
-            const futureX = [];
-            const futureY = [];
-            const confidence = [];
-            
-            const stats = calculateStats(new Float32Array(data.y));
-            const stdDev = Math.sqrt(stats.variance);
-
-            for (let i = 1; i <= 50; i++) {
-                const nextX = lastX + i * 0.1;
-                futureX.push(nextX);
-                // Linear projection: y = mx + b
-                const m = result.parameters.parameters[0];
-                const b = result.parameters.parameters[1] || 0;
-                futureY.push(m * nextX + b);
-                // Confidence band based on variance and distance from historical data
-                confidence.push(stdDev * (1 + i * 0.05));
-            }
-            
-            return { x: futureX, y: futureY, confidence };
-        }
-    })
 
     isInitialized.value = true
     initDemo()
@@ -93,36 +56,72 @@ onMounted(async () => {
   }
 })
 
+const historical = { x: [] as number[], y: [] as number[] }
+
 function initDemo() {
   if (!chart) return
 
-  const x = [];
-  const y = [];
+  historical.x = []
+  historical.y = []
   for (let i = 0; i < 100; i++) {
     const val = i * 0.1;
-    x.push(val);
-    y.push(Math.sin(val * 2) * 5 + Math.random());
+    // Linear trend + oscillation + noise, so a native linear fit is meaningful.
+    historical.x.push(val);
+    historical.y.push(1.8 * val + Math.sin(val * 2) * 3 + (Math.random() - 0.5) * 2);
   }
 
   chart.addSeries({
     id: 'historical-data',
     name: 'Historical Data',
     type: 'line',
-    data: { x, y },
+    data: { x: historical.x, y: historical.y },
     style: { color: isDark.value ? '#94a3b8' : '#64748b', width: 2 }
   })
 }
 
 async function runInference() {
     if (!mlApi || isPredicting.value) return;
-    
+
     isPredicting.value = true;
     try {
-        const result = await mlApi.runInference('trend-predictor', 'historical-data');
-        mlApi.visualizeResults(result, {
-            showConfidenceInterval: true,
-            lineStyle: { color: '#3b82f6', width: 3 }
+        // Train a native linear-regression model in-browser (Stage 3 API).
+        const training = mlApi.trainModel('native-lr', {
+            x: historical.x.map((v) => [v]),
+            y: historical.y
         });
+
+        fit.value = {
+            r2: training.r2,
+            rmse: training.rmse,
+            slope: training.coefficients[0],
+            intercept: training.intercept
+        };
+
+        // Project the fitted line forward and wrap a residual-based band.
+        const lastX = historical.x[historical.x.length - 1];
+        const xValues: number[] = [];
+        const output: number[] = [];
+        const confidence: number[] = [];
+        for (let i = 0; i <= 50; i++) {
+            const nx = lastX + i * 0.1;
+            xValues.push(nx);
+            output.push(training.intercept + training.coefficients[0] * nx);
+            confidence.push(1.96 * training.rmse);
+        }
+
+        mlApi.visualizePredictions(
+            {
+                modelId: 'native-lr',
+                output: Float32Array.from(output),
+                xValues: Float64Array.from(xValues),
+                outputShape: [output.length],
+                timestamp: Date.now(),
+                processingTime: 0,
+                confidence
+            },
+            { showConfidenceInterval: true, lineStyle: { color: '#3b82f6', width: 3 } }
+        );
+        chart.render();
     } catch (err) {
         console.error('Inference failed', err);
     } finally {
@@ -132,6 +131,7 @@ async function runInference() {
 
 function clear() {
     mlApi?.clearResults();
+    fit.value = null;
 }
 
 watch(isDark, (val) => {
@@ -150,17 +150,23 @@ onUnmounted(() => {
   <div class="ml-demo" :class="{ dark: isDark }">
     <div class="demo-controls">
         <div class="info">
-            <h3 class="title">AI Forecasting</h3>
-            <p class="desc">Neural Network prediction based on historical data.</p>
+            <h3 class="title">Native Regression</h3>
+            <p class="desc">In-browser linear-regression training with a residual-based confidence band.</p>
         </div>
         <div class="actions">
             <button @click="runInference" :disabled="isPredicting" class="btn-api primary">
-                {{ isPredicting ? '⌛ Predicting...' : '🧠 Run Inference' }}
+                {{ isPredicting ? '⌛ Training...' : '📈 Train & Predict' }}
             </button>
             <button @click="clear" class="btn-api secondary">🗑️ Clear</button>
         </div>
     </div>
     <div ref="chartContainer" class="main-chart" :style="{ height: height || '400px' }"></div>
+    <div v-if="fit" class="fit-info">
+        <span><strong>y</strong> = {{ fit.slope?.toFixed(3) }}·x + {{ fit.intercept?.toFixed(3) }}</span>
+        <span><strong>R²</strong> {{ fit.r2?.toFixed(4) }}</span>
+        <span><strong>RMSE</strong> {{ fit.rmse?.toFixed(3) }}</span>
+        <span>band = ±1.96·RMSE</span>
+    </div>
   </div>
 </template>
 
@@ -247,5 +253,21 @@ onUnmounted(() => {
     background: transparent;
     border-radius: 16px;
     overflow: hidden;
+}
+
+.fit-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.fit-info strong {
+    color: #60a5fa;
 }
 </style>
