@@ -81,9 +81,16 @@ export async function exportStackImage(
   try {
     if (scale > 1) {
       for (const chart of paneCharts) {
-        chart.setDPR(exportDpr);
+        // Lock the DPR so the enlarged backing store survives the resize() that
+        // setDPR/exportImage would otherwise revert (see ChartCore.resize).
+        if (typeof chart.setDevicePixelRatioOverride === "function") {
+          chart.setDevicePixelRatioOverride(exportDpr);
+        } else {
+          chart.setDPR(exportDpr);
+        }
         chart.render();
       }
+      await new Promise((r) => requestAnimationFrame(r));
       await new Promise((r) => requestAnimationFrame(r));
       await new Promise((r) => setTimeout(r, 50));
     }
@@ -136,7 +143,11 @@ export async function exportStackImage(
   } finally {
     if (scale > 1) {
       for (let i = 0; i < paneCharts.length; i++) {
-        paneCharts[i].setDPR(originalDprs[i]);
+        if (typeof paneCharts[i].setDevicePixelRatioOverride === "function") {
+          paneCharts[i].setDevicePixelRatioOverride!(null);
+        } else {
+          paneCharts[i].setDPR(originalDprs[i]);
+        }
         paneCharts[i].render();
       }
     }
