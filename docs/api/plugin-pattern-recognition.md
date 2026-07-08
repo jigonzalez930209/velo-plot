@@ -7,6 +7,14 @@ description: Detect technical chart patterns like Head & Shoulders, Triangles, a
 
 The Pattern Recognition plugin provides a powerful engine for identifying geometric and technical patterns in time-series and financial data. It supports a wide range of built-in classic chart patterns and allows developers to define custom pattern validators.
 
+## Interactive Demo
+
+The detected pattern is highlighted on the chart overlay, and each match emits a
+normalized trading signal that arms a Stage 2 price alert at the neckline. Use
+**Trigger breakout** to push price across the level and fire the alert live.
+
+<PatternRecognitionDemo />
+
 ## Features
 
 - ✅ **Built-in Catalog**: Covers Head & Shoulders, Double Top/Bottom, Triangles, Wedges, Flags, and more.
@@ -46,6 +54,25 @@ chart.events.on('pattern:detected', ({ match, seriesId }) => {
 });
 ```
 
+## Trading signals
+
+Every match at or above `notifications.minAlertConfidence` also emits a normalized directional signal, so patterns can feed the Stage 2 alerting system without knowing the pattern internals. Subscribe with `chart.patterns.onSignal`, which returns an unsubscribe function:
+
+```typescript
+const off = chart.patterns.onSignal((signal) => {
+  // signal.direction is 'bullish' | 'bearish' | 'neutral'
+  console.log(`${signal.patternName} → ${signal.direction} @ ${signal.price} (${signal.confidence.toFixed(2)})`);
+  if (signal.direction === 'bearish' && signal.stopLoss) {
+    chart.addAlert({ price: signal.price, direction: 'below' });
+  }
+});
+
+// later
+off();
+```
+
+Each `PatternSignalEvent` carries `seriesId`, `patternType`, `patternName`, `direction`, `confidence`, `price`, `x`, and optional `target`/`stopLoss` measurements.
+
 ## API Reference
 
 ### `chart.patterns`
@@ -56,9 +83,17 @@ The plugin exposes its methods through the `chart.patterns` namespace.
 // Manually run detection on a dataset
 const result = await chart.patterns.detectPatterns('series-1', dataPoints);
 
-// Register a new custom pattern
-chart.patterns.registerCustomPattern({
-  id: 'my-spike',
+// Enable/Disable real-time monitoring for a specific series
+chart.patterns.enableRealtimeDetection('main-ticker');
+```
+
+### Registering custom patterns by name
+
+`chart.patterns.register(id, template)` stores each custom pattern under its own id, so several named patterns coexist without colliding (they no longer share a single `'custom'` slot). The template can be a declarative `pointSequence` **or** a full definition with your own `validator`:
+
+```typescript
+// Declarative constraints
+chart.patterns.register('my-spike', {
   name: 'Volatile Spike',
   pointSequence: [
     { constraints: { lowerThanPrevious: true } },
@@ -67,9 +102,25 @@ chart.patterns.registerCustomPattern({
   ]
 });
 
-// Enable/Disable real-time monitoring for a specific series
-chart.patterns.enableRealtimeDetection('main-ticker');
+// Full validator (returns a confidence 0..1)
+chart.patterns.register('v-bottom', {
+  name: 'V Bottom',
+  minPoints: 3,
+  validator: (pts) => {
+    const [a, b, c] = [pts[0], pts[Math.floor(pts.length / 2)], pts[pts.length - 1]];
+    const valid = b.y < a.y && b.y < c.y;
+    return { valid, confidence: valid ? 0.9 : 0, segments: [], keyPoints: pts };
+  }
+});
+
+// Detection scans custom patterns when 'custom' is requested
+await chart.patterns.detectPatterns('series-1', dataPoints, { patternTypes: ['custom'] });
+
+// Remove one later
+chart.patterns.unregister('my-spike');
 ```
+
+> `registerCustomPattern(config)` is still available for backwards compatibility, but `register(id, template)` is preferred.
 
 ## Supported Pattern Types
 

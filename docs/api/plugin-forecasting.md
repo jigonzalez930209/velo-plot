@@ -21,13 +21,20 @@ await chart.use(PluginForecasting({
 Once registered, the plugin exposes its API through `chart.forecasting`.
 
 ### `forecast(data, options)`
-Generates a forecast for the provided raw data.
+Generates a forecast for the provided raw data, or for an existing series when
+a series id string is passed.
 
 **Parameters:**
-- `data`: `SeriesData | number[] | Float32Array` - The historical data.
+- `data`: `SeriesData | number[] | Float32Array | string` - The historical data, or a series id.
 - `options`: `ForecastingOptions` - Configuration for the forecast.
 
 **Returns:** `ForecastingResult`
+
+```typescript
+// Forecast an existing series by id
+const result = chart.forecasting.forecast('s1', { method: 'arima', horizon: 50 });
+chart.forecasting.visualize(result); // shaded confidence band + dashed line
+```
 
 ### `forecastSeries(seriesId, options)`
 Generates a forecast for a specific series already present in the chart.
@@ -67,10 +74,23 @@ Removes active forecast visualizations.
 | `params` | `ForecastingParams` | Method-specific parameters |
 
 ### `ForecastingMethod`
-- `'sma'`: Simple Moving Average (projects a flat line).
-- `'linear'`: Linear Trend Projection (Least Squares Fit).
-- `'holt'`: Double Exponential Smoothing (Trend-aware).
-- `'holtWinters'`: Triple Exponential Smoothing (Trend + Seasonality).
+
+All methods are implemented and return finite forecasts with confidence bands.
+**No public method throws for a supported method** (as of v2.2.0).
+
+| Method | Description | Uncertainty grows with horizon |
+|--------|-------------|:---:|
+| `'sma'` | Simple Moving Average (flat projection at trailing average) | no |
+| `'wma'` | Weighted Moving Average (linear weights on trailing window) | no |
+| `'ema'` | Exponential Moving Average (flat at last EMA) | no |
+| `'expSmoothing'` | Simple Exponential Smoothing (SES) | no |
+| `'holt'` | Double Exponential Smoothing (trend-aware) | yes |
+| `'holtWinters'` | Triple Exponential Smoothing (trend + seasonality) | yes |
+| `'linear'` | Linear Trend Projection (least-squares fit) | yes |
+| `'arima'` | ARIMA(p,d,q) via the two-stage Hannan-Rissanen procedure | yes |
+
+> ARIMA falls back to Holt's linear trend when the history is too short to fit
+> the requested orders, so it is always safe to call.
 
 ### `ForecastingParams`
 
@@ -80,7 +100,19 @@ Removes active forecast visualizations.
 | `beta` | `number` | Smoothing factor for trend |
 | `gamma` | `number` | Smoothing factor for seasonality |
 | `period` | `number` | Seasonal cycle length |
-| `windowSize` | `number` | Window size for SMA |
+| `windowSize` | `number` | Window size for SMA/WMA |
+| `p` | `number` | ARIMA autoregressive order (default 1) |
+| `d` | `number` | ARIMA differencing order (default 1) |
+| `q` | `number` | ARIMA moving-average order (default 0) |
+
+### Confidence bands
+
+Every forecast returns `lowerBound` / `upperBound` computed from in-sample
+one-step residuals. The band half-width is `z(confidence) · σ · √h` for
+trend/AR models (widening with the horizon `h`) and `z(confidence) · σ` for the
+flat moving-average methods. Set the level via `options.confidence` (default
+`0.95`). Render the shaded band with `visualize(result)` or the `band` series
+type.
 
 ### `ForecastingResult`
 
@@ -88,6 +120,6 @@ Removes active forecast visualizations.
 |----------|------|-------------|
 | `xValues` | `number[]` | Projected X coordinates |
 | `yValues` | `number[]` | Projected Y values |
-| `lowerBound` | `number[]` | (Optional) Lower confidence limit |
-| `upperBound` | `number[]` | (Optional) Upper confidence limit |
-| `metadata` | `object` | Fit statistics (MSE, MAE, R²) |
+| `lowerBound` | `number[]` | Lower confidence limit |
+| `upperBound` | `number[]` | Upper confidence limit |
+| `metadata` | `object` | Fit statistics: `mse`, `rmse`, `mae`, `r2`, `confidence` |
