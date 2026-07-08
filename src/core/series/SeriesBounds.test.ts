@@ -101,4 +101,17 @@ describe("calculateSeriesBounds", () => {
     );
     expect(result).toBeNull();
   });
+
+  it("delegates to polar bounds for polar series", () => {
+    const result = calculateSeriesBounds(
+      "polar",
+      { x: new Float32Array(0), y: new Float32Array(0) },
+      undefined,
+      { r: new Float32Array([0, 5, 10]), theta: new Float32Array([0, 90, 180]) },
+    );
+    expect(result).not.toBeNull();
+    // symmetric bounds derived from max radius
+    expect(result!.xMax).toBeGreaterThan(0);
+    expect(result!.yMax).toBeGreaterThan(0);
+  });
 });
