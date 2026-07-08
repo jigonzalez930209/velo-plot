@@ -187,6 +187,72 @@ describe("SeriesActions lifecycle", () => {
     expect(ctx.series.has("l1")).toBe(true);
   });
 
+  it("returns heatmap options unchanged (no prepare transforms)", () => {
+    const ctx = makeCtx();
+    addSeries(ctx, {
+      id: "hm",
+      type: "heatmap",
+      data: {
+        x: Float32Array.from([0, 1]),
+        y: Float32Array.from([0, 1]),
+        z: Float32Array.from([1, 2, 3, 4]),
+      },
+    } as never);
+    expect(ctx.series.has("hm")).toBe(true);
+  });
+
+  it("initializes an empty style object before assigning a scheme color", () => {
+    const ctx = makeCtx({ colorScheme: { colors: ["#abcdef"] } });
+    // no style key at all → the `if (!prepared.style)` branch initializes it
+    addSeries(ctx, lineSeries("nostyle"));
+    expect(ctx.series.get("nostyle")?.getStyle().color).toBe("#abcdef");
+  });
+
+  it("appendData tolerates a series with no initial bounds", () => {
+    const ctx = makeCtx({ autoScrollEnabled: true, yAxisOptionsMap: new Map([["y", { auto: false }]]) });
+    addSeries(ctx, { id: "empty", type: "line", data: { x: new Float32Array(0), y: new Float32Array(0) } });
+    // oldMaxX falls back to -Infinity because getBounds() is null
+    expect(() => appendData(ctx, "empty", [0, 1], [1, 2])).not.toThrow();
+    expect(ctx.requestRender).toHaveBeenCalled();
+  });
+
+  it("expands x bounds when appended data extends below the view", () => {
+    const ctx = makeCtx({
+      xAxisOptions: { auto: true },
+      viewBounds: { xMin: 5, xMax: 100, yMin: 0, yMax: 50 },
+      yAxisOptionsMap: new Map([["y", { auto: false }]]),
+    });
+    addSeries(ctx, {
+      id: "s",
+      type: "line",
+      data: { x: Float32Array.from([0, 1, 2]), y: Float32Array.from([1, 2, 3]) },
+    });
+    // xMax stays below the view but xMin (0) is below viewBounds.xMin (5)
+    appendData(ctx, "s", Float32Array.from([3]), Float32Array.from([4]));
+    expect(ctx.viewBounds.xMin).toBeLessThan(5);
+  });
+
+  it("leaves x bounds untouched when the appended range barely changes", () => {
+    const ctx = makeCtx({
+      xAxisOptions: { auto: true },
+      viewBounds: { xMin: 0, xMax: 1000, yMin: 0, yMax: 50 },
+      yAxisOptionsMap: new Map([["y", { auto: false }]]),
+    });
+    addSeries(ctx, {
+      id: "s",
+      type: "line",
+      // range ~940 is within 10% of the 1000-wide view and stays inside it
+      data: {
+        x: Float32Array.from({ length: 941 }, (_, i) => 40 + i),
+        y: Float32Array.from({ length: 941 }, (_, i) => i),
+      },
+    });
+    const beforeMax = ctx.viewBounds.xMax;
+    // stays well within the view and range change is < 10% → no bounds update
+    appendData(ctx, "s", Float32Array.from([981]), Float32Array.from([1]));
+    expect(ctx.viewBounds.xMax).toBe(beforeMax);
+  });
+
   it("skips heikin-ashi transform when OHLC is incomplete", () => {
     const ctx = makeCtx();
     addSeries(ctx, {
