@@ -32,36 +32,70 @@ export function PluginBrokenAxis(
   let ctx: PluginContext | null = null;
   let originalXScale: any = null;
   let brokenXScale: BrokenAxisScale | null = null;
-  
-  // Storage for raw data of series to allow re-transformation on zoom
+
+  // Storage for raw (un-warped) data of series to allow re-transformation.
   const rawDataStore = new Map<string, { x: Float32Array; y: Float32Array }>();
+
+  /** Union X-extent across all stored series — the domain breaks live in. */
+  function computeWarpDomain(): [number, number] | null {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const raw of rawDataStore.values()) {
+      for (let i = 0; i < raw.x.length; i++) {
+        const v = raw.x[i];
+        if (v < min) min = v;
+        if (v > max) max = v;
+      }
+    }
+    if (!Number.isFinite(min) || !Number.isFinite(max) || min === max) return null;
+    return [min, max];
+  }
 
   function updateScales() {
     if (!ctx || !config.enabled) return;
-    
+
     const options = config.axes.default || config.axes.xAxis;
     if (options && brokenXScale) {
         brokenXScale.updateBreaks(options.breaks);
         // On break change, we must re-transform everything
-        applyTransformations();
+        applyTransformations({ syncView: true });
     }
   }
 
-  function applyTransformations() {
+  /**
+   * Re-warp every stored series into compressed (broken) space using the
+   * data-derived warp domain, then align the chart's X view to that domain so
+   * the axis ticks and break symbols (which the render pass computes from
+   * viewBounds) line up with the warped data.
+   */
+  function applyTransformations(opts: { syncView?: boolean } = {}) {
       if (!ctx || !brokenXScale || !config.enabled) return;
       const chart = ctx.chart as any;
-      const [min, max] = brokenXScale.domain;
-      const range = max - min;
+
+      const domain = computeWarpDomain();
+      if (!domain) return;
+      const [min, max] = domain;
+      const range = max - min || 1;
+
+      // Pin the scale to the warp domain so mapToRatio uses the correct segments,
+      // independent of whatever sub-range the last render/zoom left behind.
+      brokenXScale.setDomain(min, max);
 
       for (const [id, raw] of rawDataStore.entries()) {
           const transformedX = new Float32Array(raw.x.length);
           for (let i = 0; i < raw.x.length; i++) {
               transformedX[i] = min + brokenXScale.mapToRatio(raw.x[i]) * range;
           }
-          // Call the TRUE underlying updateSeries to avoid hijacking loop
+          // Call the TRUE underlying updateSeries to avoid the hijacking loop.
           if (chart._originalUpdateSeries) {
               chart._originalUpdateSeries(id, { x: transformedX, y: raw.y });
           }
+      }
+
+      if (opts.syncView && typeof chart.zoom === 'function') {
+          // Constrain X to the warped data domain (warped values also span
+          // [min,max]). Y is left untouched so the caller's Y range is preserved.
+          chart.zoom({ x: [min, max], animate: false });
       }
   }
 
@@ -78,14 +112,16 @@ export function PluginBrokenAxis(
              const pxStart = brokenXScale!.transform(b.start);
              const pxEnd = brokenXScale!.transform(b.end);
              const midPx = (pxStart + pxEnd) / 2;
+             // Per-break symbol takes precedence, then the axis default.
+             const symbol = b.symbol || options.defaultSymbol || 'diagonal';
 
              ctx2d.save();
-             ctx2d.lineWidth = 1;
+             ctx2d.lineWidth = 1.5;
              ctx2d.strokeStyle = options.symbolColor || '#ff00ff';
 
              if (orientation === 'horizontal') {
-                drawSymbol(ctx2d, midPx, plotArea.y, options.defaultSymbol || 'diagonal', 'top');
-                drawSymbol(ctx2d, midPx, plotArea.y + plotArea.height, options.defaultSymbol || 'diagonal', 'bottom');
+                drawSymbol(ctx2d, midPx, plotArea.y, symbol, 'top');
+                drawSymbol(ctx2d, midPx, plotArea.y + plotArea.height, symbol, 'bottom');
              }
              ctx2d.restore();
         });
@@ -138,7 +174,7 @@ export function PluginBrokenAxis(
                   originalXScale = (chart as any).xScale;
                   brokenXScale = new BrokenAxisScale(originalXScale, (config.axes.default || config.axes.xAxis)?.breaks || []);
                   chart.setXScale(brokenXScale);
-                  applyTransformations();
+                  applyTransformations({ syncView: true });
               } else {
                   if (originalXScale) {
                       chart.setXScale(originalXScale);
@@ -169,30 +205,27 @@ export function PluginBrokenAxis(
     onInit(pCtx) {
       ctx = pCtx;
       const chart = ctx.chart as any;
-      chart.brokenAxis = pluginApi;
+      // NOTE: `chart.brokenAxis` is a read-only getter on ChartCore that resolves
+      // this plugin's `api` via the plugin bridge — do NOT assign to it (that
+      // throws "Cannot set property ... which has only a getter" and aborts
+      // plugin registration entirely).
 
       // Hijack and Save original methods
       chart._originalUpdateSeries = chart.updateSeries.bind(chart);
       chart._originalAddSeries = chart.addSeries.bind(chart);
       chart._originalAppendData = chart.appendData.bind(chart);
 
+      const toF32 = (v: any): Float32Array =>
+          v instanceof Float32Array ? v : new Float32Array(typeof v === 'number' ? [v] : v);
+
       chart.updateSeries = (id: string, data: any) => {
           if (data.x && data.y) {
-              rawDataStore.set(id, { 
-                  x: data.x instanceof Float32Array ? data.x : new Float32Array(data.x), 
-                  y: data.y instanceof Float32Array ? data.y : new Float32Array(data.y) 
-              });
+              rawDataStore.set(id, { x: toF32(data.x), y: toF32(data.y) });
           }
-          
+
           if (config.enabled && brokenXScale && data.x) {
-              const x = data.x;
-              const transformedX = new Float32Array(x.length);
-              const [min, max] = brokenXScale.domain;
-              const range = max - min;
-              for (let i = 0; i < x.length; i++) {
-                  transformedX[i] = min + brokenXScale.mapToRatio(x[i]) * range;
-              }
-              chart._originalUpdateSeries(id, { ...data, x: transformedX });
+              // Re-warp all series against the (possibly grown) data domain.
+              applyTransformations({ syncView: true });
           } else {
               chart._originalUpdateSeries(id, data);
           }
@@ -200,21 +233,14 @@ export function PluginBrokenAxis(
 
       chart.addSeries = (options: any) => {
           if (options.id && options.data?.x && options.data?.y) {
-               rawDataStore.set(options.id, { 
-                   x: options.data.x instanceof Float32Array ? options.data.x : new Float32Array(options.data.x), 
-                   y: options.data.y instanceof Float32Array ? options.data.y : new Float32Array(options.data.y) 
-               });
+              rawDataStore.set(options.id, { x: toF32(options.data.x), y: toF32(options.data.y) });
           }
-          
+
           if (config.enabled && brokenXScale && options.data?.x) {
-              const x = options.data.x;
-              const transformedX = new Float32Array(x.length);
-              const [min, max] = brokenXScale.domain;
-              const range = max - min;
-              for (let i = 0; i < x.length; i++) {
-                  transformedX[i] = min + brokenXScale.mapToRatio(x[i]) * range;
-              }
-              chart._originalAddSeries({ ...options, data: { ...options.data, x: transformedX } });
+              // Add the series (untransformed) so the chart registers it, then
+              // warp every series consistently against the data-derived domain.
+              chart._originalAddSeries(options);
+              applyTransformations({ syncView: true });
           } else {
               chart._originalAddSeries(options);
           }
@@ -223,8 +249,8 @@ export function PluginBrokenAxis(
       chart.appendData = (id: string, x: any, y: any) => {
           const raw = rawDataStore.get(id);
           if (raw) {
-              const newX = x instanceof Float32Array ? x : [x];
-              const newY = y instanceof Float32Array ? y : [y];
+              const newX = toF32(x);
+              const newY = toF32(y);
               const combinedX = new Float32Array(raw.x.length + newX.length);
               const combinedY = new Float32Array(raw.y.length + newY.length);
               combinedX.set(raw.x);
@@ -235,14 +261,7 @@ export function PluginBrokenAxis(
           }
 
           if (config.enabled && brokenXScale) {
-              const xArr = x instanceof Array ? new Float32Array(x) : (typeof x === 'number' ? new Float32Array([x]) : x);
-              const transformedX = new Float32Array(xArr.length);
-              const [min, max] = brokenXScale.domain;
-              const range = max - min;
-              for (let i = 0; i < xArr.length; i++) {
-                  transformedX[i] = min + brokenXScale.mapToRatio(xArr[i]) * range;
-              }
-              chart._originalAppendData(id, transformedX, y);
+              applyTransformations({ syncView: true });
           } else {
               chart._originalAppendData(id, x, y);
           }
@@ -258,7 +277,6 @@ export function PluginBrokenAxis(
     onDestroy() {
         if (ctx) {
             const chart = (ctx.chart as any);
-            delete chart.brokenAxis;
             if (originalXScale) {
                 chart.setXScale(originalXScale);
             }
@@ -277,9 +295,10 @@ export function PluginBrokenAxis(
         if (config.enabled) drawBreakSymbols(pCtx);
     },
     onViewChange() {
-        if (config.enabled && brokenXScale) {
-            applyTransformations();
-        }
+        // Data is warped once against the fixed data-domain; a user zoom/pan is
+        // just a linear view over the already-warped buffers, so we must NOT
+        // re-warp here (doing so against the transient view domain is exactly
+        // what collapsed the chart before). Nothing to do.
     },
     api: pluginApi
   };
