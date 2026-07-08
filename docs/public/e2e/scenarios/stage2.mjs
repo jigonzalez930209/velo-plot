@@ -160,13 +160,27 @@ export const stage2Scenarios = {
   },
 
   "stage2-drawing-fibonacci": async (lib) => {
-    const chart = lib.createChart({ container: hostEl(), width: 640, height: 360, animations: false });
+    const host = hostEl();
+    const chart = lib.createChart({ container: host, width: 640, height: 360, animations: false });
     chart.addSeries({ id: "l", type: "line", data: lineData() });
     await chart.use(lib.PluginAnnotations());
     await chart.use(lib.PluginDrawingTools({ color: "#f59e0b" }));
     chart.setDrawingMode("fibonacci");
-    chart.events.emit("click", { point: { x: 10, y: 40 } });
-    chart.events.emit("click", { point: { x: 50, y: 80 } });
+
+    // Drawing tools consume real DOM mouse events on the chart container:
+    // press → drag past the threshold → release commits the two-point drawing.
+    const rect = host.getBoundingClientRect();
+    const plot = chart.getPlotArea();
+    const at = (fx, fy) => ({
+      clientX: rect.left + plot.x + plot.width * fx,
+      clientY: rect.top + plot.y + plot.height * fy,
+      bubbles: true,
+      cancelable: true,
+    });
+    host.dispatchEvent(new MouseEvent("mousedown", at(0.3, 0.3)));
+    host.dispatchEvent(new MouseEvent("mousemove", at(0.7, 0.7)));
+    host.dispatchEvent(new MouseEvent("mouseup", at(0.7, 0.7)));
+
     assert(chart.getAnnotations().length >= 5, "fibonacci levels drawn");
     chart.destroy();
   },

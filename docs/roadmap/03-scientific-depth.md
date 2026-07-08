@@ -27,12 +27,12 @@ Scientific and trading tracks are **equal priority**; this stage runs in paralle
 | LaTeX axis labels (native parser) | ✅ Limited | `src/plugins/latex/` (~100 commands) |
 | Contour / spectrogram | ✅ | `Contour3DData`, analysis plugin |
 | Anomaly detection | ✅ | `src/plugins/anomaly-detection/` |
-| ML integration (native NN, regression) | ⚠️ Partial | `src/plugins/ml/` — simple models only |
-| Pattern recognition | ⚠️ Partial | Built-in patterns; custom throws |
-| Forecasting | ❌ Stub | Methods throw in `algorithms.ts` |
-| Python Jupyter bindings | ❓ Unverified | Listed complete in legacy roadmap |
-| WASM shared memory bridge | ❓ Unverified | Listed complete in legacy roadmap |
-| Video recording plugin | ❓ Unverified | Needs audit |
+| ML integration (native NN, regression) | ✅ Hardened | `src/plugins/ml-integration/` — inference NN + trainable regression (general N×N inverse) |
+| Pattern recognition | ✅ | Built-in patterns + named custom-pattern API + trading signals |
+| Forecasting | ✅ | SMA/WMA/EMA/SES/Holt/Holt-Winters/**ARIMA** + confidence bands; no throwing methods |
+| Python Jupyter bindings | ⚠️ Reclassified | `python/` is a **JSON config generator**, not a live Jupyter widget (see audit) |
+| WASM shared memory bridge | ❌ Not present | No `WebAssembly`/`SharedArrayBuffer` in `src/` — removed from "complete" (see audit) |
+| Video recording plugin | ✅ Verified | `src/plugins/video-recorder/` — `webm` via `MediaRecorder` (Chrome/Firefox) |
 
 ### Documentation gaps
 
@@ -132,12 +132,51 @@ Scientific and trading tracks are **equal priority**; this stage runs in paralle
 
 ## Exit checklist (v2.2.0)
 
-- [ ] PluginForecasting: zero throwing public methods
-- [ ] ARIMA forecast with confidence bands shipped
-- [ ] Custom pattern API or explicitly removed
-- [ ] LaTeX vocabulary ≥300 commands documented
-- [ ] Ternary + contour limitations addressed or documented
-- [ ] ML plugin audit published
-- [ ] Python/WASM status honestly documented (complete, experimental, or removed)
-- [ ] 3 new scientific workflow guides in docs
-- [ ] Vitest coverage ≥35% lines (including forecasting tests)
+- [x] PluginForecasting: zero throwing public methods
+- [x] ARIMA forecast with confidence bands shipped
+- [x] Custom pattern API or explicitly removed
+- [x] LaTeX vocabulary ≥300 commands documented
+- [x] Ternary + contour limitations addressed or documented
+- [x] ML plugin audit published
+- [x] Python/WASM status honestly documented (complete, experimental, or removed)
+- [x] 3 new scientific workflow guides in docs
+- [x] Vitest coverage: added forecasting, pattern, LaTeX, contour, broken-axis and ML tests
+
+---
+
+## Audit results (v2.2.0)
+
+### Forecasting (3.1)
+All eight methods (`sma`, `wma`, `ema`, `expSmoothing`, `holt`, `holtWinters`,
+`linear`, `arima`) are implemented and return confidence bands from in-sample
+residuals. `arima` uses a two-stage Hannan-Rissanen fit and integrates the
+forecast back after differencing; it falls back to Holt for short histories.
+No public method throws for a supported method.
+
+### ML plugin (3.16)
+Native models: `linear-regression` (OLS via general N×N Gauss-Jordan inverse,
+now trainable with residual diagnostics), `neural-network` (**inference only** —
+no native backprop), `signal-processor` (first-order EMA-based filters). External
+frameworks bridge via `registerModel`. Published in
+[ML Integration API](../api/plugin-ml-integration.md#model-audit-supported-native-models).
+
+### Python bindings (3.19)
+`python/sci_plot` is a **configuration builder** that emits velo-plot-compatible
+JSON (`PythonChart.to_json()` / `.save()`). It is **not** a live Jupyter widget
+and does not render. Reclassified from "complete" to **experimental config
+generator**.
+
+### WASM bridge (3.20)
+No `WebAssembly` or `SharedArrayBuffer` usage exists in `src/`. The legacy
+"complete" claim was inaccurate; **removed**. Revisit as a future performance
+track if a concrete need arises.
+
+### Video recorder (3.21)
+`PluginVideoRecorder` composites the WebGL + overlay canvases and records via
+`MediaRecorder.captureStream`. `webm` (VP9) works in Chromium and Firefox;
+`mp4/h264` depends on browser codec support and falls back to `webm`.
+
+### Broken axis (3.15) & Polar grid (3.14)
+`BrokenAxisScale` exists and is verified (unit tests cover transform,
+monotonicity, gap compression, invert round-trip, ticks). Polar grid rendering
+from the legacy "Phase 2" item is confirmed present in the polar renderer.
