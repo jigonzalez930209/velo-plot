@@ -4,7 +4,24 @@
  */
 
 import { LaTeXNode } from './types';
-import { getSymbol, isSymbol } from './symbols';
+import { getSymbol, isSymbol, BLACKBOARD, CALLIGRAPHIC, FRAKTUR } from './symbols';
+
+/** Delimiters for supported matrix environments. */
+const MATRIX_DELIMITERS: Record<string, [string, string]> = {
+  matrix: ['', ''],
+  pmatrix: ['(', ')'],
+  bmatrix: ['[', ']'],
+  Bmatrix: ['{', '}'],
+  vmatrix: ['|', '|'],
+  Vmatrix: ['‖', '‖'],
+};
+
+/** Alphabet transforms for math font commands. */
+const ALPHABET_MAPS: Record<string, Record<string, string>> = {
+  mathbb: BLACKBOARD,
+  mathcal: CALLIGRAPHIC,
+  mathfrak: FRAKTUR,
+};
 
 /**
  * Parse LaTeX string into an abstract syntax tree
@@ -144,7 +161,7 @@ function parseTokens(tokens: string[]): LaTeXNode[] {
         i = content.nextIndex;
       }
       // Text command - render as a single grouped string for proper kerning
-      else if (command === 'text') {
+      else if (command === 'text' || command === 'mathrm' || command === 'mathbf' || command === 'mathit' || command === 'operatorname') {
         i++;
         const content = parseGroup(tokens, i);
         // Concatenate all text content from the group into a single string
@@ -154,6 +171,21 @@ function parseTokens(tokens: string[]): LaTeXNode[] {
           content: textContent,
         });
         i = content.nextIndex;
+      }
+      // Math alphabets: map each letter to its Unicode variant
+      else if (command in ALPHABET_MAPS) {
+        i++;
+        const content = parseGroup(tokens, i);
+        i = content.nextIndex;
+        const map = ALPHABET_MAPS[command];
+        const raw = extractTextContent(content.nodes);
+        let mapped = '';
+        for (const ch of raw) mapped += map[ch] ?? ch;
+        nodes.push({ type: 'text', content: mapped });
+      }
+      // Matrix environments: \begin{pmatrix} a & b \\ c & d \end{pmatrix}
+      else if (command === 'begin') {
+        i = parseMatrix(tokens, i, nodes);
       }
       // Symbol
       else if (isSymbol(command)) {
@@ -200,6 +232,85 @@ function parseTokens(tokens: string[]): LaTeXNode[] {
   }
 
   return nodes;
+}
+
+/**
+ * Parse a matrix environment starting at the `\begin` token.
+ * Returns the index immediately after the matching `\end{...}`.
+ */
+function parseMatrix(tokens: string[], startIndex: number, nodes: LaTeXNode[]): number {
+  let i = startIndex + 1; // skip \begin
+
+  // Read environment name inside the following {...}
+  let envName = '';
+  if (tokens[i] === '{') {
+    i++;
+    while (i < tokens.length && tokens[i] !== '}') {
+      envName += tokens[i];
+      i++;
+    }
+    if (tokens[i] === '}') i++;
+  }
+
+  // Collect tokens until the matching \end (supporting nesting)
+  const inner: string[] = [];
+  let depth = 1;
+  while (i < tokens.length && depth > 0) {
+    const t = tokens[i];
+    if (t === '\\begin') {
+      depth++;
+      inner.push(t);
+      i++;
+    } else if (t === '\\end') {
+      depth--;
+      if (depth === 0) {
+        i++; // consume \end
+        if (tokens[i] === '{') {
+          i++;
+          while (i < tokens.length && tokens[i] !== '}') i++;
+          if (tokens[i] === '}') i++;
+        }
+      } else {
+        inner.push(t);
+        i++;
+      }
+    } else {
+      inner.push(t);
+      i++;
+    }
+  }
+
+  // Split inner tokens into rows (\\) and cells (&)
+  const matrixRows: LaTeXNode[][][] = [];
+  let rowCells: LaTeXNode[][] = [];
+  let cellTokens: string[] = [];
+  const flushCell = () => {
+    rowCells.push(parseTokens(cellTokens));
+    cellTokens = [];
+  };
+  const flushRow = () => {
+    flushCell();
+    matrixRows.push(rowCells);
+    rowCells = [];
+  };
+
+  for (const t of inner) {
+    if (t === '&') {
+      flushCell();
+    } else if (t === '\\\\') {
+      flushRow();
+    } else {
+      cellTokens.push(t);
+    }
+  }
+  if (cellTokens.length > 0 || rowCells.length > 0) {
+    flushRow();
+  }
+
+  const delimiters = MATRIX_DELIMITERS[envName] ?? ['', ''];
+  nodes.push({ type: 'matrix', rows: matrixRows, delimiters });
+
+  return i;
 }
 
 /**
