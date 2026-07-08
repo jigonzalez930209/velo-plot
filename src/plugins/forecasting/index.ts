@@ -39,8 +39,16 @@ export function PluginForecasting(
   const api: ForecastingAPI = {
     forecast(data: any, options: ForecastingOptions): ForecastingResult {
       let x: any, y: any;
-      
-      if (Array.isArray(data)) {
+
+      // Allow `forecast('seriesId', options)` by resolving the series data.
+      if (typeof data === 'string') {
+        if (!ctx) throw new Error('Plugin not initialized');
+        const series = ctx.data.getAllSeries().find(s => s.getId() === data);
+        if (!series) throw new Error(`Series not found: ${data}`);
+        const seriesData = series.getData();
+        x = seriesData.x;
+        y = seriesData.y;
+      } else if (Array.isArray(data)) {
         y = data;
         x = data.map((_, i) => i);
       } else if (data.x && data.y) {
@@ -50,7 +58,7 @@ export function PluginForecasting(
         throw new Error("Invalid data format for forecasting");
       }
 
-      return calculateForecast(x, y, options.method, options.horizon, options.params);
+      return calculateForecast(x, y, options.method, options.horizon, options.params, options.confidence);
     },
 
     async forecastSeries(seriesId: string, options: ForecastingOptions): Promise<ForecastingResult> {
