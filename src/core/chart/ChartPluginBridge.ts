@@ -135,6 +135,10 @@ export class ChartPluginBridge {
     return this.getAPI<any>("velo-plot-forecasting");
   }
 
+  get patterns(): any {
+    return this.getAPI<any>("pattern-recognition");
+  }
+
   get latex(): any {
     return this.getAPI<any>("velo-plot-latex");
   }
