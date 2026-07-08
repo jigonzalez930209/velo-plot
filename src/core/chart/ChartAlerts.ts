@@ -31,7 +31,7 @@ export interface AlertableSeries {
 }
 
 export class ChartAlertManager {
-  private alerts = new Map<string, PriceAlertOptions & { id: string; latched: boolean }>();
+  private alerts = new Map<string, PriceAlertOptions & { id: string }>();
   private idCounter = 0;
 
   constructor(
@@ -41,7 +41,7 @@ export class ChartAlertManager {
 
   addAlert(options: PriceAlertOptions): string {
     const id = options.id ?? `alert_${++this.idCounter}`;
-    this.alerts.set(id, { ...options, id, latched: false });
+    this.alerts.set(id, { ...options, id });
     return id;
   }
 
@@ -54,14 +54,12 @@ export class ChartAlertManager {
   }
 
   getAlerts(): PriceAlertOptions[] {
-    return Array.from(this.alerts.values()).map(({ latched: _, ...a }) => a);
+    return Array.from(this.alerts.values());
   }
 
   /** Call after data updates / render tick. */
   evaluate(): void {
     for (const [id, alert] of [...this.alerts.entries()]) {
-      if (alert.latched && alert.once !== false) continue;
-
       const series = this.getSeries(alert.seriesId);
       if (!series) continue;
 
@@ -103,7 +101,6 @@ export class ChartAlertManager {
       this.events.emit("alert", payload);
 
       if (alert.once !== false) {
-        alert.latched = true;
         this.alerts.delete(id);
       }
     }
