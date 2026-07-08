@@ -271,12 +271,34 @@ Use colors that contrast well with the background and each other:
 - **Grid Complexity**: Higher divisions increase render time linearly
 - **Device Pixel Ratio**: The demo accounts for high-DPI displays automatically
 
-## Limitations
+## Limitations & edge cases
 
-- Only works for exactly **3 components**
-- Components must be **non-negative**
-- No built-in **contour lines** (can be added manually)
-- No automatic **region labeling** (e.g., soil type regions)
+- Only works for exactly **3 components**.
+- Components must be **non-negative**; a point summing to `0` is invalid and is
+  skipped rather than throwing.
+- No built-in **contour lines** (can be added manually via the analysis
+  `generateContours` helper, which now also produces joined isolines and
+  labels — see [Signal Processing](../guide/signal-processing.md)).
+- No automatic **region labeling** (e.g., soil-type regions).
+
+### Boundary points
+
+Points that lie exactly on an edge or vertex (one or two components equal to
+zero, e.g. `[1, 0, 0]` or `[0.5, 0.5, 0]`) are valid and render precisely on
+the triangle boundary. Values are normalized to sum to 1 before projection, so
+un-normalized inputs like `[2, 1, 1]` are accepted and mapped to `[0.5, 0.25,
+0.25]`.
+
+### Label overlap
+
+Vertex/axis labels are drawn outside the triangle with padding to avoid
+overlapping the plotted data. When many points cluster near a vertex, prefer:
+
+- reducing marker size or opacity so density is readable, or
+- disabling per-point labels and relying on the tooltip for inspection.
+
+Grid-tick labels are placed along each axis; at very high grid-division counts
+tick labels can crowd — lower the division count for a cleaner figure.
 
 ## Mathematical Background
 
