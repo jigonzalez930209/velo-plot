@@ -136,6 +136,18 @@ describe("tooltip format", () => {
       expect(formatDataPointY(baseDataPoint({ dataY: 99999 }))).toMatch(/e/i);
     });
 
+    it("formatDataPointY uses one-decimal tier for hundreds", () => {
+      // absVal >= 100 and < 10000 → toFixed(1)
+      expect(formatDataPointY(baseDataPoint({ dataY: 500 }))).toBe("500.0");
+      // absVal in [1, 100) → toFixed(3)
+      expect(formatDataPointY(baseDataPoint({ dataY: 42.5 }))).toBe("42.500");
+    });
+
+    it("formatCompactValue handles zero and unit-range values", () => {
+      expect(formatCompactValue(baseDataPoint({ dataY: 0 }), "y")).toBe("0");
+      expect(formatCompactValue(baseDataPoint({ dataY: 5 }), "y")).toBe("5.00");
+    });
+
     it("formatCrosshairX without axis uses exponential fallback", () => {
       const data: CrosshairTooltip = {
         type: "crosshair",
