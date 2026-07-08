@@ -80,6 +80,9 @@ export default defineConfig({
             { text: "Real-time Data", link: "/guide/realtime" },
             { text: "Large Datasets", link: "/guide/large-datasets" },
             { text: "Scientific Analysis", link: "/guide/analysis" },
+            { text: "Signal Processing Pipeline", link: "/guide/signal-processing" },
+            { text: "Cyclic Voltammetry", link: "/guide/cyclic-voltammetry" },
+            { text: "Publication-Ready Export", link: "/guide/publication-export" },
             { text: "Plugin System", link: "/guide/plugins" },
             { text: "Utilities & DX", link: "/guide/utilities" },
           ],
@@ -251,6 +254,7 @@ export default defineConfig({
             { text: "Radar Charts", link: "/examples/radar-charts" },
             { text: "Gauge & Sankey", link: "/examples/gauge-sankey" },
             { text: "Ternary Charts", link: "/examples/ternary-charts" },
+            { text: "Contour Lines", link: "/examples/contour-lines" },
           ],
         },
         {
