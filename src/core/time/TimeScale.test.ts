@@ -56,4 +56,29 @@ describe("TimeScale", () => {
     const mapped = mapToBusinessDayScale(times, { calendar: "business-day" });
     expect(timeAtBusinessIndex(mapped, 5)).toBeUndefined();
   });
+
+  it("defaults to the business-day calendar when no options are given", () => {
+    const times = Float64Array.from([
+      Date.UTC(2024, 0, 5), // Fri
+      Date.UTC(2024, 0, 6), // Sat (skipped)
+      Date.UTC(2024, 0, 8), // Mon
+    ]);
+    const mapped = mapToBusinessDayScale(times);
+    expect(Number.isNaN(mapped.scaledX[1])).toBe(true);
+    expect(mapped.timeByIndex.length).toBe(2);
+  });
+
+  it("continuous calendar reuses a Float64Array input as timeByIndex", () => {
+    const times = Float64Array.from([10, 20, 30]);
+    const mapped = mapToBusinessDayScale(times, { calendar: "continuous" });
+    // same Float64Array instance is passed through without a copy
+    expect(mapped.timeByIndex).toBe(times);
+  });
+
+  it("businessDaySpanMs falls back to one day for a zero-width span", () => {
+    const times = Float64Array.from([1_000, 1_000]);
+    const mapped = mapToBusinessDayScale(times, { calendar: "continuous" });
+    // xMin===xMax collapses to a single index → t0===t1 → MS_DAY fallback
+    expect(businessDaySpanMs(mapped, 0, 0)).toBe(86_400_000);
+  });
 });

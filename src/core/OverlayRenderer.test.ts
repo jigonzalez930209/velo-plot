@@ -115,6 +115,27 @@ describe("OverlayRenderer", () => {
     expect(ctx.stroke).toHaveBeenCalled();
   });
 
+  it("drawGrid uses default tick counts and filters business-day ticks", () => {
+    const { xScale, yScale } = makeScales();
+    // A business-day mapping makes resolveXTicks filter to integer indices.
+    renderer.setBusinessDayMapping({
+      timeByIndex: Float64Array.from([0, 1, 2, 3, 4]),
+    } as unknown as Parameters<typeof renderer.setBusinessDayMapping>[0]);
+    // No axis options → the `?? 8` / `?? 6` tick-count fallbacks run.
+    renderer.drawGrid(plotArea, xScale, yScale);
+    expect(ctx.stroke).toHaveBeenCalled();
+  });
+
+  it("business-day filter yields no ticks for an empty mapping", () => {
+    const { xScale, yScale } = makeScales();
+    renderer.setBusinessDayMapping({
+      timeByIndex: new Float64Array(0),
+    } as unknown as Parameters<typeof renderer.setBusinessDayMapping>[0]);
+    renderer.drawGrid(plotArea, xScale, yScale, { tickCount: 4 }, { tickCount: 4 });
+    // maxIdx < 0 → filter returns [], so no vertical grid strokes crash
+    expect(ctx.stroke).toHaveBeenCalled();
+  });
+
   it("drawGrid returns early when grid is hidden", () => {
     theme.grid.visible = false;
     renderer.setTheme(theme);
