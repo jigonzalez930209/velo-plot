@@ -131,11 +131,26 @@ export class SimpleNeuralNetwork implements MLModelAPI {
 // Native Statistical Models
 // ============================================
 
+/** Result returned when training a small on-chart model (task 3.17). */
+export interface TrainingResult {
+  coefficients: number[];
+  intercept: number;
+  /** Fitted values for the training inputs. */
+  fitted: number[];
+  /** Residuals (observed - fitted), suitable for a residual plot. */
+  residuals: number[];
+  /** Coefficient of determination on the training set. */
+  r2: number;
+  /** Root mean squared error on the training set. */
+  rmse: number;
+}
+
 export class NativeLinearRegression implements MLModelAPI {
   private config: ModelConfig;
   private coefficients: number[] = [];
   private intercept = 0;
   private ready = false;
+  private lastTraining: TrainingResult | null = null;
 
   constructor(config: ModelConfig) {
     this.config = config;
@@ -147,16 +162,20 @@ export class NativeLinearRegression implements MLModelAPI {
 
   async predict(input: PredictionInput): Promise<PredictionResult> {
     const startTime = performance.now();
-    
+
+    // Each input entry is treated as a single-feature observation.
     const inputData = Array.from(input.data);
-    const predictions = inputData.map(x => {
+    const predictions = inputData.map((x) => {
+      const feat = x as number;
       let result = this.intercept;
-      for (let i = 0; i < this.coefficients.length && i < (x as number); i++) {
-        result += this.coefficients[i] * (x as number);
+      // Univariate: only the first coefficient multiplies the scalar input.
+      // Multivariate models should call `predictRows`.
+      if (this.coefficients.length > 0) {
+        result += this.coefficients[0] * feat;
       }
       return result;
     });
-    
+
     const processingTime = performance.now() - startTime;
 
     return {
@@ -168,63 +187,52 @@ export class NativeLinearRegression implements MLModelAPI {
     };
   }
 
-  train(data: { x: number[][], y: number[] }): void {
-    // Simple linear regression using least squares
+  /** Predict from full feature rows (multivariate). */
+  predictRows(rows: number[][]): number[] {
+    return rows.map((row) => {
+      let result = this.intercept;
+      for (let i = 0; i < this.coefficients.length && i < row.length; i++) {
+        result += this.coefficients[i] * row[i];
+      }
+      return result;
+    });
+  }
+
+  train(data: { x: number[][], y: number[] }): TrainingResult {
     const n = data.x.length;
-    
-    // Create design matrix
+
+    // Design matrix with an intercept column.
     const X: number[][] = [];
     for (let i = 0; i < n; i++) {
       X.push([1, ...data.x[i]]);
     }
-    
-    // Calculate coefficients using normal equation: β = (X^T X)^(-1) X^T y
-    const XtX = this.matrixMultiply(this.transpose(X), X);
-    const XtY = this.matrixMultiply(this.transpose(X), data.y.map(y => [y]));
-    
-    const XtXInv = this.matrixInverse(XtX);
-    const beta = this.matrixMultiply(XtXInv, XtY);
-    
+
+    // Normal equation: β = (XᵀX)⁻¹ Xᵀy
+    const XtX = matrixMultiply(transpose(X), X);
+    const XtY = matrixMultiply(transpose(X), data.y.map((y) => [y]));
+
+    const XtXInv = matrixInverse(XtX);
+    const beta = matrixMultiply(XtXInv, XtY);
+
     this.intercept = beta[0][0];
-    this.coefficients = beta.slice(1).map(row => row[0]);
+    this.coefficients = beta.slice(1).map((row) => row[0]);
     this.ready = true;
+
+    // Fit diagnostics for a residual plot.
+    const fitted = this.predictRows(data.x);
+    const residuals = data.y.map((y, i) => y - fitted[i]);
+    const meanY = data.y.reduce((s, v) => s + v, 0) / (n || 1);
+    const sse = residuals.reduce((s, r) => s + r * r, 0);
+    const sst = data.y.reduce((s, y) => s + (y - meanY) ** 2, 0);
+    const r2 = sst > 0 ? 1 - sse / sst : 0;
+    const rmse = Math.sqrt(sse / (n || 1));
+
+    this.lastTraining = { coefficients: this.coefficients, intercept: this.intercept, fitted, residuals, r2, rmse };
+    return this.lastTraining;
   }
 
-  private transpose(matrix: number[][]): number[][] {
-    return matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
-  }
-
-  private matrixMultiply(a: number[][], b: number[][]): number[][] {
-    const result: number[][] = [];
-    for (let i = 0; i < a.length; i++) {
-      result[i] = [];
-      for (let j = 0; j < b[0].length; j++) {
-        let sum = 0;
-        for (let k = 0; k < b.length; k++) {
-          sum += a[i][k] * b[k][j];
-        }
-        result[i][j] = sum;
-      }
-    }
-    return result;
-  }
-
-  private matrixInverse(matrix: number[][]): number[][] {
-    // Simplified 2x2 matrix inverse for demonstration
-    if (matrix.length === 2 && matrix[0].length === 2) {
-      const det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
-      if (Math.abs(det) < 1e-10) {
-        return [[1, 0], [0, 1]]; // Identity matrix if singular
-      }
-      const invDet = 1 / det;
-      return [
-        [invDet * matrix[1][1], -invDet * matrix[0][1]],
-        [-invDet * matrix[1][0], invDet * matrix[0][0]]
-      ];
-    }
-    
-    // For larger matrices, return identity (simplified)
-    return matrix.map((row, i) => row.map((_, j) => i === j ? 1 : 0));
+  getTrainingResult(): TrainingResult | null {
+    return this.lastTraining;
   }
 
   getInfo(): ModelConfig {
@@ -243,7 +251,69 @@ export class NativeLinearRegression implements MLModelAPI {
 
   dispose(): void {
     this.ready = false;
+    this.lastTraining = null;
   }
+}
+
+// ============================================
+// Matrix utilities (general purpose)
+// ============================================
+
+function transpose(matrix: number[][]): number[][] {
+  return matrix[0].map((_, colIndex) => matrix.map((row) => row[colIndex]));
+}
+
+function matrixMultiply(a: number[][], b: number[][]): number[][] {
+  const result: number[][] = [];
+  for (let i = 0; i < a.length; i++) {
+    result[i] = [];
+    for (let j = 0; j < b[0].length; j++) {
+      let sum = 0;
+      for (let k = 0; k < b.length; k++) {
+        sum += a[i][k] * b[k][j];
+      }
+      result[i][j] = sum;
+    }
+  }
+  return result;
+}
+
+/**
+ * General square-matrix inverse via Gauss-Jordan elimination with partial
+ * pivoting. Falls back to the identity for singular matrices so callers never
+ * receive NaNs. Replaces the previous 2x2-only stub (task 3.17 fix).
+ */
+export function matrixInverse(matrix: number[][]): number[][] {
+  const n = matrix.length;
+  // Augment [A | I]
+  const M = matrix.map((row, i) => [
+    ...row,
+    ...Array.from({ length: n }, (_, j) => (i === j ? 1 : 0)),
+  ]);
+
+  for (let col = 0; col < n; col++) {
+    // Partial pivot
+    let pivot = col;
+    for (let r = col + 1; r < n; r++) {
+      if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
+    }
+    if (Math.abs(M[pivot][col]) < 1e-12) {
+      // Singular - return identity as a safe fallback.
+      return matrix.map((row, i) => row.map((_, j) => (i === j ? 1 : 0)));
+    }
+    [M[col], M[pivot]] = [M[pivot], M[col]];
+
+    const pivotVal = M[col][col];
+    for (let c = 0; c < 2 * n; c++) M[col][c] /= pivotVal;
+
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const factor = M[r][col];
+      for (let c = 0; c < 2 * n; c++) M[r][c] -= factor * M[col][c];
+    }
+  }
+
+  return M.map((row) => row.slice(n));
 }
 
 // ============================================

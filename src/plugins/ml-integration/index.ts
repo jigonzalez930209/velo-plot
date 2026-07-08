@@ -84,6 +84,42 @@ export function PluginMLIntegration(
       ctx?.requestRender();
     },
 
+    /**
+     * Alias for {@link visualizeResults} that reads as an intent-revealing
+     * name for the prediction-overlay use case (task 3.18).
+     */
+    visualizePredictions(result: PredictionResult, config: VisualizationConfig = {}) {
+      return api.visualizeResults(result, config);
+    },
+
+    /**
+     * Train a small regression model on the fly (task 3.17). Creates a native
+     * linear-regression model when the id does not yet exist. Returns fit
+     * diagnostics including residuals for a residual plot.
+     */
+    trainModel(modelId: string, data: { x: number[][]; y: number[] }) {
+      let model = models.get(modelId) as any;
+      if (!model) {
+        model = createNativeModel({ id: modelId, name: modelId, type: 'linear-regression' });
+        models.set(modelId, model);
+      }
+      if (typeof model.train !== 'function') {
+        throw new Error(`Model '${modelId}' does not support training`);
+      }
+      return model.train(data);
+    },
+
+    /** Retrieve the last training diagnostics for a model, if any. */
+    getTrainingResult(modelId: string) {
+      const model = models.get(modelId) as any;
+      return model?.getTrainingResult?.() ?? null;
+    },
+
+    /** List registered model descriptors (for the ML audit / introspection). */
+    listModels() {
+      return Array.from(models.values()).map((m) => m.getInfo());
+    },
+
     stats: {
       fft: nativeFFT,
       mean: nativeMean,
