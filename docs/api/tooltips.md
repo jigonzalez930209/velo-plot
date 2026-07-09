@@ -5,7 +5,7 @@ description: High-performance, customizable tooltip system for scientific charts
 
 # Tooltip System API Reference
 
-The Sci Plot features a high-performance, customizable tooltip system designed for scientific data visualization. It supports multiple tooltip types, professional themes, and extensible templates.
+The Velo Plot features a high-performance, customizable tooltip system designed for scientific data visualization. It supports multiple tooltip types, professional themes, and extensible templates.
 
 ## Quick Start
 

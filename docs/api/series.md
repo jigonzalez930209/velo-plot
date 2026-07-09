@@ -41,7 +41,7 @@ interface SeriesData {
 ```
 
 ::: tip TypedArrays Required
-Sci Plot requires TypedArrays (`Float32Array` or `Float64Array`) for optimal WebGL performance. Regular JavaScript arrays will cause errors.
+Velo Plot requires TypedArrays (`Float32Array` or `Float64Array`) for optimal WebGL performance. Regular JavaScript arrays will cause errors.
 :::
 
 ### SeriesStyle
