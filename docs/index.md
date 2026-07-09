@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: "Sci Plot"
+  name: "Velo Plot"
   text: "Ultra-fast WebGL Scientific Charts"
   tagline: Render millions of points at 60 FPS with WebGL-powered precision
   actions:
@@ -86,7 +86,7 @@ chart.addSeries({
 ### React Usage
 
 ```tsx
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 
 function MyChart() {
   const series = [{
@@ -97,7 +97,7 @@ function MyChart() {
   }]
 
   return (
-    <SciPlot
+    <VeloPlot
       series={series}
       xAxis={{ label: 'Time', auto: true }}
       yAxis={{ label: 'Value', auto: true }}
@@ -107,9 +107,9 @@ function MyChart() {
 }
 ```
 
-## Why Sci Plot?
+## Why Velo Plot?
 
-| Feature | Sci Plot | Chart.js | Plotly |
+| Feature | Velo Plot | Chart.js | Plotly |
 |---------|----------------|----------|--------|
 | Max Points (60 FPS) | **10M+** | ~10k | ~100k |
 | Rendering | WebGL | Canvas 2D | SVG/WebGL |

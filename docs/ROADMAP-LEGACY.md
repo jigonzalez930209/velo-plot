@@ -2,7 +2,7 @@
 
 ---
 
-# Sci Plot - Roadmap de Desarrollo
+# Velo Plot - Roadmap de Desarrollo
 
 > **Versión Actual:** 1.6.2  
 > **Fecha:** 2026-01-13  
@@ -872,7 +872,7 @@ chart.xAxis.breakStyle = {
 #### 37. **Bindings para Python (Jupyter Widgets)**
 ```python
 # En Jupyter Notebook
-import sci_plot as sce
+import velo_plot as sce
 import numpy as np
 
 # Crear chart
