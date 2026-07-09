@@ -1,5 +1,5 @@
 /**
- * Sci Plot - High-Performance Scientific Charting
+ * Velo Plot - High-Performance Scientific Charting
  *
  * A WebGL-based charting engine designed for scientific data visualization
  * and high-performance rendering of large datasets.
@@ -339,13 +339,24 @@ export {
 // React bindings
 // ============================================
 export {
-  SciPlot,
-  useSciPlot,
-  type SciPlotProps,
-  type SciPlotRef,
-  type SciPlotSeries,
-  type UseSciPlotOptions,
-  type UseSciPlotReturn,
+  VeloPlot,
+  StackedPlot,
+  useVeloPlot,
+  useStackedPlot,
+  useIndicator,
+  useChartSync,
+  useChartGroup,
+  type VeloPlotProps,
+  type VeloPlotRef,
+  type VeloPlotSeries,
+  type StackedPlotProps,
+  type StackedPlotRef,
+  type UseVeloPlotOptions,
+  type UseVeloPlotReturn,
+  type UseStackedPlotOptions,
+  type UseStackedPlotReturn,
+  type UseIndicatorReturn,
+  type UseChartSyncReturn,
 } from "./react";
 
 // ============================================
