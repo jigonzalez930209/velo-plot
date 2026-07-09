@@ -1,12 +1,12 @@
-# Sci Plot: Implementation Guide for AI Agents
+# Velo Plot: Implementation Guide for AI Agents
 
-This document provides a comprehensive technical overview and implementation guide for the **Sci Plot**, a high-performance WebGL-based scientific charting library. This guide is designed to be read by AI agents to facilitate the integration of the library into any analytical or scientific application.
+This document provides a comprehensive technical overview and implementation guide for the **Velo Plot**, a high-performance WebGL-based scientific charting library. This guide is designed to be read by AI agents to facilitate the integration of the library into any analytical or scientific application.
 
 ---
 
 ## 🚀 Core Architecture
 
-Sci Plot uses a modular, plugin-based architecture centered around the `Chart` instance. It leverages **WebGL** for high-performance rendering (handling 10⁵–10⁶ points at 60 FPS) and a specialized **Plugin System** for advanced analysis and interaction.
+Velo Plot uses a modular, plugin-based architecture centered around the `Chart` instance. It leverages **WebGL** for high-performance rendering (handling 10⁵–10⁶ points at 60 FPS) and a specialized **Plugin System** for advanced analysis and interaction.
 
 ### 1. Installation & Initialization
 
@@ -166,7 +166,7 @@ const dataUrl = chart.exportImage('png');
 
 ## 🧠 AI Agent Implementation Checklist
 
-When implementing Sci Plot in a new view, follow these steps:
+When implementing Velo Plot in a new view, follow these steps:
 
 1.  **Container**: Ensure the target DOM element has a defined height/width.
 2.  **Instance**: Create the chart instance using `createChart`.
