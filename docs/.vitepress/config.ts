@@ -8,7 +8,7 @@ const base = '/velo-plot/';
 
 export default defineConfig({
   base,
-  title: "Sci Plot | Ultra-fast WebGL Charts",
+  title: "Velo Plot | Ultra-fast WebGL Charts",
   description:
     "Open-source high-performance WebGL2 scientific charting engine for real-time visualization of millions of data points at 60 FPS. Supports 2D and 3D charts with zero-copy architecture.",
   ignoreDeadLinks: true,
@@ -30,7 +30,7 @@ export default defineConfig({
   },
   themeConfig: {
     logo: '/logo.svg',
-    siteTitle: 'Sci Plot',
+    siteTitle: 'Velo Plot',
     search: {
       provider: 'local',
     },
@@ -374,7 +374,7 @@ export default defineConfig({
     ],
     footer: {
       message: "Released under the MIT License.",
-      copyright: "Copyright © 2025-present Sci Plot",
+      copyright: "Copyright © 2025-present Velo Plot",
     },
   },
 });

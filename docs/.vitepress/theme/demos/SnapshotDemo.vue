@@ -9,7 +9,7 @@ const resolution = ref('standard');
 const quality = ref(0.9);
 const includeBackground = ref(true);
 const includeOverlays = ref(true);
-const watermarkText = ref('Sci Plot Export');
+const watermarkText = ref('Velo Plot Export');
 const lastSnapshotUrl = ref('');
 const isExporting = ref(false);
 
