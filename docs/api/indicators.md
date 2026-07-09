@@ -5,7 +5,7 @@ description: Technical analysis indicators for financial charts - SMA, EMA, RSI,
 
 # Financial/Technical Indicators
 
-Sci Plot includes a comprehensive library of technical analysis indicators commonly used in financial charting and signal analysis.
+Velo Plot includes a comprehensive library of technical analysis indicators commonly used in financial charting and signal analysis.
 
 ## Moving Averages
 
