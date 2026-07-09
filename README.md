@@ -1,4 +1,4 @@
-# Sci Plot 🚀
+# Velo Plot 🚀
 
 A high-performance, WebGL-powered scientific charting engine built for precision, speed, and deep interactivity. Optimized for electrochemical and scientific data visualization.
 
@@ -52,7 +52,7 @@ pnpm docs:dev
 ### React (Recommended)
 
 ```tsx
-import { SciPlot } from 'velo-plot/react';
+import { VeloPlot } from 'velo-plot/react';
 
 function App() {
   const data = {
@@ -62,7 +62,7 @@ function App() {
 
   return (
     <div style={{ width: '800px', height: '400px' }}>
-      <SciPlot 
+      <VeloPlot 
         series={[{ id: 's1', ...data, color: '#00f2ff' }]}
         xAxis={{ label: 'Time (s)' }}
         yAxis={{ label: 'Voltage (V)' }}
@@ -127,7 +127,7 @@ for (let i = 0; i < 20; i++) {
 
 ## 📖 Documentation
 
-Visit [Sci Plot Docs](https://jigonzalez930209.github.io/velo-plot/) for:
+Visit [Velo Plot Docs](https://jigonzalez930209.github.io/velo-plot/) for:
 -   [Getting Started Guide](https://jigonzalez930209.github.io/velo-plot/guide/)
 -   [Core Concepts](https://jigonzalez930209.github.io/velo-plot/guide/concepts)
 -   [API Reference](https://jigonzalez930209.github.io/velo-plot/api/chart)
@@ -144,7 +144,12 @@ The library is at **v1.12.0**. The active roadmap toward **v3.0.0** lives in [`d
 |--------|----------|
 | `velo-plot` | Core chart engine (~60KB) |
 | `velo-plot/full` | Everything including plugins, 3D, analysis |
-| `velo-plot/react` | `SciPlot`, `useSciPlot`, `useStackedPlot` |
+| `velo-plot/react` | `VeloPlot`, `StackedPlot`, `useVeloPlot`, `useStackedPlot`, `useIndicator`, `useChartSync` |
+| `velo-plot/vue` | `VeloPlot`, `StackedPlot`, composables |
+| `velo-plot/svelte` | hooks + `VeloPlot.svelte`, `StackedPlot.svelte` (source) |
+| `velo-plot/solid` | `VeloPlot`, `StackedPlot`, hooks |
+| `velo-plot/angular` | `VeloPlotComponent`, `StackedPlotComponent`, services |
+| `velo-plot/astro` | `.astro` island wrappers |
 | `velo-plot/plugins/*` | Individual plugins (tree-shakeable) |
 
 ## 📄 License
