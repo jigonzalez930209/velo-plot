@@ -71,12 +71,23 @@ export const UTILITY_SCENARIOS = [
   "util-indicator-build-pane",
 ] as const;
 
+export const FRAMEWORK_SCENARIOS = [
+  "framework-react-veloplot",
+  "framework-react-stackedplot",
+  "framework-vue-veloplot",
+  "framework-svelte-create-veloplot",
+  "framework-solid-veloplot",
+  "framework-angular-hooks",
+  "framework-astro-wrapper",
+] as const;
+
 export const ALL_E2E_SCENARIOS = [
   ...CORE_SCENARIOS,
   ...STACKED_SCENARIOS,
   ...STAGE2_SCENARIOS,
   ...PLUGIN_SCENARIOS,
   ...UTILITY_SCENARIOS,
+  ...FRAMEWORK_SCENARIOS,
 ] as const;
 
 export type E2EScenarioId = (typeof ALL_E2E_SCENARIOS)[number];
