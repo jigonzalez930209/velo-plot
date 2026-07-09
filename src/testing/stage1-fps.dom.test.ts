@@ -193,6 +193,33 @@ describe("stage1BrowserBench baseline", () => {
     expect(check.passed).toBe(true);
   });
 
+  it("uses default regression threshold when baseline omits it", async () => {
+    vi.resetModules();
+    vi.doMock("./baselines/v1.15.0.json", () => ({
+      default: {
+        version: "test",
+        scenarios: {
+          "custom-scenario": { minAvgFps: 100 },
+        },
+      },
+    }));
+    const { compareScenarioToBaseline } = await import("./stage1BrowserBench");
+    const check = compareScenarioToBaseline("custom-scenario", {
+      avgFps: 80,
+      minFps: 75,
+      maxFps: 85,
+      avgFrameTime: 12,
+      frameCount: 100,
+      duration: 3000,
+      pointsRendered: 1e6,
+      throughput: 80e6,
+    });
+    expect(check.passed).toBe(false);
+    expect(check.failures[0]).toContain("10% slack");
+    vi.doUnmock("./baselines/v1.15.0.json");
+    vi.resetModules();
+  });
+
   it("compareScenarioToBaseline flags frame time regression", async () => {
     const { compareScenarioToBaseline } = await import("./stage1BrowserBench");
     const check = compareScenarioToBaseline("line-1m-pan", {

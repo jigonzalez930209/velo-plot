@@ -1,5 +1,5 @@
 /**
- * Theme - Visual styling configuration for SciPlot
+ * Theme - Visual styling configuration for VeloPlot
  *
  * Provides customizable themes for the chart including:
  * - Grid styling
@@ -307,6 +307,50 @@ export const LIGHT_THEME: ChartTheme = {
   },
 };
 
+export const HIGH_CONTRAST_THEME: ChartTheme = {
+  name: "high-contrast",
+  isDark: true,
+  backgroundColor: "#000000",
+  plotAreaBackground: "#0a0a0a",
+  plotBorderColor: "#ffffff",
+  grid: {
+    ...DEFAULT_GRID_THEME,
+    majorColor: "rgba(255, 255, 255, 0.35)",
+    minorColor: "rgba(255, 255, 255, 0.15)",
+  },
+  xAxis: {
+    ...DEFAULT_AXIS_THEME,
+    lineColor: "#ffffff",
+    tickColor: "#ffffff",
+    labelColor: "#ffffff",
+    titleColor: "#ffffff",
+  },
+  yAxis: {
+    ...DEFAULT_AXIS_THEME,
+    lineColor: "#ffffff",
+    tickColor: "#ffffff",
+    labelColor: "#ffffff",
+    titleColor: "#ffffff",
+  },
+  legend: {
+    ...DEFAULT_LEGEND_THEME,
+    backgroundColor: "#000000",
+    borderColor: "#ffffff",
+    textColor: "#ffffff",
+  },
+  toolbar: {
+    ...DEFAULT_TOOLBAR_THEME,
+    backgroundColor: "#000000",
+    borderColor: "#ffffff",
+  },
+  cursor: {
+    ...DEFAULT_CURSOR_THEME,
+    lineColor: "#ffff00",
+    tooltipBackground: "#ffff00",
+    tooltipColor: "#000000",
+  },
+};
+
 /** Electrochemistry theme - Professional blue tones */
 export const ELECTROCHEM_THEME: ChartTheme = {
   name: "electrochemistry",
@@ -388,6 +432,9 @@ export function getThemeByName(name: string): ChartTheme {
     case "electrochemistry":
     case "electrochem":
       return ELECTROCHEM_THEME;
+    case "high-contrast":
+    case "highContrast":
+      return HIGH_CONTRAST_THEME;
     default:
       console.warn(`[Theme] Unknown theme "${name}", using dark`);
       return DARK_THEME;
