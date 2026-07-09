@@ -23,7 +23,7 @@ export interface PaneResizeOptions {
 const DIVIDER_CLASS = "velo-pane-divider";
 const RESIZING_CLASS = "velo-pane-resizing";
 
-function injectDividerStyles(direction: StackDirection): void {
+export function injectDividerStyles(direction: StackDirection): void {
   if (typeof document === "undefined") return;
   let style = document.getElementById("velo-pane-divider-styles") as HTMLStyleElement | null;
   if (!style) {
@@ -112,6 +112,25 @@ function injectDividerStyles(direction: StackDirection): void {
   `;
 
   void handleGlyph;
+}
+
+export function measurePaneSizes(
+  paneWrappers: HTMLDivElement[],
+  isHorizontal: boolean,
+): number[] {
+  return paneWrappers.map((w) =>
+    isHorizontal ? w.getBoundingClientRect().width : w.getBoundingClientRect().height,
+  );
+}
+
+export function resolveDragStartSizes(
+  onDragStart: PaneResizeOptions["onDragStart"],
+  leadingIdx: number,
+  trailingIdx: number,
+  paneWrappers: HTMLDivElement[],
+  isHorizontal: boolean,
+): number[] {
+  return onDragStart?.(leadingIdx, trailingIdx) ?? measurePaneSizes(paneWrappers, isHorizontal);
 }
 
 function createDividerElement(index: number, size: number, direction: StackDirection): HTMLDivElement {
@@ -270,11 +289,13 @@ export function attachPaneResize(
       divider.setPointerCapture(e.pointerId);
       container.classList.add(RESIZING_CLASS);
 
-      const sizesPx =
-        options.onDragStart?.(i, i + 1) ??
-        paneWrappers.map((w) =>
-          isHorizontal ? w.getBoundingClientRect().width : w.getBoundingClientRect().height,
-        );
+      const sizesPx = resolveDragStartSizes(
+        options.onDragStart,
+        i,
+        i + 1,
+        paneWrappers,
+        isHorizontal,
+      );
 
       options.onDragMove?.(sizesPx, i, i + 1);
 

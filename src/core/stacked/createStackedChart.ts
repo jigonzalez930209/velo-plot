@@ -728,7 +728,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
       return mountPane(pane);
     },
     async addIndicator(preset: IndicatorPresetName, opts: AddIndicatorOptions = {}) {
-      const priceChart = paneCharts.get(masterPaneId) ?? master;
+      const priceChart = master;
       if (opts.pane !== "new") {
         const overlay = await addIndicatorToChart(priceChart, preset, opts);
         return { ...overlay, chart: priceChart };
