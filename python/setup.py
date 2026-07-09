@@ -5,7 +5,7 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[],
-    author="SciPlot Team",
-    description="Python bindings for Sci Plot",
+    author="VeloPlot Team",
+    description="Python bindings for Velo Plot",
     python_requires='>=3.6',
 )

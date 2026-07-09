@@ -1,5 +1,5 @@
 import math
-from sci_plot import PythonChart
+from velo_plot import PythonChart
 
 # 1. Create a new chart
 chart = PythonChart("my-chart")
