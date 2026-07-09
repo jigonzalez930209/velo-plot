@@ -5,7 +5,7 @@ description: Built-in utilities for scientific data analysis, including peak det
 
 # Data Analysis
 
-Sci Plot includes built-in utilities for common data analysis tasks.
+Velo Plot includes built-in utilities for common data analysis tasks.
 
 ## Overview
 

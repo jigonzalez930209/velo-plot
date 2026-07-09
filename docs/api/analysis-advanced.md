@@ -2,7 +2,7 @@
 
 <AnalysisAdvancedChart height="500px" />
 
-Sci Plot provides a powerful suite of scientific analysis tools for signal processing, frequency analysis, and statistical evaluation.
+Velo Plot provides a powerful suite of scientific analysis tools for signal processing, frequency analysis, and statistical evaluation.
 
 ::: tip Plugin Required
 While these functions are available as standalone utilities, the `PluginAnalysis` provides integrated access via `chart.analysis`.

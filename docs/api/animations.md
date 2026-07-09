@@ -5,7 +5,7 @@ description: Configure smooth, high-performance animations for zoom, pan, auto-s
 
 # Animations
 
-Sci Plot includes a powerful animation system for smooth visual transitions during zoom, pan, and auto-scale operations.
+Velo Plot includes a powerful animation system for smooth visual transitions during zoom, pan, and auto-scale operations.
 
 ## Enabling Animations
 
