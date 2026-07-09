@@ -5,7 +5,7 @@ description: Native mathematical expressions without external dependencies
 
 # LaTeX Rendering
 
-The Sci Plot includes a **native LaTeX rendering plugin** that allows you to display mathematical expressions directly in your charts without requiring external libraries like KaTeX or MathJax.
+The Velo Plot includes a **native LaTeX rendering plugin** that allows you to display mathematical expressions directly in your charts without requiring external libraries like KaTeX or MathJax.
 
 ## Interactive Demo
 

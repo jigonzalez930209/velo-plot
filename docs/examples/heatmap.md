@@ -55,7 +55,7 @@ chart.addHeatmap({
 
 ### Color Scales
 
-Sci Plot includes several built-in colormaps:
+Velo Plot includes several built-in colormaps:
 
 - `viridis` (default) - Perceptually uniform green-yellow
 - `plasma` - Vibrant purple-yellow
@@ -70,4 +70,4 @@ The `zValues` array must be a flattened 1D array of length `xValues.length * yVa
 
 ### Interaction
 
-Like all SciPlot components, heatmaps support real-time zoom and pan. The color scale mapping remains consistent even when zooming in on specific data features.
+Like all VeloPlot components, heatmaps support real-time zoom and pan. The color scale mapping remains consistent even when zooming in on specific data features.

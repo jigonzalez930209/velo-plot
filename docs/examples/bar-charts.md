@@ -1,6 +1,6 @@
 # Bar Charts
 
-Sci Plot supports high-performance bar charts for categorical data or discrete measurements.
+Velo Plot supports high-performance bar charts for categorical data or discrete measurements.
 
 ## Live Demo
 
@@ -45,7 +45,7 @@ Bar charts support several specific styling options:
 
 ### Automatic Bar Width
 
-If `barWidth` is not specified, Sci Plot automatically calculates an optimal width based on the spacing between consecutive X values, ensuring bars don't overlap.
+If `barWidth` is not specified, Velo Plot automatically calculates an optimal width based on the spacing between consecutive X values, ensuring bars don't overlap.
 
 ```typescript
 chart.addSeries({

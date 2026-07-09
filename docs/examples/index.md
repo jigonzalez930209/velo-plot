@@ -1,6 +1,6 @@
 # Examples
 
-Interactive examples demonstrating Sci Plot capabilities.
+Interactive examples demonstrating Velo Plot capabilities.
 
 <script setup>
 import { ref } from 'vue'
@@ -197,9 +197,9 @@ chart.addSeries({
 ### React Minimal
 
 ```tsx
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 
-<SciPlot
+<VeloPlot
   series={[{
     id: 'data',
     x: new Float32Array([0, 1, 2, 3, 4]),

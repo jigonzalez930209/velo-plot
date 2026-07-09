@@ -1,6 +1,6 @@
 # Advanced Scientific Analysis
 
-Sci Plot includes a comprehensive set of mathematical functions for professional scientific analysis. All functions are optimized for large datasets and are available directly from the chart instance.
+Velo Plot includes a comprehensive set of mathematical functions for professional scientific analysis. All functions are optimized for large datasets and are available directly from the chart instance.
 
 <script setup>
 import AdvancedMathDemo from '../.vitepress/theme/demos/2d/AdvancedMathDemo.vue'

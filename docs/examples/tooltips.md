@@ -1,11 +1,11 @@
 ---
 title: Tooltips Showcase
-description: Interactive showcase of Sci Plot's high-performance tooltip system, featuring glassmorphism themes, multi-series crosshairs, and custom templates.
+description: Interactive showcase of Velo Plot's high-performance tooltip system, featuring glassmorphism themes, multi-series crosshairs, and custom templates.
 ---
 
 # Tooltips Showcase
 
-Explore the power and versatility of the Sci Plot's new tooltip system. This demo showcases different themes, templates, and interaction modes.
+Explore the power and versatility of the Velo Plot's new tooltip system. This demo showcases different themes, templates, and interaction modes.
 
 <ChartDemo type="tooltips" />
 
