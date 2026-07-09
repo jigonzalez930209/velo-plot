@@ -18,7 +18,7 @@
   ],
   "description": "A high-performance scientific charting engine for web applications.",
   "engines": {
-    "node": ">=24",
+    "node": ">=22",
     "pnpm": ">=11"
   },
   "type": "module",
@@ -42,6 +42,26 @@
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react.js"
     },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue.js"
+    },
+    "./svelte": {
+      "types": "./dist/svelte/index.d.ts",
+      "import": "./dist/svelte.js"
+    },
+    "./solid": {
+      "types": "./dist/solid/index.d.ts",
+      "import": "./dist/solid.js"
+    },
+    "./angular": {
+      "types": "./dist/angular/index.d.ts",
+      "import": "./dist/angular.js"
+    },
+    "./astro": {
+      "import": "./dist/astro/VeloPlot.astro"
+    },
+    "./astro/*": "./dist/astro/*",
     "./plugins/3d": {
       "types": "./dist/plugins/3d.d.ts",
       "import": "./dist/plugins/3d.js"
@@ -174,11 +194,14 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.build.json && vite build -c vite.config.lib.ts",
+    "build": "tsc -p tsconfig.build.json && vite build -c vite.config.lib.ts && node scripts/copy-framework-assets.mjs",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test": "vitest run && pnpm test:bindings",
+    "test:bindings": "vitest run --config vitest.bindings.config.ts",
+    "test:coverage": "pnpm test:coverage:bindings && pnpm test:coverage:core",
+    "test:coverage:core": "vitest run --coverage && node scripts/check-core-coverage.mjs",
+    "test:coverage:bindings": "vitest run --config vitest.bindings.config.ts --coverage && node scripts/check-bindings-coverage.mjs",
     "test:watch": "vitest",
     "test:dom": "vitest run .dom.test.ts",
     "test:e2e": "playwright test",
@@ -199,25 +222,76 @@
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
+    "create-plugin": "node scripts/create-plugin.mjs",
+    "docs:api": "typedoc",
     "prepublishOnly": "pnpm run build"
   },
   "peerDependencies": {
+    "@angular/core": ">=17.0.0",
+    "astro": ">=4.0.0",
     "react": ">=16.8.0",
-    "react-dom": ">=16.8.0"
+    "react-dom": ">=16.8.0",
+    "solid-js": ">=1.8.0",
+    "svelte": ">=4.0.0",
+    "vue": ">=3.3.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "vue": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    },
+    "astro": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@angular/compiler": "^19.2.25",
+    "@angular/core": "^19.2.25",
+    "@angular/platform-browser-dynamic": "^19.2.25",
     "@playwright/test": "^1.52.0",
+    "@solidjs/testing-library": "^0.8.10",
+    "@sveltejs/vite-plugin-svelte": "^7.2.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/svelte": "^5.4.2",
+    "@testing-library/vue": "^8.1.0",
     "@types/node": "^25.0.3",
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-vue": "^6.0.7",
     "@vitest/coverage-v8": "^3.2.6",
+    "@vue/test-utils": "^2.4.11",
+    "astro": "^5.18.2",
     "happy-dom": "^20.10.6",
     "playwright": "^1.52.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "solid-js": "^1.9.14",
+    "svelte": "^5.56.4",
+    "typedoc": "^0.28.20",
     "typescript": "^5.2.2",
     "vite": "^5.0.0",
     "vite-plugin-dts": "^3.6.0",
+    "vite-plugin-solid": "^2.11.12",
+    "vite-plugin-svelte": "^3.0.1",
     "vitepress": "^1.0.0-rc.31",
-    "vitest": "^3.2.6"
+    "vitest": "^3.2.6",
+    "vue": "^3.5.26",
+    "zone.js": "^0.15.1"
   },
   "packageManager": "pnpm@11.9.0"
 }
