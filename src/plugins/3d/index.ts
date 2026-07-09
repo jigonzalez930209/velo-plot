@@ -1,5 +1,5 @@
 /**
- * SciPlot Engine - 3D Visualization Plugin
+ * VeloPlot Engine - 3D Visualization Plugin
  * 
  * This plugin provides 3D rendering capabilities including:
  * - Line3D, Area3D, Bubble3D, Impulse3D renderers
@@ -66,7 +66,7 @@ const manifest3D: PluginManifest = {
 };
 
 /**
- * SciPlot 3D Plugin
+ * VeloPlot 3D Plugin
  * 
  * Provides interactive 3D charts, surfaces, and meshes.
  */
