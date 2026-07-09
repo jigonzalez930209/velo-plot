@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Loading Indicator Module
+ * Velo Plot - Loading Indicator Module
  * 
  * Provides visual loading/progress indicators for chart operations.
  * Supports progress bars, spinners, and skeleton placeholders.
