@@ -79,7 +79,7 @@ function ThemedChart({ isDark }) {
   const theme = isDark ? 'midnight' : 'light'
   
   return (
-    <SciPlot
+    <VeloPlot
       series={series}
       theme={theme}
     />

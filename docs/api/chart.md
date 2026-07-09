@@ -1,11 +1,11 @@
 ---
 title: createChart API
-description: Learn how to initialize Sci Plot with createChart, including configuration for axes, themes, and WebGL rendering options.
+description: Learn how to initialize Velo Plot with createChart, including configuration for axes, themes, and WebGL rendering options.
 ---
 
 # createChart
 
-Creates a new Sci Plot instance.
+Creates a new Velo Plot instance.
 
 ## Signature
 
@@ -34,7 +34,7 @@ function createChart(options: ChartOptions): Chart
 | `layout` | `LayoutOptions` | defaults | Control margins and axis title spacing |
 
 ::: tip Modular Architecture
-From version 1.5.0, Sci Plot uses a highly modular plugin-based architecture. To maintain a small core bundle, advanced features like **Tooltips**, **Analysis**, and **Annotations** must be explicitly loaded using `chart.use()`.
+From version 1.5.0, Velo Plot uses a highly modular plugin-based architecture. To maintain a small core bundle, advanced features like **Tooltips**, **Analysis**, and **Annotations** must be explicitly loaded using `chart.use()`.
 :::
 ### AxisOptions
 
@@ -88,7 +88,7 @@ By default, the X-axis label gap is `45` and the Y-axis label gap is `50`.
 
 ### Renderer backend
 
-Sci Plot renders series with **WebGL2** by default. **WebGPU** is available as an opt-in chart renderer when the browser supports it.
+Velo Plot renders series with **WebGL2** by default. **WebGPU** is available as an opt-in chart renderer when the browser supports it.
 
 ```typescript
 const chart = createChart({
@@ -192,7 +192,7 @@ chart.resetZoom()                        // equivalent to chart.fit()
 
 ### Sharp rendering (HiDPI)
 
-Charts can look blurry on Retina displays when canvas backing-store pixels are fractional. Sci Plot:
+Charts can look blurry on Retina displays when canvas backing-store pixels are fractional. Velo Plot:
 
 - Rounds canvas dimensions to integer device pixels
 - Uses `setTransform(dpr, …)` instead of cumulative `scale()`
