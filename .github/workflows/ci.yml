@@ -28,6 +28,12 @@ jobs:
       - name: Run Tests
         run: pnpm test
 
+      - name: Run Framework Binding Tests
+        run: pnpm test:bindings
+
+      - name: Run Framework Binding Coverage
+        run: pnpm test:coverage:bindings
+
       - name: Build Library
         run: pnpm build
 
