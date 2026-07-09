@@ -2,6 +2,7 @@ import { coreChartScenarios } from "./core-chart.mjs";
 import { stackedScenarios } from "./stacked.mjs";
 import { stage2Scenarios } from "./stage2.mjs";
 import { pluginScenarios, utilityScenarios } from "./plugins.mjs";
+import { frameworkScenarios } from "./frameworks.mjs";
 
 /** All E2E scenario runners keyed by id */
 export const SCENARIOS = {
@@ -10,6 +11,7 @@ export const SCENARIOS = {
   ...stage2Scenarios,
   ...pluginScenarios,
   ...utilityScenarios,
+  ...frameworkScenarios,
 };
 
 export function listScenarios() {
