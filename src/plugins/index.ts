@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Plugin System
+ * Velo Plot - Plugin System
  * 
  * Comprehensive plugin architecture for extending chart functionality.
  * 

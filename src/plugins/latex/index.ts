@@ -1,5 +1,5 @@
 /**
- * @fileoverview LaTeX rendering plugin for Sci Plot
+ * @fileoverview LaTeX rendering plugin for Velo Plot
  * @module plugins/latex
  *
  * This plugin provides native LaTeX rendering without external dependencies.

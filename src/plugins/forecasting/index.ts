@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Forecasting Plugin
+ * Velo Plot - Forecasting Plugin
  * 
  * Provides time series forecasting capabilities using native statistical models.
  */
@@ -28,7 +28,7 @@ const manifestForecasting: PluginManifest = {
 };
 
 /**
- * Forecasting Plugin for Sci Plot
+ * Forecasting Plugin for Velo Plot
  */
 export function PluginForecasting(
   config: Partial<PluginForecastingConfig> = {}

@@ -1,5 +1,5 @@
 /**
- * SciPlot Engine - Chart Sync Plugin
+ * VeloPlot Engine - Chart Sync Plugin
  * 
  * Provides synchronization between multiple chart instances.
  * 
@@ -26,7 +26,7 @@ const manifestSync: PluginManifest = {
 };
 
 /**
- * SciPlot Sync Plugin
+ * VeloPlot Sync Plugin
  *
  * @deprecated Use `ChartGroup` / `createChartGroup` from `velo-plot` (or `velo-plot/full`) instead.
  * This plugin stub does not perform synchronization. Kept for backward-compatible imports only.

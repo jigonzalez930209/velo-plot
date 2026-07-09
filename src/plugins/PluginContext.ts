@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Plugin Context Implementation
+ * Velo Plot - Plugin Context Implementation
  * 
  * Provides the comprehensive context object that gives plugins
  * access to all chart functionality in a controlled manner.
@@ -84,7 +84,7 @@ class PluginLoggerImpl implements PluginLogger {
     private enabled: boolean;
 
     constructor(pluginName: string, enabled = true) {
-        this.prefix = `[SciPlot:${pluginName}]`;
+        this.prefix = `[VeloPlot:${pluginName}]`;
         this.enabled = enabled;
     }
 
@@ -151,7 +151,7 @@ class EventContextImpl implements EventContext {
                 try {
                     handler(data);
                 } catch (e) {
-                    console.error(`[SciPlot] Error in plugin event handler for "${event}":`, e);
+                    console.error(`[VeloPlot] Error in plugin event handler for "${event}":`, e);
                 }
             });
         }

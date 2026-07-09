@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Data Export Plugin
+ * Velo Plot - Data Export Plugin
  * 
  * Advanced data export capabilities for scientific chart data.
  * Supports multiple formats including CSV, JSON, MATLAB, and Python.
@@ -57,13 +57,13 @@ const manifestDataExport: PluginManifest = {
   name: "velo-plot-data-export",
   version: "1.0.0",
   description: "Advanced data export capabilities for velo-plot",
-  author: "Sci Plot Team",
+  author: "Velo Plot Team",
   provides: ["export"],
   tags: ["export", "csv", "json", "matlab", "python", "data"],
 };
 
 /**
- * Sci Plot Data Export Plugin
+ * Velo Plot Data Export Plugin
  * 
  * Provides comprehensive data export functionality with support for
  * multiple scientific and standard data formats.

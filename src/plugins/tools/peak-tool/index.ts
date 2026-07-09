@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Peak Tool Module
+ * Velo Plot - Peak Tool Module
  * 
  * Provides interactive measurement tool for measuring distances,
  * differences, and slopes between two data points on the chart.

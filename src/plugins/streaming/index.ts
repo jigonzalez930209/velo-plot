@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Streaming Plugin
+ * Velo Plot - Streaming Plugin
  * 
  * Provides real-time data streaming capabilities including:
  * - WebSocket connections
@@ -49,7 +49,7 @@ const manifestStreaming: PluginManifest = {
 };
 
 /**
- * SciPlot Streaming Plugin
+ * VeloPlot Streaming Plugin
  * 
  * Enables seamless integration with real-time data sources.
  */

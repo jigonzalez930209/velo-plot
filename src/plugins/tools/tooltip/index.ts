@@ -1,5 +1,5 @@
 /**
- * Tooltip System - High-performance, customizable tooltips for Sci Plot
+ * Tooltip System - High-performance, customizable tooltips for Velo Plot
  * 
  * This module provides a comprehensive tooltip system with:
  * - Multiple tooltip types (datapoint, crosshair, heatmap, etc.)

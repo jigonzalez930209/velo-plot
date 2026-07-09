@@ -1,5 +1,5 @@
 /**
- * SciPlot Engine - Debug Overlay Plugin
+ * VeloPlot Engine - Debug Overlay Plugin
  * 
  * Provides performance metrics and debugging information.
  * 
@@ -28,7 +28,7 @@ import { DebugOverlay, DebugOverlayOptions } from "../../core/debug";
 import { ChartStatistics } from "../../core/ChartStatistics";
 
 /**
- * SciPlot Debug Plugin
+ * VeloPlot Debug Plugin
  * 
  * Adds a useful overlay with real-time performance metrics and debugging info.
  */

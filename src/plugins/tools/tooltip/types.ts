@@ -2,7 +2,7 @@
  * Tooltip System - Type Definitions
  * 
  * This module defines all types and interfaces for the high-performance
- * tooltip system in Sci Plot.
+ * tooltip system in Velo Plot.
  * 
  * @module tooltip/types
  */

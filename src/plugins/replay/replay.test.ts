@@ -122,6 +122,33 @@ describe("PluginReplay", () => {
     api.pause();
   });
 
+  it("applyWindow is a no-op after destroy clears the buffer", () => {
+    const plugin = PluginReplay({ seriesId: "candles", frameMs: 100 });
+    const { ctx, updateSeries } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as ReplayAPI;
+    api.seek(1);
+    updateSeries.mockClear();
+    plugin.onDestroy!();
+    api.seek(2);
+    expect(updateSeries).not.toHaveBeenCalled();
+  });
+
+  it("play timer stops cleanly after destroy clears ctx", () => {
+    const plugin = PluginReplay({ seriesId: "candles", frameMs: 100 });
+    const { ctx, updateSeries } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as ReplayAPI;
+    api.seek(0);
+    const pauseSpy = vi.spyOn(api, "pause").mockImplementation(() => {});
+    api.play(1);
+    plugin.onDestroy!();
+    updateSeries.mockClear();
+    vi.advanceTimersByTime(100);
+    expect(updateSeries).not.toHaveBeenCalled();
+    pauseSpy.mockRestore();
+  });
+
   it("replays line series using y values only", () => {
     const updateSeries = vi.fn();
     const chart = {

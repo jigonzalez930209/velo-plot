@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Context Menu Plugin
+ * Velo Plot - Context Menu Plugin
  * 
  * Provides a customizable right-click context menu for chart interactions.
  * 
@@ -125,13 +125,13 @@ const manifestContextMenu: PluginManifest = {
   name: "velo-plot-context-menu",
   version: "1.0.0",
   description: "Customizable right-click context menu for velo-plot",
-  author: "Sci Plot Team",
+  author: "Velo Plot Team",
   provides: ["interaction"],
   tags: ["context-menu", "right-click", "menu", "ui"],
 };
 
 /**
- * Sci Plot Context Menu Plugin
+ * Velo Plot Context Menu Plugin
  * 
  * Adds a customizable context menu with built-in actions and 
  * extensibility for custom menu items.

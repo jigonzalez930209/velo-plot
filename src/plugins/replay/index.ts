@@ -47,8 +47,7 @@ export function PluginReplay(config: PluginReplayConfig): ChartPlugin<PluginRepl
   const frameMs = config.frameMs ?? 250;
 
   function applyWindow(end: number): void {
-    if (!ctx || !buffer) return;
-    const n = Math.min(end + 1, buffer.x.length);
+    const n = Math.min(end + 1, buffer!.x.length);
     const slice = (arr?: Float32Array) => (arr ? arr.subarray(0, n) : undefined);
     ctx.chart.updateSeries(config.seriesId, {
       x: slice(buffer.x)!,
@@ -66,7 +65,11 @@ export function PluginReplay(config: PluginReplayConfig): ChartPlugin<PluginRepl
       speed = Math.max(0.1, s);
       if (timer) clearInterval(timer);
       timer = setInterval(() => {
-        if (index >= buffer!.x.length - 1) {
+        if (!ctx || !buffer) {
+          api.pause();
+          return;
+        }
+        if (index >= buffer.x.length - 1) {
           api.pause();
           return;
         }

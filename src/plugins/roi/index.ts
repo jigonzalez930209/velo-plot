@@ -63,7 +63,7 @@ export const PluginROI = (config: PluginROIConfig = {}) => {
     name: "roi",
     description: "Region of Interest selection tool and masking",
     version: "1.1.0",
-    author: "SciPlot",
+    author: "VeloPlot",
   };
 
   function createRegion(tool: RoiTool): RoiRegion {

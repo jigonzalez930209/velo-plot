@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Built-in Plugins
+ * Velo Plot - Built-in Plugins
  * 
  * Collection of official plugins that demonstrate the plugin system
  * capabilities and provide common functionality.

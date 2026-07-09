@@ -1,5 +1,5 @@
 /**
- * SciPlot Engine - GPU Abstraction Plugin
+ * VeloPlot Engine - GPU Abstraction Plugin
  * 
  * Provides WebGPU and WebGL2 backend support, GPU compute capabilities,
  * and performance benchmarking tools.
@@ -52,7 +52,7 @@ const manifestGpu: PluginManifest = {
 };
 
 /**
- * SciPlot GPU Plugin
+ * VeloPlot GPU Plugin
  * 
  * Enables high-performance GPU-accelerated rendering and compute.
  */
