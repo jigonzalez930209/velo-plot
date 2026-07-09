@@ -5,7 +5,7 @@ description: Enhance accessibility, localization, and productivity with Keyboard
 
 # Utility Plugins
 
-This collection of plugins adds essential quality-of-life features to your Sci Plot application, focusing on accessibility, internationalization, and user productivity.
+This collection of plugins adds essential quality-of-life features to your Velo Plot application, focusing on accessibility, internationalization, and user productivity.
 
 ## Keyboard Shortcuts (`PluginKeyboard`)
 
