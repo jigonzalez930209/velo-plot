@@ -733,6 +733,62 @@ describe("ChartGroup branch coverage", () => {
     expect(b.zoom).toHaveBeenCalledTimes(1);
   });
 
+  it("fitAll fits slaves with padding only when shared X cannot be derived", () => {
+    const master = {
+      getId: () => "m",
+      getViewBounds: () => ({ xMin: 0, xMax: Number.NaN, yMin: 0, yMax: 1 }),
+      fit: vi.fn(),
+      zoom: vi.fn(),
+      pan: vi.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
+    };
+    const slave = {
+      getId: () => "s",
+      getViewBounds: () => ({ ...B }),
+      fit: vi.fn(),
+      zoom: vi.fn(),
+      pan: vi.fn(),
+      on: vi.fn(),
+      off: vi.fn(),
+    };
+    const g = new ChartGroup({ axis: "x", masterId: "m" });
+    g.addAll(master, slave);
+    g.fitAll({ padding: 4 });
+    expect(master.fit).toHaveBeenCalledWith({ padding: 4 });
+    expect(slave.fit).toHaveBeenCalledWith({ padding: 4 });
+  });
+
+  it("detachEventHandlers is a no-op for charts without handlers", () => {
+    const a = createMockChart("a", B);
+    const g = new ChartGroup({ axis: "x" });
+    g.add(a);
+    g.remove(a);
+    expect(() => a.off).not.toThrow();
+  });
+
+  it("selection sync ignores events from an unknown source chart", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", B, handlers);
+    const b = { ...createMockChart("b", B, handlers), selectPoints: vi.fn() };
+    const g = new ChartGroup({ axis: "x", syncSelection: true });
+    g.addAll(a, b);
+    g.remove(a);
+    a.emit("selectionChange", { selected: [{ seriesId: "s", indices: [0] }] });
+    expect(b.selectPoints).not.toHaveBeenCalled();
+  });
+
+  it("pan propagation skips invalid source bounds", () => {
+    const handlers = new Map<string, (...args: unknown[]) => void>();
+    const a = createMockChart("a", { xMin: 0, xMax: Number.POSITIVE_INFINITY, yMin: 0, yMax: 1 }, handlers);
+    const b = createMockChart("b", B, handlers);
+    const g = new ChartGroup({ axis: "x", syncPan: true });
+    g.addAll(a, b);
+    a.emit("pan", { deltaX: 10, deltaY: 0 });
+    flushRaf();
+    expect(b.zoom).not.toHaveBeenCalled();
+  });
+
   it("debounce resets the timer when actions arrive quickly", () => {
     vi.useFakeTimers();
     vi.stubGlobal("window", { setTimeout, clearTimeout });
