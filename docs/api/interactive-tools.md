@@ -5,7 +5,7 @@ description: Advanced measurement and analysis tools like Delta (cursor measurem
 
 # Interactive Tools
 
-Sci Plot provides professional interactive tools for manual measurement and detailed peak analysis. These tools are part of the `PluginTools` module.
+Velo Plot provides professional interactive tools for manual measurement and detailed peak analysis. These tools are part of the `PluginTools` module.
 
 ## Requirement
 
