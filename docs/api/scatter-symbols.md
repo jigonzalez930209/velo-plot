@@ -5,7 +5,7 @@ description: Customizable marker shapes for scatter plots
 
 # Scatter Symbols
 
-Sci Plot supports multiple high-performance scatter symbols rendered via WebGL. These symbols are essential for distinguishing between different data series in scientific plots.
+Velo Plot supports multiple high-performance scatter symbols rendered via WebGL. These symbols are essential for distinguishing between different data series in scientific plots.
 
 ## Supported Symbols
 

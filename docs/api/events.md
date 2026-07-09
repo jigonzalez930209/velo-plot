@@ -1,6 +1,6 @@
 # Events
 
-Sci Plot emits events for various chart interactions and state changes.
+Velo Plot emits events for various chart interactions and state changes.
 
 ## Subscribing to Events
 
