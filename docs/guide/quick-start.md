@@ -60,7 +60,7 @@ chart.addSeries({
 ### 1. Create Component
 
 ```tsx
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 
 function MyChart() {
   // Generate data
@@ -81,7 +81,7 @@ function MyChart() {
   }]
 
   return (
-    <SciPlot
+    <VeloPlot
       series={series}
       xAxis={{ label: 'X', auto: true }}
       yAxis={{ label: 'Y', auto: true }}
@@ -198,6 +198,9 @@ chart.updateSeries('data', {
 
 ## Next Steps
 
+- [StackBlitz starter](/examples/stackblitz) — one-click React template in `examples/stackblitz/`
+- [SSR guide](/guide/ssr) — safe dynamic import patterns
+- [Framework guides](/guide/vue) — Vue, Svelte, SolidJS, Angular, Astro
 - [Core Concepts](/guide/concepts) - Understand the architecture
 - [API Reference](/api/) - Full API documentation
 - [Examples](/examples/) - More examples

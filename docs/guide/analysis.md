@@ -1,6 +1,6 @@
 # Scientific Analysis Guide
 
-Sci Plot is more than just a renderer; it includes a suite of high-performance tools for scientific and engineering data analysis. These features are provided by the **PluginAnalysis** module.
+Velo Plot is more than just a renderer; it includes a suite of high-performance tools for scientific and engineering data analysis. These features are provided by the **PluginAnalysis** module.
 
 ## Getting Started
 

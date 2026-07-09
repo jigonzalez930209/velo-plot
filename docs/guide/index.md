@@ -1,8 +1,8 @@
 # Introduction
 
-Sci Plot is a high-performance WebGL-based charting library designed for scientific data visualization.
+Velo Plot is a high-performance WebGL-based charting library designed for scientific data visualization.
 
-## Why Sci Plot?
+## Why Velo Plot?
 
 - **Performance**: Render 10M+ data points at 60 FPS
 - **Precision**: Native Float32/Float64 array support
@@ -13,7 +13,7 @@ Sci Plot is a high-performance WebGL-based charting library designed for scienti
 
 ### WebGL Rendering
 
-Unlike canvas-based libraries, Sci Plot uses WebGL for hardware-accelerated rendering. This enables:
+Unlike canvas-based libraries, Velo Plot uses WebGL for hardware-accelerated rendering. This enables:
 
 - Smooth zooming and panning without re-rendering data
 - Efficient handling of millions of points
@@ -77,10 +77,10 @@ chart.addSeries({
 
 ## Next Steps
 
-- [Installation](/guide/installation) - Add Sci Plot to your project
+- [Installation](/guide/installation) - Add Velo Plot to your project
 - [Quick Start](/guide/quick-start) - Create your first chart
 - [Core Concepts](/guide/concepts) - Understand the architecture
-- [React Integration](/guide/react) - Use SciPlot with React
+- [React Integration](/guide/react) - Use VeloPlot with React
 - [Performance Optimization](/guide/performance) - Handle millions of points
 - [Responsive Design](/guide/responsive) - Mobile-first visualization
 - [Scientific Analysis](/guide/analysis) - Professional data tools

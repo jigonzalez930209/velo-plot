@@ -1,6 +1,6 @@
 # Large Datasets
 
-Handle millions of data points efficiently with Sci Plot.
+Handle millions of data points efficiently with Velo Plot.
 
 <script setup>
 import { ref } from 'vue'

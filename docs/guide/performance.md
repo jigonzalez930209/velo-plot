@@ -1,11 +1,11 @@
 ---
 title: Performance Optimization
-description: Learn how Sci Plot achieves 60 FPS with millions of points using WebGL rendering, zero-copy architecture, and optimized typed arrays.
+description: Learn how Velo Plot achieves 60 FPS with millions of points using WebGL rendering, zero-copy architecture, and optimized typed arrays.
 ---
 
 # Performance
 
-Optimize Sci Plot for maximum performance with large datasets.
+Optimize Velo Plot for maximum performance with large datasets.
 
 <script setup>
 import { ref } from 'vue'
@@ -15,11 +15,11 @@ import { ref } from 'vue'
 
 <ChartDemo type="large" height="400px" :points="1000000" />
 
-## Why Sci Plot is Fast
+## Why Velo Plot is Fast
 
 ### WebGL Rendering
 
-Unlike canvas-based libraries, Sci Plot uses WebGL for hardware-accelerated rendering:
+Unlike canvas-based libraries, Velo Plot uses WebGL for hardware-accelerated rendering:
 
 - **GPU Processing**: Data is rendered on the GPU, not CPU
 - **Parallel Execution**: Thousands of points rendered simultaneously
@@ -238,7 +238,7 @@ chart.on('render', ({ fps, frameTime }) => {
 
 | Library | 10k points | 100k points | 1M points |
 |---------|------------|-------------|-----------|
-| Sci Plot | 60 FPS | 60 FPS | 60 FPS |
+| Velo Plot | 60 FPS | 60 FPS | 60 FPS |
 | Chart.js | 60 FPS | 15 FPS | ❌ |
 | Plotly | 60 FPS | 30 FPS | 5 FPS |
 | D3.js | 60 FPS | 20 FPS | ❌ |

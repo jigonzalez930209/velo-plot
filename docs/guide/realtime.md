@@ -1,6 +1,6 @@
 # Real-time Data
 
-Stream and visualize data in real-time with Sci Plot.
+Stream and visualize data in real-time with Velo Plot.
 
 <script setup>
 import { ref } from 'vue'
@@ -161,7 +161,7 @@ function onSensorData(sensorId, time, value) {
 
 ```tsx
 function RealtimeChart() {
-  const chartRef = useRef<SciPlotRef>(null)
+  const chartRef = useRef<VeloPlotRef>(null)
   const dataRef = useRef({ x: new Float32Array(0), y: new Float32Array(0) })
   const tRef = useRef(0)
 
@@ -203,7 +203,7 @@ function RealtimeChart() {
     return () => cancelAnimationFrame(animationId)
   }, [])
 
-  return <SciPlot ref={chartRef} series={[]} />
+  return <VeloPlot ref={chartRef} series={[]} />
 }
 ```
 

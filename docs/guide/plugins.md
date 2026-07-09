@@ -1,6 +1,6 @@
 # Plugin System
 
-The Sci Plot features a modular plugin system that allows you to extend chart functionality, add custom visualizations, and hook into the internal lifecycle of the chart.
+The Velo Plot features a modular plugin system that allows you to extend chart functionality, add custom visualizations, and hook into the internal lifecycle of the chart.
 
 ## Core Concepts
 

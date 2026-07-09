@@ -1,17 +1,17 @@
 # React Integration Guide
 
-Learn how to use Sci Plot seamlessly within React applications.
+Learn how to use Velo Plot seamlessly within React applications.
 
 ## Official Components
 
-The engine provides a React-first experience through two main paths: the `<SciPlot />` component for declarative usage, and the `useSciPlot` hook for imperative control.
+The engine provides a React-first experience through two main paths: the `<VeloPlot />` component for declarative usage, and the `useVeloPlot` hook for imperative control.
 
 ### 1. Declarative Component
 
 The simplest way to add a chart to your React app.
 
 ```tsx
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 
 function App() {
   const data = {
@@ -21,7 +21,7 @@ function App() {
 
   return (
     <div style={{ width: '800px', height: '400px' }}>
-      <SciPlot
+      <VeloPlot
         series={[{
           id: 'sensor-data',
           type: 'line',
@@ -39,14 +39,14 @@ function App() {
 
 ### 2. Imperative Hook
 
-Use `useSciPlot` when you need full access to the low-level `Chart` instance (e.g., for specialized analysis, dynamic series management, or custom plugins).
+Use `useVeloPlot` when you need full access to the low-level `Chart` instance (e.g., for specialized analysis, dynamic series management, or custom plugins).
 
 ```tsx
-import { useSciPlot } from 'velo-plot/react'
+import { useVeloPlot } from 'velo-plot/react'
 import { useEffect } from 'react'
 
 function CustomChart() {
-  const { ref, chart } = useSciPlot({
+  const { ref, chart } = useVeloPlot({
     theme: 'midnight',
     xAxis: { label: 'Frequency' }
   })
@@ -122,14 +122,14 @@ const [theme, setTheme] = useState('midnight')
 return (
   <>
     <button onClick={() => setTheme('light')}>Light Mode</button>
-    <SciPlot theme={theme} ... />
+    <VeloPlot theme={theme} ... />
   </>
 )
 ```
 
 ## Performance Tips for React
 
-1. **Keep Containers Small**: Ensure the parent element of `<SciPlot />` has a fixed or relative size.
+1. **Keep Containers Small**: Ensure the parent element of `<VeloPlot />` has a fixed or relative size.
 2. **Memoize Large Data**: Use `useMemo` for large static datasets to avoid unnecessary prop diffing.
 3. **Clean Up**: Always call `chart.destroy()` if you are creating charts manually. The official components handle this for you automatically.
 
