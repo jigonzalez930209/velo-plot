@@ -1,6 +1,6 @@
 ---
 title: 3D Series Types
-description: Reference for all available 3D data interfaces and series types in Sci Plot, including bubble, surface, pointline, column, and waterfall metrics.
+description: Reference for all available 3D data interfaces and series types in Velo Plot, including bubble, surface, pointline, column, and waterfall metrics.
 ---
 
 # 3D Series Types
