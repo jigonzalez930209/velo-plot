@@ -66,7 +66,7 @@ This stage delivers **trust** — users and contributors can rely on what the do
 
 | ID | Task | Priority | Complexity | Definition of done |
 |----|------|----------|------------|-------------------|
-| 0.6 | Add `./react` export to `package.json` | P0 | Low | `import { SciPlot } from 'velo-plot/react'` resolves; types included |
+| 0.6 | Add `./react` export to `package.json` | P0 | Low | `import { VeloPlot } from 'velo-plot/react'` resolves; types included |
 | 0.7 | Align `vite.config.lib.ts` entries with all `package.json` exports | P0 | Medium | Every declared subpath builds; CI verifies with `pnpm build` |
 | 0.8 | Document bundle strategy (`core` vs `full` vs future `trading`) | P1 | Low | Section in README and [installation guide](../guide/installation.md) |
 

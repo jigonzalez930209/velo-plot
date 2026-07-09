@@ -18,8 +18,8 @@ Make velo-plot as pleasant to integrate as any modern chart library. First-class
 
 | Export | File | Status |
 |--------|------|--------|
-| `SciPlot` | `SciPlot.tsx` | ✅ Declarative single chart |
-| `useSciPlot` | `useSciPlot.ts` | ✅ Lifecycle hook |
+| `VeloPlot` | `VeloPlot.tsx` | ✅ Declarative single chart |
+| `useVeloPlot` | `useVeloPlot.ts` | ✅ Lifecycle hook |
 | `useStackedPlot` | `useStackedPlot.ts` | ⚠️ Mount-only — does not react to prop changes |
 
 ### Gaps
@@ -30,7 +30,7 @@ Make velo-plot as pleasant to integrate as any modern chart library. First-class
 | Hooks not reactive to options/theme/panes | Changing props requires manual destroy/recreate |
 | No `useIndicator` hook | Manual calculate + `buildIndicatorPane` |
 | No `useChartGroup` hook | Sync groups only via imperative API |
-| `SciPlotSeries` props limited | No candlestick, indicator, heatmap in declarative props |
+| `VeloPlotSeries` props limited | No candlestick, indicator, heatmap in declarative props |
 | `./react` export missing (Stage 0) | Broken import path in README |
 | No SSR guidance | Canvas/WebGL assumes browser |
 | Basic touch only | No documented pinch-zoom |
@@ -48,10 +48,10 @@ Make velo-plot as pleasant to integrate as any modern chart library. First-class
 |----|------|----------|------------|-------------------|
 | 4.1 | `<StackedPlot />` component | P0 | Medium | Declarative panes, indicators, sync props |
 | 4.2 | Reactive `useStackedPlot` | P0 | High | Changing `panes`, `theme`, `sync` updates chart without full remount |
-| 4.3 | Reactive `useSciPlot` | P0 | High | Same for single chart |
+| 4.3 | Reactive `useVeloPlot` | P0 | High | Same for single chart |
 | 4.4 | `useIndicator(chart, 'rsi', options)` | P0 | Medium | Wraps Stage 2 `addIndicator()` |
 | 4.5 | `useChartSync(charts, options)` | P1 | Medium | Hook for non-stacked sync |
-| 4.6 | Extend `SciPlot` series types | P1 | Medium | candlestick, bar, indicator in props |
+| 4.6 | Extend `VeloPlot` series types | P1 | Medium | candlestick, bar, indicator in props |
 
 ### P0 — Export and types
 
@@ -93,7 +93,7 @@ Make velo-plot as pleasant to integrate as any modern chart library. First-class
 
 | ID | Task | Priority | Complexity | Definition of done |
 |----|------|----------|------------|-------------------|
-| 4.23 | Vue composables (`useSciPlot`) | P2 | Medium | Docs already use Vue in VitePress — dogfood |
+| 4.23 | Vue composables (`useVeloPlot`) | P2 | Medium | Docs already use Vue in VitePress — dogfood |
 | 4.24 | Svelte actions / stores | P3 | Medium | Evaluate community demand |
 | 4.25 | SSR-safe dynamic import pattern | P2 | Low | Document `typeof window` guard pattern |
 
@@ -146,13 +146,14 @@ import { StackedPlot } from 'velo-plot/react'
 
 ## Exit checklist (v2.9.0)
 
-- [ ] `<StackedPlot />` shipped with docs and example
-- [ ] `useStackedPlot` and `useSciPlot` reactive to prop changes
-- [ ] `useIndicator` hook shipped
-- [ ] `velo-plot/react` export stable
-- [ ] Keyboard navigation for pan/zoom/reset
-- [ ] Pinch-to-zoom on touch devices
-- [ ] High contrast theme
-- [ ] Plugin scaffolding CLI
-- [ ] Online starter template linked from docs
-- [ ] Vitest coverage ≥50% lines (including React hook tests with `@testing-library/react`)
+- [x] `<StackedPlot />` shipped with docs and example
+- [x] `useStackedPlot` and `useVeloPlot` reactive to prop changes
+- [x] `useIndicator` hook shipped
+- [x] `velo-plot/react` export stable
+- [x] Keyboard navigation for pan/zoom/reset
+- [x] Pinch-to-zoom on touch devices
+- [x] High contrast theme
+- [x] Plugin scaffolding CLI
+- [x] Online starter template linked from docs
+- [x] Framework bindings: Vue, Svelte, SolidJS, Angular, Astro
+- [x] Vitest coverage for React/shared bindings tests

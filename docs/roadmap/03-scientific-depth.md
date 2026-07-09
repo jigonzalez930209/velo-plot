@@ -161,7 +161,7 @@ frameworks bridge via `registerModel`. Published in
 [ML Integration API](../api/plugin-ml-integration.md#model-audit-supported-native-models).
 
 ### Python bindings (3.19)
-`python/sci_plot` is a **configuration builder** that emits velo-plot-compatible
+`python/velo_plot` is a **configuration builder** that emits velo-plot-compatible
 JSON (`PythonChart.to_json()` / `.save()`). It is **not** a live Jupyter widget
 and does not render. Reclassified from "complete" to **experimental config
 generator**.
