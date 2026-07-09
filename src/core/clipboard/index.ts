@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Clipboard Module
+ * Velo Plot - Clipboard Module
  * 
  * Provides clipboard operations for copying chart data to various formats.
  * Supports copying selected points, visible data, or all data.
