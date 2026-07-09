@@ -5,7 +5,7 @@ description: Display uncertainty and variability in your scientific data
 
 # Error Bars
 
-Error bars are essential for scientific data visualization, showing the uncertainty, variability, or confidence intervals of measurements. Sci Plot supports both symmetric and asymmetric error bars in both X and Y directions.
+Error bars are essential for scientific data visualization, showing the uncertainty, variability, or confidence intervals of measurements. Velo Plot supports both symmetric and asymmetric error bars in both X and Y directions.
 
 ## Quick Example
 
