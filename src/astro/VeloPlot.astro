@@ -1,0 +1,23 @@
+---
+/**
+ * Astro island wrapper for velo-plot React VeloPlot.
+ * Usage: <VeloPlot client:only="react" series={...} />
+ */
+import { VeloPlot as VeloPlotReact } from "velo-plot/react";
+
+interface Props {
+  series?: import("velo-plot/react").VeloPlotSeries[];
+  width?: number | string;
+  height?: number | string;
+  theme?: string;
+  class?: string;
+}
+
+const { series = [], width = "100%", height = 400, theme, class: className = "" } = Astro.props as Props;
+---
+
+<VeloPlotReact client:only="react" series={series} width={width} height={height} theme={theme} className={className} />
+
+<noscript>
+  <p>Chart requires JavaScript. Enable JS to view the interactive chart.</p>
+</noscript>
