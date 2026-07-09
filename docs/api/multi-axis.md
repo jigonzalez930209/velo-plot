@@ -5,7 +5,7 @@ description: Create charts with multiple Y axes for visualizing different scales
 
 # Multi-Axis Charts
 
-Sci Plot supports multiple Y axes, allowing you to visualize data with different scales on the same chart. This is essential for scientific applications where you need to correlate variables like current (µA) and potential (V), or temperature and pressure.
+Velo Plot supports multiple Y axes, allowing you to visualize data with different scales on the same chart. This is essential for scientific applications where you need to correlate variables like current (µA) and potential (V), or temperature and pressure.
 
 ## Creating Multi-Axis Charts
 

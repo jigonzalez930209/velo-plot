@@ -1,11 +1,11 @@
 ---
 title: API Reference
-description: Comprehensive API documentation for Sci Plot, covering chart creation, series management, interactions, and scientific data analysis.
+description: Comprehensive API documentation for Velo Plot, covering chart creation, series management, interactions, and scientific data analysis.
 ---
 
 # API Reference
 
-Sci Plot provides a comprehensive API for creating high-performance scientific charts.
+Velo Plot provides a comprehensive API for creating high-performance scientific charts.
 
 ## Core Modules
 
@@ -216,8 +216,8 @@ Nuevos tipos de visualización altamente especializados para KPIs y flujos.
 
 | Export | Description |
 |--------|-------------|
-| [`SciPlot`](/api/react-velo-plot) | React component |
-| [`useSciPlot`](/api/react-hook) | React hook for imperative control |
+| [`VeloPlot`](/api/react-velo-plot) | React component |
+| [`useVeloPlot`](/api/react-hook) | React hook for imperative control |
 | [`useStackedPlot`](/api/react-hook#usestackedplot-hook) | React hook for multi-pane stacks |
 
 ## Data Analysis
