@@ -1,5 +1,5 @@
 /**
- * Chart - Main Sci Plot Entry Point
+ * Chart - Main Velo Plot Entry Point
  * 
  * This file re-exports the chart API from the modular implementation.
  * For the core implementation, see ./chart/ChartCore.ts
