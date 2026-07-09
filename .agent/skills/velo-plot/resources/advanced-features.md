@@ -1,4 +1,4 @@
-# Advanced Sci Plot Features
+# Advanced Velo Plot Features
 
 ## Multi-Axis Support
 The engine allows multiple X and Y axes, which is essential for comparing datasets with different scales.

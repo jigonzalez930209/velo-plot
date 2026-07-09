@@ -1,11 +1,11 @@
 ---
 name: velo-plot
-description: High-performance scientific charting and data analysis using Sci Plot (WebGL).
+description: High-performance scientific charting and data analysis using Velo Plot (WebGL).
 ---
 
-# Sci Plot Skill
+# Velo Plot Skill
 
-This skill allows agents to integrate and manage the **Sci Plot**, a high-performance WebGL-based charting library for scientific and analytical applications.
+This skill allows agents to integrate and manage the **Velo Plot**, a high-performance WebGL-based charting library for scientific and analytical applications.
 
 ## Quick Start
 
@@ -104,7 +104,7 @@ chart.enableCursor({ crosshair: true, valueDisplayMode: 'disabled' });
 ## Practical Examples
 - [Basic Chart Setup](./examples/basic-chart.ts)
 - [React Component Integration (Imperative)](./examples/react-integration.tsx)
-- [Declarative React (SciPlot Component)](./examples/declarative-react.tsx)
+- [Declarative React (VeloPlot Component)](./examples/declarative-react.tsx)
 - [Advanced Analysis (FFT & Peaks)](./examples/advanced-analysis.ts)
 - [Real-time Streaming](./examples/real-time-streaming.ts)
 - [Layout Configuration](./examples/layout-example.ts)

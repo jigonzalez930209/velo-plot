@@ -1,4 +1,4 @@
-# Sci Plot API Summary
+# Velo Plot API Summary
 
 ## Creation & Lifecycle
 - `createChart(options)`: Initialize a chart.

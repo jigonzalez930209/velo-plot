@@ -1,6 +1,6 @@
 # Plugin Architecture & Lifecycle
 
-Sci Plot is built on a modular plugin system. Every advanced feature (Tooltips, Analysis, ROI) is a plugin.
+Velo Plot is built on a modular plugin system. Every advanced feature (Tooltips, Analysis, ROI) is a plugin.
 
 ## Plugin Interface
 A plugin is an object or a factory that implements the `ChartPlugin` interface.
