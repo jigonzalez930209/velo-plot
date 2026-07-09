@@ -331,7 +331,7 @@ export class ChartImpl implements Chart {
     // 3. Show loading indicator INSTANTLY if enabled
     if (options.loading !== false) {
       const loadingConfig = typeof options.loading === 'object' ? options.loading : {
-        message: 'Loading SciPlot...',
+        message: 'Loading VeloPlot...',
         overlayOpacity: 0.1,
       };
       this.use(PluginLoading({
@@ -537,6 +537,7 @@ export class ChartImpl implements Chart {
           }
           this.requestOverlayRender();
         },
+        onDoubleTap: () => this.resetZoom(),
         onBoxSelect: (rect, additive) => {
           if (rect) {
             const xScale = this.xScale;
@@ -669,7 +670,7 @@ export class ChartImpl implements Chart {
           cmd.fn();
         } catch (err) {
           console.error(
-            `[SciPlot] Error executing queued command '${cmd.name}':`,
+            `[VeloPlot] Error executing queued command '${cmd.name}':`,
             err
           );
         }
@@ -1106,7 +1107,7 @@ export class ChartImpl implements Chart {
         animation.promise.catch((err) => {
           // Ignore cancellation errors
           if (err.message !== "Animation cancelled") {
-            console.error("[SciPlot] Animation error:", err);
+            console.error("[VeloPlot] Animation error:", err);
           }
         });
       }
@@ -1172,7 +1173,7 @@ export class ChartImpl implements Chart {
           animation.promise.catch((err) => {
             // Ignore cancellation errors
             if (err.message !== "Animation cancelled") {
-              console.error("[SciPlot] Animation error:", err);
+              console.error("[VeloPlot] Animation error:", err);
             }
           });
         }
@@ -1225,7 +1226,7 @@ export class ChartImpl implements Chart {
       animation.promise.catch((err) => {
         // Ignore cancellation errors
         if (err.message !== "Animation cancelled") {
-          console.error("[SciPlot] Animation error:", err);
+          console.error("[VeloPlot] Animation error:", err);
         }
       });
     }
@@ -1403,7 +1404,7 @@ export class ChartImpl implements Chart {
     }
 
     console.warn(
-      "[SciPlot] WebGPU unavailable — falling back to WebGL2. " +
+      "[VeloPlot] WebGPU unavailable — falling back to WebGL2. " +
         "See docs/adr/001-webgpu-renderer-strategy.md.",
     );
     this.renderer = new NativeWebGLRenderer(this.webglCanvas);
@@ -1568,13 +1569,13 @@ export class ChartImpl implements Chart {
         toolsApi.setMode(mode);
       } else {
         // Plugin not yet loaded - retry after a short delay
-        console.info(`[SciPlot] Tools plugin not ready, retrying setMode('${mode}')...`);
+        console.info(`[VeloPlot] Tools plugin not ready, retrying setMode('${mode}')...`);
         setTimeout(() => {
           const api = this.getPluginAPI<any>("velo-plot-tools");
           if (api) {
             api.setMode(mode);
           } else {
-            console.warn(`[SciPlot] Tools plugin still not available for mode '${mode}'`);
+            console.warn(`[VeloPlot] Tools plugin still not available for mode '${mode}'`);
           }
         }, 100);
       }

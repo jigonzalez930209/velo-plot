@@ -382,7 +382,7 @@ export function renderOverlay(
   const rect = ctx.container.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) {
     console.warn(
-      "[SciPlot] Container has zero size in render, skipping overlay"
+      "[VeloPlot] Container has zero size in render, skipping overlay"
     );
     return;
   }
