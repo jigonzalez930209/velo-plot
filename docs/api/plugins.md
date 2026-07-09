@@ -1,11 +1,11 @@
 ---
 title: Plugins API
-description: Extend Sci Plot through its powerful plugin system, allowing custom lifecycle hooks for rendering, series management, and UI overlays.
+description: Extend Velo Plot through its powerful plugin system, allowing custom lifecycle hooks for rendering, series management, and UI overlays.
 ---
 
 # Plugins API
 
-The Sci Plot provides a powerful, extensible plugin system that allows you to hook into every aspect of the chart's lifecycle.
+The Velo Plot provides a powerful, extensible plugin system that allows you to hook into every aspect of the chart's lifecycle.
 
 ## Plugin Interface
 
