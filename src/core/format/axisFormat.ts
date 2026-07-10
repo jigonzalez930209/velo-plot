@@ -75,7 +75,7 @@ export function toScientificUnicode(value: number, precision: number): string {
 
   const unicodeExp = exponent
     .replace("+", "")
-    .replace(/[0-9\-]/g, (char) => superscriptMap[char]);
+    .replace(/[0-9-]/g, (char) => superscriptMap[char]);
 
   return `${mantissa}e${unicodeExp}`;
 }

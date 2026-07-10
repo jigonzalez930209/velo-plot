@@ -7,7 +7,7 @@ function createMockChart(
   bounds: Bounds,
   handlers: Map<string, (...args: unknown[]) => void> = new Map(),
 ): ChartLike & { emit: (event: string, data: unknown) => void } {
-  let viewBounds = { ...bounds };
+  const viewBounds = { ...bounds };
   const zoom = vi.fn((opts: { x?: [number, number]; y?: [number, number] }) => {
     if (opts.x) {
       viewBounds.xMin = opts.x[0];

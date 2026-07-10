@@ -1,13 +1,8 @@
 /**
  * ChartStatistics - In-chart statistics panel
- * 
- * Displays real-time statistics (Min, Max, Mean, StdDev, Area) 
- * for the visible data range of active series.
  */
-
 import { ChartTheme } from "../theme";
 import { Series } from "./Series";
-import { calculateStats, integrate } from "../plugins/analysis";
 import { Bounds } from "../types";
 
 export class ChartStatistics {
@@ -85,9 +80,10 @@ export class ChartStatistics {
     `;
   }
 
-  public update(viewBounds: Bounds): void {
+  public async update(viewBounds: Bounds): Promise<void> {
     if (!this.isExpanded) return;
 
+    const { calculateStats, integrate } = await import("../plugins/analysis");
     this.content.innerHTML = "";
     
     this.series.forEach((s) => {
@@ -96,7 +92,6 @@ export class ChartStatistics {
       const data = s.getData();
       if (!data) return;
 
-      // Filter data in visible range
       const visibleY: number[] = [];
       const visibleX: number[] = [];
       for (let i = 0; i < data.x.length; i++) {
@@ -143,9 +138,6 @@ export class ChartStatistics {
   public toggle(): void {
     this.isExpanded = !this.isExpanded;
     this.content.style.display = this.isExpanded ? "block" : "none";
-    if (this.isExpanded) {
-        // Redraw immediately will be handled by the chart's next render
-    }
   }
 
   public updateTheme(theme: ChartTheme): void {

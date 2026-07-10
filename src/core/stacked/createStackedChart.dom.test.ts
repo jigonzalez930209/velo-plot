@@ -1191,4 +1191,96 @@ describe("createStackedChart (DOM)", () => {
     document.body.removeChild(container);
     vi.unstubAllGlobals();
   });
+
+  it("normalizes zero pane ratios at creation", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    container.style.height = "400px";
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      panes: [
+        { id: "a", height: 0 },
+        { id: "b", height: 0 },
+      ],
+    });
+
+    expect(stack.getPanes()).toHaveLength(2);
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("honors explicit layout margins and host minHeight", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    container.style.height = "400px";
+    container.style.minHeight = "280px";
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      layout: { margins: { left: 88, right: 44, top: 16 } },
+      panes: [{ id: "a", height: 1 }],
+    });
+
+    expect(container.style.minHeight).toBe("280px");
+    expect(stack.getPanes()).toHaveLength(1);
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("addPane on a vertical stack with gap updates the previous pane bottom margin", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    container.style.height = "400px";
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      gap: 12,
+      panes: [{ id: "a", height: 0.7 }],
+    });
+    const prev = stack.getPane("a") as Record<string, ReturnType<typeof vi.fn>>;
+    stack.addPane({ id: "b", height: 0.3, chart: { xAxis: { tickCount: 3 } } });
+    expect(prev.updateLayout).toHaveBeenCalledWith({
+      margins: { bottom: expect.any(Number) },
+    });
+
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("pins measured host height from offsetHeight without inline style", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    Object.defineProperty(container, "offsetHeight", { value: 360, configurable: true });
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      panes: [{ id: "a", height: 1 }],
+    });
+
+    expect(container.style.height).toBe("360px");
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("uses fallback min height when host has no measured size", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    Object.defineProperty(container, "offsetHeight", { value: 0, configurable: true });
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      panes: [{ id: "a", height: 1 }],
+    });
+
+    expect(container.style.height).toBe("100%");
+    expect(container.style.minHeight).toBe("320px");
+    stack.destroy();
+    document.body.removeChild(container);
+  });
 });
