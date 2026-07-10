@@ -152,9 +152,10 @@ const DEFAULT_GRID_THEME: GridTheme = {
   minorColor: "rgba(255, 255, 255, 0.05)",
   majorWidth: 1,
   minorWidth: 0.5,
-  majorDash: [4, 4],
+  // Solid majors — dashed + minor divisions read as a “grid inside the grid”.
+  majorDash: [],
   minorDash: [2, 4],
-  showMinor: true, // Default to show minor
+  showMinor: false,
   minorDivisions: 5,
 };
 
@@ -202,6 +203,8 @@ export const DARK_THEME: ChartTheme = {
     ...DEFAULT_GRID_THEME,
     majorColor: "rgba(255, 255, 255, 0.12)",
     minorColor: "rgba(255, 255, 255, 0.04)",
+    showMinor: false,
+    majorDash: [],
   },
   xAxis: {
     ...DEFAULT_AXIS_THEME,
@@ -232,6 +235,8 @@ export const MIDNIGHT_THEME: ChartTheme = {
     ...DEFAULT_GRID_THEME,
     majorColor: "rgba(150, 150, 255, 0.2)",
     minorColor: "rgba(150, 150, 255, 0.08)",
+    showMinor: false,
+    majorDash: [],
   },
   xAxis: {
     ...DEFAULT_AXIS_THEME,
@@ -274,6 +279,8 @@ export const LIGHT_THEME: ChartTheme = {
     ...DEFAULT_GRID_THEME,
     majorColor: "rgba(0, 0, 0, 0.1)",
     minorColor: "rgba(0, 0, 0, 0.04)",
+    showMinor: false,
+    majorDash: [],
   },
   xAxis: {
     ...DEFAULT_AXIS_THEME,
@@ -317,6 +324,8 @@ export const HIGH_CONTRAST_THEME: ChartTheme = {
     ...DEFAULT_GRID_THEME,
     majorColor: "rgba(255, 255, 255, 0.35)",
     minorColor: "rgba(255, 255, 255, 0.15)",
+    showMinor: false,
+    majorDash: [],
   },
   xAxis: {
     ...DEFAULT_AXIS_THEME,
