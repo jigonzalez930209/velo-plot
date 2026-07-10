@@ -742,6 +742,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     getPane(id: string) {
       return paneCharts.get(id);
     },
+    /** @deprecated Prefer `getPane(id)`. **Removed in v4.0.** */
     getChart(id: string) {
       return paneCharts.get(id);
     },

@@ -76,7 +76,9 @@ export interface StackedChartOptions {
 export interface StackedChart {
   readonly container: HTMLDivElement;
   getPane(id: string): Chart | undefined;
-  /** Alias for getPane (Trading Experience / docs) */
+  /**
+   * @deprecated Prefer `getPane(id)`. Alias kept for docs / Trading Experience. **Removed in v4.0.**
+   */
   getChart(id: string): Chart | undefined;
   getPanes(): Chart[];
   getMaster(): Chart;
