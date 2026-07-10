@@ -11,4 +11,10 @@ describe("vue index", () => {
     expect(vue.useChartSync).toBeTypeOf("function");
     expect(vue.useChartGroup).toBe(vue.useChartSync);
   });
+
+  it("keeps SciPlot aliases for backward compatibility", () => {
+    expect(vue.SciPlot).toBe(vue.VeloPlot);
+    expect(vue.useSciPlot).toBe(vue.useVeloPlot);
+    expect(vue.useSciChart).toBe(vue.useVeloPlot);
+  });
 });
