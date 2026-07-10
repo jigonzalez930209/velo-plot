@@ -36,5 +36,5 @@ export function useChartSync(
   return { group };
 }
 
-/** Alias matching roadmap naming */
+/** Alias matching roadmap naming (`useChartGroup` ≡ `useChartSync`). */
 export const useChartGroup = useChartSync;

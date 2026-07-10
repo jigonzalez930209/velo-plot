@@ -11,4 +11,11 @@ describe("react index", () => {
     expect(react.useChartSync).toBeTypeOf("function");
     expect(react.useChartGroup).toBe(react.useChartSync);
   });
+
+  it("keeps SciPlot / SciChart aliases for backward compatibility", () => {
+    expect(react.SciPlot).toBe(react.VeloPlot);
+    expect(react.SciChart).toBe(react.VeloPlot);
+    expect(react.useSciPlot).toBe(react.useVeloPlot);
+    expect(react.useSciChart).toBe(react.useVeloPlot);
+  });
 });
