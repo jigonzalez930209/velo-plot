@@ -19,10 +19,13 @@ export {
   interleaveData,
   interleaveStepData,
   interleaveErrorData,
-  interleaveBoxPlotData,
-  interleaveWaterfallData,
   parseColor,
   brightenColor,
+} from "./native/utilsCore";
+
+export {
+  interleaveBoxPlotData,
+  interleaveWaterfallData,
 } from "./native/utils";
 
 export type { NativeRenderOptions, NativeSeriesRenderData } from "./native/types";
