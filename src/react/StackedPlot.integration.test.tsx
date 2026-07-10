@@ -43,6 +43,7 @@ describe("StackedPlot integration", () => {
       />,
     );
     await waitFor(() => expect(document.querySelector('[data-ready="true"]')).toBeTruthy());
+    expect(getByRole("img", { name: "Custom stack" })).toBeTruthy();
     ref.current?.fitAll();
     ref.current?.resetAll();
     expect(mockStack.fitAll).toHaveBeenCalled();

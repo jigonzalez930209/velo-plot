@@ -23,7 +23,7 @@ export interface UseStackedPlotOptions
   extends Omit<StackedChartOptions, "container"> {}
 
 export interface UseStackedPlotReturn {
-  containerRef: RefObject<HTMLDivElement | null>;
+  containerRef: RefObject<HTMLDivElement>;
   stack: StackedChart | null;
   isReady: boolean;
   fitAll: (options?: { x?: Range; padding?: number }) => void;

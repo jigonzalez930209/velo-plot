@@ -39,7 +39,7 @@ export interface UseVeloPlotReturn {
 }
 
 export function useVeloPlot(
-  containerRef: RefObject<HTMLDivElement | null>,
+  containerRef: RefObject<HTMLDivElement>,
   options: UseVeloPlotOptions = {},
 ): UseVeloPlotReturn {
   const [chart, setChart] = useState<Chart | null>(null);
