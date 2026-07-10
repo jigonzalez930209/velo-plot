@@ -11,4 +11,10 @@ describe("svelte index", () => {
     expect(svelte.useChartSync).toBeTypeOf("function");
     expect(svelte.useChartGroup).toBe(svelte.useChartSync);
   });
+
+  it("keeps SciPlot aliases for backward compatibility", () => {
+    expect(svelte.useSciPlot).toBe(svelte.useVeloPlot);
+    expect(svelte.createSciPlot).toBe(svelte.createVeloPlot);
+    expect(svelte.useSciChart).toBe(svelte.useVeloPlot);
+  });
 });
