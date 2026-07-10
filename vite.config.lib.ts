@@ -28,7 +28,7 @@ export default defineConfig({
       include: ["src/solid/**/*.{ts,tsx}"],
     }),
     dts({
-      include: ["src"],
+      tsconfigPath: resolve(__dirname, "tsconfig.build.json"),
       insertTypesEntry: true,
     }),
   ],

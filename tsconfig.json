@@ -34,6 +34,8 @@
   ],
   "exclude": [
     "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.vue.test.ts",
     "src/**/*.dom.test.ts",
     "src/**/*.spec.ts"
   ]
