@@ -2,6 +2,10 @@
 
 Velo Plot is a high-performance WebGL-based charting library designed for scientific data visualization.
 
+::: tip v3 bundles
+velo-plot ships multiple entry points (`velo-plot`, `/trading`, `/scientific`, `/full`). Start with **[Bundle Architecture](/guide/bundle-architecture)** to pick the smallest import for your app.
+:::
+
 ## Why Velo Plot?
 
 - **Performance**: Render 10M+ data points at 60 FPS
@@ -77,8 +81,10 @@ chart.addSeries({
 
 ## Next Steps
 
+- **[Bundle Architecture](/guide/bundle-architecture)** — pick core, trading, scientific, or full (v3)
 - [Installation](/guide/installation) - Add Velo Plot to your project
 - [Quick Start](/guide/quick-start) - Create your first chart
+- [Migration v2 → v3](/guide/migration-v3) - if upgrading
 - [Core Concepts](/guide/concepts) - Understand the architecture
 - [React Integration](/guide/react) - Use VeloPlot with React
 - [Performance Optimization](/guide/performance) - Handle millions of points

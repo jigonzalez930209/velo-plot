@@ -17,7 +17,8 @@ Velo Plot supports two approaches for dashboards with multiple related charts:
 For TradingView-style layouts:
 
 ```typescript
-import { createStackedChart, buildIndicatorPane } from 'velo-plot';
+import { createStackedChart } from 'velo-plot/trading';
+import { buildIndicatorPane } from 'velo-plot/full';
 
 const stack = createStackedChart({
   container,
@@ -106,7 +107,7 @@ See [Indicator Panes API](/api/indicator-panes).
 When you control your own layout (grids, tabs, side panels):
 
 ```typescript
-import { createChart, createChartGroup } from 'velo-plot';
+import { createChart, createChartGroup } from 'velo-plot/scientific';
 
 const group = createChartGroup([chart1, chart2], {
   axis: 'x',

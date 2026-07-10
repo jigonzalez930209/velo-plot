@@ -1,8 +1,23 @@
 # What's new in v3
 
-velo-plot **v3.0** is the stable-platform release: trading workflows, scientific depth, and first-class framework DX on one engine — with clear bundles and a migration path from v2.
+velo-plot **v3.0** is the stable-platform release: trading workflows, scientific depth, and first-class framework DX on one engine — with **documented bundles** and a clear migration path from v2.
 
 ## Highlights
+
+### Bundle architecture (new in v3.0)
+
+velo-plot is no longer a single monolithic import. Four primary entries keep apps small:
+
+| Entry | Gzip | Doc |
+|-------|------|-----|
+| `velo-plot` | ~51 KB | [Core Bundle](/api/core-bundle) |
+| `velo-plot/trading` | ~72 KB | [Trading Bundle](/api/trading-bundle) |
+| `velo-plot/scientific` | ~114 KB | [Scientific Bundle](/api/scientific-bundle) |
+| `velo-plot/full` | heavier | Everything |
+
+Read the full guide: **[Bundle Architecture](/guide/bundle-architecture)**.
+
+Core slimming uses **registry pattern** — extended series and trading APIs register at import time instead of living inside `ChartCore` ([ADR 004](/adr/004-core-bundle-slimming)).
 
 ### Trading
 
@@ -24,21 +39,21 @@ velo-plot **v3.0** is the stable-platform release: trading workflows, scientific
 
 ### Platform
 
-- CI: unit + bindings + Playwright e2e + warning benchmarks
-- Coverage gates on core Stage 1–4 modules
+- CI: unit + bindings + Playwright e2e + **bundle size budgets**
+- ESLint clean; coverage gates on core modules
 - Honest [plugin status](/PLUGIN-STATUS); SVG full homolog deferred to [Stage 6](/roadmap/06-svg-vector-parity) → v4
 
 ## Upgrade
 
+- **[Bundle Architecture](/guide/bundle-architecture)** — start here
 - [Migration v2 → v3](/guide/migration-v3)
 - [Migration v1 → v2](/guide/migration-v2) (if still on v1)
-- [Installation](/guide/installation) — bundle table
+- [Installation](/guide/installation) — import table
 
-## Release candidates
+## Release
 
 | Version | Notes |
 |---------|--------|
-| `3.0.0-rc.1` | First RC — scientific bundle, migration docs, semver policy, CI lint |
-| `3.0.0` | GA — after RC feedback; npm `latest` |
+| `3.0.0` | GA — bundle split, core slimming, migration docs, CI bundle budgets |
 
-Report issues against the RC before GA so breaking-change notes stay accurate.
+Report issues before upgrading production apps so breaking-change notes stay accurate.

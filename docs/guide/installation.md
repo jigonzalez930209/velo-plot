@@ -15,30 +15,39 @@ yarn add velo-plot
 
 ## Imports
 
+Choose the **smallest entry** for your app. See [Bundle Architecture](/guide/bundle-architecture) for the full matrix.
+
 ### ES Modules
 
 ```typescript
-// Core API
+// Core — line/scatter/step/band only (~51 KB gzip)
 import { createChart } from 'velo-plot';
 
-// Specialized Plugins 
-import { PluginTools, PluginAnalysis, PluginAnnotations } from 'velo-plot';
+// Trading — candles, indicators, stacked, alerts (~72 KB gzip)
+import { createStackedChart, PluginDrawingTools } from 'velo-plot/trading';
+
+// Scientific — heatmap, analysis, 3D, LaTeX (~114 KB gzip)
+import { createChart, PluginAnalysis, PluginForecasting } from 'velo-plot/scientific';
+
+// Full — everything (heavier)
+import { createChart } from 'velo-plot/full';
+
+// Per-plugin (with core entry)
+import { PluginAnnotations } from 'velo-plot/plugins/annotations';
 
 // React components
 import { VeloPlot, useVeloPlot } from 'velo-plot/react';
 
-// Trading dashboard bundle (tree-shaken — no 3D/scientific plugins)
-import { createStackedChart, PluginDrawingTools } from 'velo-plot/trading';
-
-// Scientific bundle (analysis, FFT, regression, forecasting, LaTeX, 3D)
-import { createChart, PluginAnalysis, PluginForecasting } from 'velo-plot/scientific';
-
-// Full bundle (everything — heavier)
-import { createChart } from 'velo-plot/full';
-
-// Built-in Themes
-import { MIDNIGHT_THEME, DARK_THEME, LIGHT_THEME } from 'velo-plot';
+// Themes — core exports DARK/LIGHT/DEFAULT; extended themes on scientific/full
+import { DARK_THEME, LIGHT_THEME } from 'velo-plot';
+import { MIDNIGHT_THEME } from 'velo-plot/scientific';
 ```
+
+| Entry | API doc |
+|-------|---------|
+| `velo-plot` | [Core Bundle](/api/core-bundle) |
+| `velo-plot/trading` | [Trading Bundle](/api/trading-bundle) |
+| `velo-plot/scientific` | [Scientific Bundle](/api/scientific-bundle) |
 
 ### TypeScript Usage
 
@@ -80,6 +89,7 @@ WebGL 2.0 is required for hardware acceleration. Most modern browsers support th
 
 ## Next Steps
 
-- **[Quick Start](/guide/quick-start)** - Create your first interactive chart.
-- **[Plugin System](/guide/plugins)** - Learn how to extend the chart with tools.
-- **[Advanced Analysis](/examples/analysis-advanced)** - Deep dive into scientific features.
+- **[Bundle Architecture](/guide/bundle-architecture)** — pick the right entry and understand sizes.
+- **[Quick Start](/guide/quick-start)** — Create your first interactive chart.
+- **[Migration v2 → v3](/guide/migration-v3)** — if upgrading from v2.
+- **[Plugin System](/guide/plugins)** — Extend the chart with tools.

@@ -2,36 +2,41 @@
 
 Understanding the architecture of Velo Plot.
 
+::: tip Bundles
+velo-plot ships multiple **library entry points** (core, trading, scientific, full). See [Bundle Architecture](/guide/bundle-architecture) before choosing imports.
+:::
+
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  Chart Instance                 │
-├─────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────┐  │
-│  │   Series    │  │   Series    │  │ Series  │  │
-│  │  (WebGL)    │  │  (WebGL)    │  │ (WebGL) │  │
-│  └─────────────┘  └─────────────┘  └─────────┘  │
-├─────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────┐│
-│  │           WebGL Renderer                    ││
-│  │  • GPU-accelerated line/point rendering     ││
-│  │  • Zoom/pan via uniforms (no re-upload)     ││
-│  └─────────────────────────────────────────────┘│
-├─────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────┐│
-│  │           Overlay Renderer (2D Canvas)      ││
-│  │  • Axes, grid, labels                       ││
-│  │  • Cursor, tooltips                         ││
-│  │  • Legend, controls                         ││
-│  └─────────────────────────────────────────────┘│
-├─────────────────────────────────────────────────┤
-│  ┌─────────────────────────────────────────────┐│
-│  │           Interaction Manager               ││
-│  │  • Mouse/touch events                       ││
-│  │  • Zoom, pan, box-select                    ││
-│  └─────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Bundle entry (import)                    │
+│   velo-plot │ /trading │ /scientific │ /full                │
+│         └─ registerExtendedSeries / registerTrading         │
+├─────────────────────────────────────────────────────────────┤
+│                  Chart Instance (ChartCore)                 │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐          │
+│  │   Series    │  │   Series    │  │   Series    │          │
+│  │  (WebGL)    │  │  (WebGL)    │  │  (WebGL)    │          │
+│  └─────────────┘  └─────────────┘  └─────────────┘          │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │           WebGL Renderer (NativeWebGLRenderer)          ││
+│  │  • Core: line, scatter, step, band                      ││
+│  │  • Extended: bar, heatmap, boxplot, waterfall (registry)││
+│  └─────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │           Overlay Renderer (2D Canvas)                  ││
+│  │  • Axes, grid, labels, cursor, legend                   ││
+│  │  • Gauge / Sankey (extended registry)                   ││
+│  └─────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │           Plugin Manager + chart.use()                  ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## Key Components
@@ -164,17 +169,17 @@ Velo Plot uses `requestAnimationFrame` for smooth rendering:
 ┌─────────────────────────────────────┐
 │         requestAnimationFrame       │
 │               ↓                     │
-│    ┌─────────────────────────┐     │
-│    │  needsRender = true?    │     │
-│    └──────────┬──────────────┘     │
+│    ┌─────────────────────────┐      │
+│    │  needsRender = true?    │      │
+│    └──────────┬──────────────┘      │
 │               │ yes                 │
 │               ↓                     │
-│    ┌─────────────────────────┐     │
-│    │     render()            │     │
-│    │  • WebGL draw           │     │
-│    │  • Overlay draw         │     │
-│    │  • Emit 'render' event  │     │
-│    └─────────────────────────┘     │
+│    ┌─────────────────────────┐      │
+│    │     render()            │      │
+│    │  • WebGL draw           │      │
+│    │  • Overlay draw         │      │
+│    │  • Emit 'render' event  │      │
+│    └─────────────────────────┘      │
 │               ↓                     │
 │         needsRender = false         │
 │               ↓                     │
@@ -216,6 +221,7 @@ useEffect(() => {
 
 ## Next Steps
 
+- [Bundle Architecture](/guide/bundle-architecture) — entry points and sizes
 - [Series & Data](/guide/series) - Working with data
 - [Interactions](/guide/interactions) - User interactions
 - [Performance](/guide/performance) - Optimization tips

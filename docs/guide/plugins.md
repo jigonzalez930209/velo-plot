@@ -17,7 +17,9 @@ From version 1.5.0, core features are modularized into plugins. You should expli
 
 ```typescript
 import { createChart } from 'velo-plot';
-import { PluginTools, PluginAnalysis, PluginAnnotations } from 'velo-plot/plugins';
+import { PluginTools } from 'velo-plot/plugins/tools';
+import { PluginAnalysis } from 'velo-plot/plugins/analysis';
+import { PluginAnnotations } from 'velo-plot/plugins/annotations';
 
 const chart = createChart({
   container: document.getElementById('chart'),

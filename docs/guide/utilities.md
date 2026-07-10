@@ -12,7 +12,8 @@ Velo Plot includes several utilities to enhance developer experience and improve
 Configure keyboard shortcuts for common chart interactions:
 
 ```typescript
-import { createChart, KeyBindingManager, DEFAULT_KEY_BINDINGS } from 'velo-plot';
+import { createChart } from 'velo-plot';
+import { KeyBindingManager, DEFAULT_KEY_BINDINGS } from 'velo-plot/full';
 
 const chart = createChart({
   container: document.getElementById('chart'),
@@ -47,7 +48,7 @@ const chart = createChart({
 Copy chart data to clipboard in various formats:
 
 ```typescript
-import { copyToClipboard, getClipboardManager } from 'velo-plot';
+import { copyToClipboard, getClipboardManager } from 'velo-plot/full';
 
 // Copy selected points
 const result = await copyToClipboard(selectedPoints, {
@@ -126,11 +127,11 @@ Configure locale-specific formatting:
 
 ```typescript
 import { 
-  createChart, 
   setGlobalLocale, 
   createLocaleFormatter,
   LOCALE_ES_ES 
-} from 'velo-plot';
+} from 'velo-plot/plugins/i18n';
+import { createChart } from 'velo-plot';
 
 // Set global locale
 setGlobalLocale('es-ES');
@@ -165,7 +166,7 @@ console.log(formatter.formatWithPrefix(1.5e-6, 'A')); // "1,50 µA"
 Show loading states for large data operations:
 
 ```typescript
-import { showLoading, showProgress, LoadingIndicator } from 'velo-plot';
+import { showLoading, showProgress, LoadingIndicator } from 'velo-plot/full';
 
 // Simple spinner
 const loader = showLoading(container, 'Loading data...');
@@ -220,7 +221,7 @@ import {
   benchmarkRender,
   assertPerformance,
   waitForFrames,
-} from 'velo-plot';
+} from 'velo-plot/full';
 
 // Generate waveforms
 const sine = generateSineWave({

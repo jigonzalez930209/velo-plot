@@ -114,7 +114,7 @@ self.onmessage = (e) => {
 For datasets too large to display efficiently, use LTTB (Largest Triangle Three Buckets) downsampling:
 
 ```typescript
-import { downsampleLTTB } from 'velo-plot'
+import { downsampleLTTB } from 'velo-plot/scientific'
 
 // Original: 10 million points
 const originalX = new Float32Array(10000000)
@@ -200,7 +200,9 @@ largeDataArray = null
 For extremely large datasets, use `PluginVirtualization` (automatic LOD) or `PluginLazyLoad` (chunked loading):
 
 ```typescript
-import { createChart, PluginVirtualization, PluginLazyLoad } from 'velo-plot'
+import { createChart } from 'velo-plot/scientific'
+import { PluginVirtualization } from 'velo-plot/plugins/virtualization'
+import { PluginLazyLoad } from 'velo-plot/plugins/lazy-load'
 
 const chart = createChart('#chart')
 
@@ -268,7 +270,7 @@ const { passed, failures } = assertPerformance(result, { minFps: 55 })
 Heavy indicator calculations run off the main thread when Workers are available:
 
 ```typescript
-import { rsiAsync, macdAsync, bollingerBandsAsync } from 'velo-plot'
+import { rsiAsync, macdAsync, bollingerBandsAsync } from 'velo-plot/scientific'
 
 const { values, duration } = await rsiAsync(closePrices, 14)
 const macd = await macdAsync(closePrices)

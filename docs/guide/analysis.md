@@ -7,8 +7,8 @@ Velo Plot is more than just a renderer; it includes a suite of high-performance 
 To use the analysis features, you must load the `PluginAnalysis` plugin.
 
 ```typescript
-import { createChart } from 'velo-plot';
-import { PluginAnalysis } from 'velo-plot/plugins';
+import { createChart } from 'velo-plot/scientific';
+import { PluginAnalysis } from 'velo-plot/plugins/analysis';
 
 const chart = createChart({ container });
 
@@ -34,7 +34,7 @@ Analysis tools are divided into four main categories:
 The most common task is removing noise from experimental data. The **Savitzky-Golay** filter is highly recommended for scientific data as it preserves peak heights better than moving averages.
 
 ```typescript
-import { createChart } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
 
 const chart = createChart({ container });
 const analysis = chart.analysis;

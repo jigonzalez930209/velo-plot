@@ -1,15 +1,19 @@
 # Migration Guide: v1.x → v2.0
 
+::: warning v3 bundle split
+As of **v3.0.0**, `import from 'velo-plot'` is the **core** bundle only (~51 KB gzip), not the full monolith. Trading APIs require `velo-plot/trading`; scientific features require `velo-plot/scientific`. See [Migration v2 → v3](/guide/migration-v3) and [Bundle Architecture](/guide/bundle-architecture).
+:::
+
 Stage 2 (Trading Experience) adds high-level trading APIs. Existing v1.x code continues to work; new APIs are opt-in.
 
 ## New import path
 
 ```typescript
-// Recommended for trading apps
+// Recommended for trading apps (v3)
 import { createStackedChart, PluginDrawingTools } from 'velo-plot/trading'
 
-// Still valid — full bundle
-import { createStackedChart } from 'velo-plot'
+// Full bundle — everything in one import
+import { createStackedChart } from 'velo-plot/full'
 ```
 
 ## Indicators: manual → `addIndicator()`
@@ -18,7 +22,7 @@ import { createStackedChart } from 'velo-plot'
 
 ```typescript
 import { rsi } from 'velo-plot/plugins/analysis'
-import { buildIndicatorPane } from 'velo-plot'
+import { buildIndicatorPane } from 'velo-plot/full'
 
 const { values } = rsi(close, 14)
 // manual pane config + series wiring...

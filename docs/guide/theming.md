@@ -38,7 +38,8 @@ const chart = createChart({
 ### Theme Objects
 
 ```typescript
-import { DARK_THEME, LIGHT_THEME, MIDNIGHT_THEME } from 'velo-plot'
+import { DARK_THEME, LIGHT_THEME } from 'velo-plot'
+import { MIDNIGHT_THEME } from 'velo-plot/scientific'
 
 const chart = createChart({
   container,
@@ -366,7 +367,7 @@ console.log(scheme.highlightColor)  // '#FFD700' (gold)
 ### Custom Color Schemes
 
 ```typescript
-import { type ColorScheme } from 'velo-plot'
+import { type ColorScheme } from 'velo-plot/scientific'
 
 const customScheme: ColorScheme = {
   name: 'my-scheme',

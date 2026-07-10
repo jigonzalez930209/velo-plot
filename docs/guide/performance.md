@@ -143,7 +143,7 @@ function updateView(centerIndex) {
 For datasets too large to display, use LTTB downsampling:
 
 ```typescript
-import { downsampleLTTB } from 'velo-plot'
+import { downsampleLTTB } from 'velo-plot/scientific'
 
 // Reduce 10M points to 10k for display
 const { x: sampledX, y: sampledY } = downsampleLTTB(
@@ -233,6 +233,24 @@ chart.on('render', ({ fps, frameTime }) => {
 - Chrome/Edge: Best WebGL performance
 - Firefox: Good performance
 - Safari: Good, but may have WebGL quirks
+
+## Bundle size
+
+Import the smallest entry that fits your app. Sizes are minified ESM gzip (see `pnpm check:bundle-size`):
+
+| Entry | Gzip | Best for |
+|-------|------|----------|
+| `velo-plot` | ~51 KB | Line/scatter/step/band only |
+| `velo-plot/trading` | ~72 KB | OHLC, indicators, stacked panes |
+| `velo-plot/scientific` | ~114 KB | Heatmap, analysis, 3D |
+| `velo-plot/full` | heavier | All features |
+
+Extended series and trading APIs are **not** in the core graph. See [Bundle Architecture](/guide/bundle-architecture).
+
+```typescript
+import { createChart } from 'velo-plot'           // smallest
+import { createChart } from 'velo-plot/trading'   // +candlestick, indicators
+```
 
 ## Comparison with Other Libraries
 

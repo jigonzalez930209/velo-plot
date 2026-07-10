@@ -117,7 +117,7 @@ function App() {
 To enable advanced interactions like tooltips or the delta tool, you must load the `PluginTools`.
 
 ```typescript
-import { PluginTools } from 'velo-plot';
+import { PluginTools } from 'velo-plot/plugins/tools';
 
 await chart.use(PluginTools());
 
