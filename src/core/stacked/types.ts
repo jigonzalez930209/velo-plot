@@ -40,6 +40,12 @@ export interface StackedChartOptions {
   sharedXAxis?: "bottom" | "none";
   /** Shared Y axis on left pane only (horizontal layout) */
   sharedYAxis?: "left" | "none";
+  /**
+   * Shared X-axis defaults applied to every pane (e.g. `type: 'time'`, timeScale).
+   * Per-pane `chart.xAxis` overrides these. Visibility (labels/ticks/line) is still
+   * controlled by `sharedXAxis` / `showXAxis`.
+   */
+  xAxis?: Omit<NonNullable<RootChartOptions["xAxis"]>, "showLabels" | "showTicks" | "showLine">;
   /** Shared theme applied to every pane */
   theme?: string | object;
   devicePixelRatio?: number;
@@ -70,6 +76,8 @@ export interface StackedChartOptions {
 export interface StackedChart {
   readonly container: HTMLDivElement;
   getPane(id: string): Chart | undefined;
+  /** Alias for getPane (Trading Experience / docs) */
+  getChart(id: string): Chart | undefined;
   getPanes(): Chart[];
   getMaster(): Chart;
   getGroup(): ChartGroup;
