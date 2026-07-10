@@ -3,6 +3,7 @@
  * Tree-shakes trading-only plugins; includes analysis, FFT, regression,
  * forecasting, LaTeX, 3D, and related scientific tooling.
  */
+import "./registerScientific";
 
 // Core chart
 export { createChart } from "../core/Chart";
