@@ -37,9 +37,7 @@ export class VeloPlotComponent implements OnDestroy, AfterViewInit {
   readonly chartOptions = input<ChartBindingOptions>({});
   readonly zoomChange = output<Bounds>();
 
-  readonly containerRef = viewChild<ElementRef<HTMLDivElement>>("container", {
-    read: ElementRef,
-  });
+  readonly containerRef = viewChild<ElementRef<HTMLDivElement>>("container");
 
   chart: Chart | null = null;
   private destroy: (() => void) | null = null;
@@ -125,9 +123,7 @@ export class StackedPlotComponent implements OnDestroy, AfterViewInit {
   readonly height = input<number | string>(480);
   readonly stackOptions = input<Omit<StackedChartOptions, "container" | "panes">>({});
 
-  readonly containerRef = viewChild<ElementRef<HTMLDivElement>>("container", {
-    read: ElementRef,
-  });
+  readonly containerRef = viewChild<ElementRef<HTMLDivElement>>("container");
 
   stack: StackedChart | null = null;
   private destroy: (() => void) | null = null;
