@@ -149,7 +149,7 @@ export class InteractionManager {
 
   /**
    * Set the interaction mode
-   * @deprecated Use setMode instead
+   * @deprecated Use setMode instead. **Removed in v4.0.**
    */
   public setPanMode(enabled: boolean): void {
     this.mode = enabled ? 'pan' : 'select';
