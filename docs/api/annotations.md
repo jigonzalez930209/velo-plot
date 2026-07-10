@@ -273,5 +273,5 @@ import type {
   BandAnnotation,
   TextAnnotation,
   ArrowAnnotation
-} from 'velo-plot';
+} from 'velo-plot/plugins/annotations';
 ```

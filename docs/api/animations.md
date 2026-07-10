@@ -109,7 +109,7 @@ chart.autoScale(false);
 For custom animations, use the `AnimationEngine` class:
 
 ```typescript
-import { AnimationEngine, easings } from 'velo-plot';
+import { AnimationEngine, easings } from 'velo-plot/full';
 
 const engine = new AnimationEngine();
 
@@ -142,7 +142,7 @@ await handle.promise;
 ## Default Configuration
 
 ```typescript
-import { DEFAULT_ANIMATION_CONFIG } from 'velo-plot';
+import { DEFAULT_ANIMATION_CONFIG } from 'velo-plot/full';
 
 console.log(DEFAULT_ANIMATION_CONFIG);
 // {

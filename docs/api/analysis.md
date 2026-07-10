@@ -20,7 +20,7 @@ import {
   movingAverage,
   downsampleLTTB,
   validateData,
-} from 'velo-plot'
+} from 'velo-plot/scientific'
 
 const stats = calculateStats(myData);
 ```
@@ -29,7 +29,7 @@ const stats = calculateStats(myData);
 By loading the `PluginAnalysis`, you gain access to all analysis tools directly through the `chart` instance, which handles coordinate conversion and series-aware analysis automatically.
 
 ```typescript
-import { PluginAnalysis } from 'velo-plot/plugins';
+import { PluginAnalysis } from 'velo-plot/plugins/analysis';
 
 await chart.use(PluginAnalysis());
 
@@ -167,7 +167,7 @@ import {
   detectPeaks, 
   calculateStats,
   downsampleLTTB 
-} from 'velo-plot'
+} from 'velo-plot/scientific'
 
 // Detect cycles in oscillating data
 const cycles = detectCycles(signalData)
