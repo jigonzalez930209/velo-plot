@@ -40,6 +40,9 @@ jobs:
       - name: Build Library
         run: pnpm build
 
+      - name: Bundle size budget
+        run: node scripts/check-bundle-size.mjs
+
   e2e-playwright:
     runs-on: ubuntu-latest
     steps:
