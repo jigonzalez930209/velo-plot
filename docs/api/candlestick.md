@@ -1,6 +1,14 @@
+::: warning Bundle requirement
+Requires `velo-plot/trading` (or `velo-plot/full`). Core entry (`velo-plot`) throws for candlestick series.
+:::
+
 # Candlestick Series
 
 Candlestick charts are used to describe price movements of a security, derivative, or currency.
+
+```typescript
+import { createChart } from 'velo-plot/trading'
+```
 
 ## Configuration
 

@@ -1,3 +1,7 @@
+::: warning Bundle requirement
+Requires `velo-plot/scientific` or `velo-plot/trading` (or `velo-plot/full`). Core entry throws for bar series.
+:::
+
 # Bar Charts API
 
 Bar charts are used for categorical data or discrete measurements. They support automatic width calculation and custom styling.
@@ -7,6 +11,10 @@ Bar charts are used for categorical data or discrete measurements. They support 
 You can add a bar series using the `addSeries` method with `type: 'bar'` or the `addBar` convenience method.
 
 ```typescript
+import { createChart } from 'velo-plot/scientific'
+
+const chart = createChart({ container: document.getElementById('chart')! })
+
 chart.addBar({
   id: 'my-bars',
   data: {

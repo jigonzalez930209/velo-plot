@@ -25,16 +25,20 @@ function createChart(options: ChartOptions): Chart
 | `theme` | `string \| ChartTheme` | `'dark'` | Theme name or custom theme object |
 | `background` | `string` | Theme default | Background color |
 | `showControls` | `boolean` | `false` | Show toolbar controls |
-| `showLegend` | `boolean` | `false` | Show series legend |
+| `showLegend` | `boolean` | `true` (theme) | Show series legend — defaults to `theme.legend.visible` |
 | `showStatistics` | `boolean` | `false` | Enable stats panel (requires `StatsPlugin`) |
 | `devicePixelRatio` | `number` | `window.devicePixelRatio` | Pixel ratio for rendering |
-| `loading` | `boolean \| LoadingConfig` | `true` | Show loading indicator on init |
+| `loading` | `boolean \| LoadingConfig` | `false` (implicit) | Show loading indicator — **opt-in** in v3 core |
 | `animations` | `boolean \| AnimationConfig` | `true` | Enable navigation animations |
 | `responsive` | `boolean \| ResponsiveConfig` | `true` | Auto-resize on container change |
 | `layout` | `LayoutOptions` | defaults | Control margins and axis title spacing |
 
+::: tip Bundle entry
+Series types and chart methods depend on which entry you import. Core supports line/scatter/step/band/area; candlestick and trading APIs require `velo-plot/trading`. See [Bundle Architecture](/guide/bundle-architecture) and [Trading Bundle](/api/trading-bundle).
+:::
+
 ::: tip Modular Architecture
-From version 1.5.0, Velo Plot uses a highly modular plugin-based architecture. To maintain a small core bundle, advanced features like **Tooltips**, **Analysis**, and **Annotations** must be explicitly loaded using `chart.use()`.
+From version 1.5.0, Velo Plot uses a modular plugin architecture. Advanced features (tooltips, analysis, annotations) must be loaded with `chart.use()`. In v3, **bundle entry** also determines built-in series and trading methods.
 :::
 ### AxisOptions
 
@@ -88,9 +92,13 @@ By default, the X-axis label gap is `45` and the Y-axis label gap is `50`.
 
 ### Renderer backend
 
-Velo Plot renders series with **WebGL2** by default. **WebGPU** is available as an opt-in chart renderer when the browser supports it.
+Velo Plot renders series with **WebGL2** by default (`NativeWebGLRenderer`).
+
+**WebGPU** (`renderer: 'webgpu'`) requires an **extended bundle** import (`velo-plot/trading`, `velo-plot/scientific`, or `velo-plot/full`). On core-only imports, `'webgpu'` is **silently ignored** — the chart stays on WebGL2.
 
 ```typescript
+import { createChart } from 'velo-plot/trading'
+
 const chart = createChart({
   container: document.getElementById('chart')!,
   renderer: 'webgl', // default — NativeWebGLRenderer
@@ -106,10 +114,10 @@ console.log(webgpuChart.getActiveRenderer()); // 'webgpu' | 'webgl'
 
 | Value | Behavior |
 |-------|----------|
-| `'webgl'` | Native WebGL2 renderer (default). All series types. |
-| `'webgpu'` | WebGPU via `GpuChartRenderer`. WebGL2 fallback if unavailable ([ADR 001](/adr/001-webgpu-renderer-strategy.md)). |
+| `'webgl'` | Native WebGL2 renderer (default). All series types **for your bundle entry**. |
+| `'webgpu'` | `GpuChartRenderer` when extended entry loaded. WebGL2 fallback if unavailable ([ADR 001](/adr/001-webgpu-renderer-strategy.md)). |
 
-For WebGPU **compute** experiments (not chart rendering), use `PluginGpu`.
+For WebGPU **compute** experiments (not chart rendering), use `PluginGpu` from `velo-plot/plugins/gpu`.
 
 ## Returns
 
@@ -120,7 +128,7 @@ Returns a `Chart` instance with the following methods:
 ```typescript
 chart.addSeries({
   id: 'my-series',
-  type: 'line',           // 'line' | 'scatter' | 'both' | 'candlestick' | 'step' | 'area' | 'band'
+  type: 'line',           // 'line' | 'scatter' | 'line+scatter' | 'step' | 'area' | 'band' (+ extended types per bundle)
   data: { x, y },         // Float32Array or Float64Array
   style: { color: '#00f2ff', width: 2 },
 })
@@ -170,7 +178,7 @@ chart.setDPR(window.devicePixelRatio)
 
 // { xMin: 0, xMax: 100, yMin: -1, yMax: 1 }
 
-// NOTE: Auto-scale now uses a 0.5% padding by default for scientific precision.
+// NOTE: autoScale() uses 0.5% padding. fit() uses 2% X / 5% Y padding by default.
 ```
 
 ### fit()
@@ -207,9 +215,14 @@ const chart = createChart({
 
 ### Loading State
 
-Control the built-in loading indicator (enabled by default).
+The loading overlay is **opt-in** in v3 core — pass `loading: true` in `createChart` options. Until the loading plugin is loaded, `chart.loading` is a no-op stub.
 
 ```typescript
+const chart = createChart({
+  container,
+  loading: true, // required in v3 core to show overlay
+})
+
 // Show with custom message
 chart.loading.show("Processing large dataset...")
 
@@ -265,11 +278,12 @@ chart.resize(800, 600)
 // Force a render
 chart.render()
 
-// Export as image (built-in raster)
+// Export as image (built-in raster — available on core)
 const dataUrl = chart.exportImage('png')  // or 'jpeg'
 
-// Export as SVG string (vector)
-const svg = chart.exportSVG()
+// Export as SVG string (vector) — requires extended bundle
+// import from 'velo-plot/trading', 'velo-plot/scientific', or 'velo-plot/full'
+const svg = chart.exportSVG()  // throws on core-only import
 
 // High-res / WebP / SVG download via plugin:
 // chart.use(PluginSnapshot())

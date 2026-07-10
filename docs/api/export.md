@@ -8,8 +8,10 @@ description: Export chart data to CSV, JSON and PNG formats
 Velo Plot provides built-in methods to export chart **data** (CSV, JSON) and **images** (PNG, JPEG, WebP, SVG). This page covers data export; for raster, vector, and multi-pane stack images see **[Image & Vector Export](/api/image-export)**.
 
 ::: tip Image & SVG export
-- Single chart: `chart.exportImage()`, `chart.exportSVG()`, or `PluginSnapshot`
-- Multi-pane stack: `stack.exportImage()` / `stack.snapshot()`
+- Single chart raster: `chart.exportImage()` — available on **core**
+- Single chart SVG: `chart.exportSVG()` — requires **extended bundle** (`velo-plot/trading`, `velo-plot/scientific`, or `velo-plot/full`)
+- High-res / WebP / plugin SVG: `PluginSnapshot` from `velo-plot/plugins/snapshot` or `velo-plot/full`
+- Multi-pane stack: `stack.exportImage()` / `stack.snapshot()` — requires `velo-plot/trading` or `velo-plot/full`
 - [Full image export guide →](/api/image-export)
 :::
 

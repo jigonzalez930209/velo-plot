@@ -12,8 +12,9 @@ The Curve Fitting system allows you to mathematically analyze data series and vi
 The Curve Fitting system is part of the `PluginAnalysis` module. You must load this plugin to use `addFitLine`.
 
 ```typescript
-import { createChart } from 'velo-plot';
-import { PluginAnalysis, PluginAnnotations } from 'velo-plot/plugins';
+import { createChart } from 'velo-plot/scientific';
+import { PluginAnalysis } from 'velo-plot/plugins/analysis';
+import { PluginAnnotations } from 'velo-plot/plugins/annotations';
 
 const chart = createChart({ container });
 

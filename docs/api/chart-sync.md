@@ -3,6 +3,12 @@ title: Chart Synchronization
 description: Link multiple charts for synchronized zoom, pan, and cursor — configurable per axis with bidirectional or master-slave modes.
 ---
 
+::: tip Bundle requirements
+- `linkCharts`, `createMasterSlave` → `velo-plot/full`
+- `createChartGroup` → `velo-plot/scientific` or `velo-plot/full`
+- Core entry (`velo-plot`) does not export sync helpers
+:::
+
 # Chart Synchronization
 
 Link multiple charts so they share zoom, pan, and cursor state. Configure sync per axis: **X only**, **Y only**, **both**, or **none**.
@@ -12,7 +18,7 @@ Link multiple charts so they share zoom, pan, and cursor state. Configure sync p
 ### Link Two Charts
 
 ```typescript
-import { createChart, linkCharts } from 'velo-plot';
+import { createChart, linkCharts } from 'velo-plot/full';
 
 const chart1 = createChart({ container: el1, id: 'chart1' });
 const chart2 = createChart({ container: el2, id: 'chart2' });
@@ -28,7 +34,7 @@ Pass `id` in `createChart` options or use `chart.getId()`. Sync relies on stable
 ### Create a Chart Group
 
 ```typescript
-import { createChartGroup } from 'velo-plot';
+import { createChartGroup } from 'velo-plot/scientific';
 
 const group = createChartGroup([chart1, chart2, chart3], {
   axis: 'x',            // 'x' | 'y' | 'xy' | 'none'
@@ -73,7 +79,7 @@ createChartGroup([price, volume, rsi], {
 Only the master chart propagates pan/zoom. Slaves follow but cannot push changes back.
 
 ```typescript
-import { createMasterSlave } from 'velo-plot';
+import { createMasterSlave } from 'velo-plot/full';
 
 const group = createMasterSlave(priceChart, volumeChart, 'x');
 // bidirectional: false, masterId set automatically
