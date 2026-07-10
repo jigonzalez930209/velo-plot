@@ -30,7 +30,7 @@ pnpm add velo-plot
 ### 3. Initialize the Renderer
 
 ```typescript
-import { Bubble3DRenderer } from 'velo-plot/core/3d';
+import { Bubble3DRenderer } from 'velo-plot/plugins/3d';
 
 const canvas = document.createElement('canvas');
 document.getElementById('chart-container').appendChild(canvas);
@@ -239,7 +239,7 @@ renderer.on('cameraChange', (event) => {
 ## Complete Example
 
 ```typescript
-import { Bubble3DRenderer } from 'velo-plot/core/3d';
+import { Bubble3DRenderer } from 'velo-plot/plugins/3d';
 
 async function createChart() {
   const container = document.getElementById('chart');
