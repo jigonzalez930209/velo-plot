@@ -1,0 +1,43 @@
+{
+  "measuredAt": "2026-07-10T13:23:34.947Z",
+  "budgets": {
+    "trading": {
+      "gzipMaxBytes": 153600,
+      "gzipMaxLabel": "150.0 KB"
+    },
+    "core": {
+      "gzipMaxBytes": 53248,
+      "gzipMaxLabel": "52.0 KB"
+    },
+    "scientific": {
+      "gzipMaxBytes": 204800,
+      "gzipMaxLabel": "200.0 KB"
+    }
+  },
+  "bundles": {
+    "trading": {
+      "rawBytes": 254952,
+      "gzipBytes": 73366,
+      "rawLabel": "249.0 KB",
+      "gzipLabel": "71.6 KB",
+      "budgetBytes": 153600,
+      "withinBudget": true
+    },
+    "core": {
+      "rawBytes": 189241,
+      "gzipBytes": 52380,
+      "rawLabel": "184.8 KB",
+      "gzipLabel": "51.2 KB",
+      "budgetBytes": 53248,
+      "withinBudget": true
+    },
+    "scientific": {
+      "rawBytes": 414250,
+      "gzipBytes": 116761,
+      "rawLabel": "404.5 KB",
+      "gzipLabel": "114.0 KB",
+      "budgetBytes": 204800,
+      "withinBudget": true
+    }
+  }
+}

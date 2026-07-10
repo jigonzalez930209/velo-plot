@@ -8,6 +8,10 @@ A high-performance, WebGL-powered scientific charting engine built for precision
 
 ## ✨ Features
 
+::: tip v3 bundle entries
+The default import (`velo-plot`) is the **core** bundle (~51 KB gzip): line, scatter, step, band, and area charts. Candlesticks, heatmaps, analysis, and trading APIs require `velo-plot/trading`, `velo-plot/scientific`, or `velo-plot/full`. See [Bundle Architecture](docs/guide/bundle-architecture.md).
+:::
+
 -   **🚀 High Performance**: Render millions of data points at 60 FPS using a specialized raw WebGL renderer.
 -   **📈 Advanced Analysis**: Built-in peak detection, integration, baseline correction, and customizable curve fitting (linear/poly/exp).
 -   **📊 Specialized Series**: Support for Lines, Scatter (SDF symbols), Step charts, Band series, Area charts, **Candlesticks** (OHLC), and **Stacked Charts**.
@@ -128,31 +132,34 @@ for (let i = 0; i < 20; i++) {
 ## 📖 Documentation
 
 Visit [Velo Plot Docs](https://jigonzalez930209.github.io/velo-plot/) for:
+-   [Bundle Architecture](https://jigonzalez930209.github.io/velo-plot/guide/bundle-architecture) — **start here for v3 imports**
 -   [Getting Started Guide](https://jigonzalez930209.github.io/velo-plot/guide/)
 -   [Core Concepts](https://jigonzalez930209.github.io/velo-plot/guide/concepts)
 -   [API Reference](https://jigonzalez930209.github.io/velo-plot/api/chart)
 -   [Interactive Examples](https://jigonzalez930209.github.io/velo-plot/examples/)
--   [Development Roadmap → v3.0.0](https://jigonzalez930209.github.io/velo-plot/roadmap/) — staged plan for trading + scientific features
+-   [Development Roadmap](https://jigonzalez930209.github.io/velo-plot/roadmap/)
 
 ## 🗺️ Development Roadmap
 
-The library is at **v3.0.0-rc.1**. The roadmap toward GA lives in [`docs/roadmap/`](./docs/roadmap/README.md). Plugin audit: [`docs/PLUGIN-STATUS.md`](./docs/PLUGIN-STATUS.md). Migration: [v1→v2](./docs/guide/migration-v2.md), [v2→v3](./docs/guide/migration-v3.md).
+The library is at **v3.0.0**. Roadmap: [`docs/roadmap/`](./docs/roadmap/README.md). Plugin audit: [`docs/PLUGIN-STATUS.md`](./docs/PLUGIN-STATUS.md). Migration: [v1→v2](./docs/guide/migration-v2.md), [v2→v3](./docs/guide/migration-v3.md). **Bundles:** [Architecture](./docs/guide/bundle-architecture.md).
 
 ### Bundle entry points
 
-| Import | Contents |
-|--------|----------|
-| `velo-plot` | Core chart engine |
-| `velo-plot/trading` | Stacked charts, indicators, drawings, replay, alerts, datafeed |
-| `velo-plot/scientific` | Analysis, FFT, regression, forecasting, LaTeX, 3D |
-| `velo-plot/full` | Everything including plugins, 3D, analysis, trading |
-| `velo-plot/react` | `VeloPlot`, `StackedPlot`, `useVeloPlot`, `useStackedPlot`, `useIndicator`, `useChartSync` |
-| `velo-plot/vue` | `VeloPlot`, `StackedPlot`, composables |
-| `velo-plot/svelte` | hooks + `VeloPlot.svelte`, `StackedPlot.svelte` (source) |
-| `velo-plot/solid` | `VeloPlot`, `StackedPlot`, hooks |
-| `velo-plot/angular` | `VeloPlotComponent`, `StackedPlotComponent`, services |
-| `velo-plot/astro` | `.astro` island wrappers |
-| `velo-plot/plugins/*` | Individual plugins (tree-shakeable) |
+| Import | Gzip (approx.) | Contents |
+|--------|----------------|----------|
+| `velo-plot` | ~51 KB | Core: line, scatter, step, band, plugins API |
+| `velo-plot/trading` | ~72 KB | + candles, indicators, stacked, alerts, WebGPU |
+| `velo-plot/scientific` | ~114 KB | + heatmap, bar, polar, analysis, 3D, LaTeX |
+| `velo-plot/full` | heavier | Everything |
+| `velo-plot/react` | — | `VeloPlot`, `StackedPlot`, hooks |
+| `velo-plot/vue` | — | `VeloPlot`, composables |
+| `velo-plot/svelte` | — | hooks + Svelte components |
+| `velo-plot/solid` | — | `VeloPlot`, hooks |
+| `velo-plot/angular` | — | components + services |
+| `velo-plot/astro` | — | island wrappers |
+| `velo-plot/plugins/*` | varies | Individual plugins (tree-shakeable) |
+
+Full guide: [Bundle Architecture](https://jigonzalez930209.github.io/velo-plot/guide/bundle-architecture)
 
 ## 📄 License
 
