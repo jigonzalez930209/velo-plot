@@ -138,7 +138,7 @@ export const VeloPlot = forwardRef<VeloPlotRef, VeloPlotProps>(
         a11yRef.current?.cleanup();
         a11yRef.current = null;
       };
-    }, [isReady, chart, keyboardNav, ariaLabel]);
+    }, [isReady, chart, keyboardNav, ariaLabel, bounds, series]);
 
     useEffect(() => {
       const el = containerRef.current;
