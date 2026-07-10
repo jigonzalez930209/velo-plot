@@ -8,58 +8,10 @@ import type {
   SeriesUpdateData,
 } from "../../../types";
 import { updateSeriesBuffer } from "./SeriesBuffer";
-import { buildIndicatorSeries } from "../../indicator/buildIndicatorSeries";
-import type { IndicatorSeriesOptions } from "../../indicator/types";
-import { computeHeikinAshi } from "../heikinAshi";
-import { applyBusinessDayX, isBusinessDayScaleActive } from "../../time/applyTimeScale";
-
-function prepareSeriesOptions(
-  ctx: any,
-  options: SeriesOptions | HeatmapOptions,
-): SeriesOptions | HeatmapOptions {
-  if (options.type === "heatmap" || options.type === "indicator") {
-    return options;
-  }
-
-  let opts = { ...options } as SeriesOptions;
-
-  if ((opts.type as string) === "heikin-ashi") {
-    const d = opts.data;
-    if (d?.open && d.high && d.low && d.close) {
-      const ha = computeHeikinAshi({
-        open: d.open,
-        high: d.high,
-        low: d.low,
-        close: d.close,
-      });
-      opts = {
-        ...opts,
-        type: "candlestick",
-        data: { ...d, ...ha },
-      };
-    }
-  }
-
-  if (isBusinessDayScaleActive(ctx.xAxisOptions) && opts.data?.x?.length) {
-    const { displayX, mapping } = applyBusinessDayX(opts.data.x, ctx.xAxisOptions);
-    ctx.timeScaleMapping = mapping;
-    opts = {
-      ...opts,
-      data: { ...opts.data, x: displayX },
-    };
-  }
-
-  return opts;
-}
-
-function expandSeriesOptions(
-  options: SeriesOptions | HeatmapOptions,
-): Array<SeriesOptions | HeatmapOptions> {
-  if ((options as SeriesOptions).type === "indicator") {
-    return buildIndicatorSeries(options as IndicatorSeriesOptions);
-  }
-  return [options];
-}
+import {
+  applySeriesOptionsPreprocessors,
+  expandSeriesOptions,
+} from "./seriesOptionsRegistry";
 
 export function addSeries(
   ctx: any,
@@ -74,8 +26,7 @@ function addSeriesOne(
   ctx: any,
   options: SeriesOptions | HeatmapOptions
 ): void {
-  const prepared = prepareSeriesOptions(ctx, options);
-  // Auto-assign color from scheme if not provided (skip for heatmaps)
+  const prepared = applySeriesOptionsPreprocessors(ctx, options);
   if (prepared.type !== 'heatmap' && !prepared.style?.color && !(prepared as any).color && ctx.colorScheme) {
     const seriesIndex = ctx.series.size;
     const schemeColor = ctx.colorScheme.colors[seriesIndex % ctx.colorScheme.colors.length];
@@ -92,7 +43,6 @@ function addSeriesOne(
     ctx.xAxisOptions.auto ||
     Array.from(ctx.yAxisOptionsMap.values()).some((o: any) => o.auto)
   ) {
-    // Don't animate autoscale when adding series to avoid animation conflicts
     ctx.autoScale(false);
   }
   ctx.updateLegend?.();
@@ -111,6 +61,27 @@ export function removeSeries(ctx: any, id: string): void {
   }
 }
 
+const dataPreprocessors: Array<
+  (ctx: unknown, data: SeriesUpdateData) => SeriesUpdateData
+> = [];
+
+export function registerSeriesDataPreprocessor(
+  fn: (ctx: unknown, data: SeriesUpdateData) => SeriesUpdateData,
+): void {
+  dataPreprocessors.push(fn);
+}
+
+function applyDataPreprocessors(
+  ctx: unknown,
+  data: SeriesUpdateData,
+): SeriesUpdateData {
+  let result = data;
+  for (const fn of dataPreprocessors) {
+    result = fn(ctx, result);
+  }
+  return result;
+}
+
 export function updateSeries(
   ctx: any,
   id: string,
@@ -122,12 +93,7 @@ export function updateSeries(
   const isAppend = !!data.append;
   const oldMaxX = isAppend ? (s.getBounds()?.xMax ?? -Infinity) : -Infinity;
 
-  let patch = data;
-  if (data.x && isBusinessDayScaleActive(ctx.xAxisOptions)) {
-    const { displayX, mapping } = applyBusinessDayX(data.x, ctx.xAxisOptions);
-    ctx.timeScaleMapping = mapping;
-    patch = { ...data, x: displayX };
-  }
+  const patch = applyDataPreprocessors(ctx, data);
   s.updateData(patch);
   updateSeriesBuffer(ctx, s);
 
@@ -138,16 +104,11 @@ export function updateSeries(
   ctx.requestRender();
 }
 
-/**
- * After an append: either keep a fixed X window scrolling to the latest point
- * (autoScroll), or grow the X domain to fit all history.
- */
 function applyStreamingViewport(ctx: any, series: Series, oldMaxX: number): void {
   if (ctx.autoScrollEnabled) {
     const newBounds = series.getBounds();
     if (newBounds) {
       const xRange = ctx.viewBounds.xMax - ctx.viewBounds.xMin;
-      // Follow only when the view was already near the live edge
       if (oldMaxX >= ctx.viewBounds.xMax - Math.max(xRange * 0.05, 1e-9)) {
         const range = xRange > 0 ? xRange : Math.max(newBounds.xMax - newBounds.xMin, 1);
         ctx.viewBounds.xMax = newBounds.xMax;
@@ -160,7 +121,6 @@ function applyStreamingViewport(ctx: any, series: Series, oldMaxX: number): void
     return;
   }
 
-  // Expand mode: auto-scale Y; optionally grow X when axis.auto
   if (Array.from(ctx.yAxisOptionsMap.values()).some((o: any) => o.auto)) {
     ctx.autoScaleYOnly();
   }

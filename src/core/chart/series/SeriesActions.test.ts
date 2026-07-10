@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeAll } from "vitest";
+import "../../../trading/registerTrading";
 import {
   addSeries,
   removeSeries,
@@ -10,6 +11,7 @@ import { Series } from "../../Series";
 
 function makeCtx(overrides: Record<string, unknown> = {}) {
   const series = new Map<string, Series>();
+  let timeScaleMapping: unknown = null;
   return {
     series,
     renderer: {
@@ -24,7 +26,10 @@ function makeCtx(overrides: Record<string, unknown> = {}) {
     autoScrollEnabled: false,
     requestRender: vi.fn(),
     updateLegend: vi.fn(),
-    timeScaleMapping: null as unknown,
+    getTimeScaleMapping: () => timeScaleMapping,
+    setTimeScaleMapping: (v: unknown) => {
+      timeScaleMapping = v;
+    },
     colorScheme: undefined as { colors: string[] } | undefined,
     ...overrides,
   };
@@ -274,6 +279,103 @@ describe("SeriesActions lifecycle", () => {
     // stays well within the view and range change is < 10% → no bounds update
     appendData(ctx, "s", Float32Array.from([981]), Float32Array.from([1]));
     expect(ctx.viewBounds.xMax).toBe(beforeMax);
+  });
+
+  it("updateSeries is a no-op for unknown series id", () => {
+    const ctx = makeCtx();
+    updateSeries(ctx, "missing", { x: Float32Array.from([0]), y: Float32Array.from([1]) });
+    expect(ctx.requestRender).not.toHaveBeenCalled();
+  });
+
+  it("autoscroll skips viewport pan when append is far from the trailing edge", () => {
+    const ctx = makeCtx({
+      autoScrollEnabled: true,
+      viewBounds: { xMin: 0, xMax: 100, yMin: 0, yMax: 50 },
+      yAxisOptionsMap: new Map([["y", { auto: false }]]),
+    });
+    addSeries(ctx, {
+      id: "s",
+      type: "line",
+      data: {
+        x: Float32Array.from({ length: 50 }, (_, i) => i),
+        y: Float32Array.from({ length: 50 }, (_, i) => i),
+      },
+    });
+    const xmaxBefore = ctx.viewBounds.xMax;
+    updateSeries(ctx, "s", {
+      x: Float32Array.from([10, 11]),
+      y: Float32Array.from([1, 2]),
+      append: true,
+    });
+    expect(ctx.viewBounds.xMax).toBe(xmaxBefore);
+  });
+
+  it("expands x bounds when appended data range shifts more than 10%", () => {
+    const ctx = makeCtx({
+      autoScrollEnabled: false,
+      xAxisOptions: { auto: true },
+      viewBounds: { xMin: 0, xMax: 100, yMin: 0, yMax: 50 },
+      yAxisOptionsMap: new Map([["y", { auto: false }]]),
+    });
+    addSeries(ctx, {
+      id: "s",
+      type: "line",
+      data: {
+        x: Float32Array.from({ length: 20 }, (_, i) => i),
+        y: Float32Array.from({ length: 20 }, (_, i) => i),
+      },
+    });
+    updateSeries(ctx, "s", {
+      x: Float32Array.from({ length: 200 }, (_, i) => i),
+      y: Float32Array.from({ length: 200 }, (_, i) => i),
+      append: true,
+    });
+    expect(ctx.viewBounds.xMax).toBeGreaterThan(100);
+  });
+
+  it("updateSeries append treats missing bounds as -Infinity trailing edge", () => {
+    const ctx = makeCtx({ autoScrollEnabled: true });
+    addSeries(ctx, { id: "empty", type: "line", data: { x: new Float32Array(0), y: new Float32Array(0) } });
+    updateSeries(ctx, "empty", {
+      x: Float32Array.from([0, 1]),
+      y: Float32Array.from([1, 2]),
+      append: true,
+    });
+    expect(ctx.requestRender).toHaveBeenCalled();
+  });
+
+  it("autoscroll derives range from data when the view x span is zero", () => {
+    const ctx = makeCtx({
+      autoScrollEnabled: true,
+      viewBounds: { xMin: 50, xMax: 50, yMin: 0, yMax: 50 },
+      yAxisOptionsMap: new Map([["y", { auto: false }]]),
+    });
+    addSeries(ctx, {
+      id: "s",
+      type: "line",
+      data: {
+        x: Float32Array.from({ length: 51 }, (_, i) => i),
+        y: Float32Array.from({ length: 51 }, (_, i) => i),
+      },
+    });
+    updateSeries(ctx, "s", {
+      x: Float32Array.from([51, 52]),
+      y: Float32Array.from([51, 52]),
+      append: true,
+    });
+    expect(ctx.viewBounds.xMax).toBeGreaterThan(50);
+    expect(ctx.viewBounds.xMax - ctx.viewBounds.xMin).toBeGreaterThan(0);
+  });
+
+  it("updateSeries without append does not read trailing bounds", () => {
+    const ctx = makeCtx({ autoScrollEnabled: true });
+    addSeries(ctx, lineSeries("s", 5));
+    const getBounds = vi.spyOn(ctx.series.get("s")!, "getBounds");
+    updateSeries(ctx, "s", {
+      x: Float32Array.from([0, 1, 2, 3, 4]),
+      y: Float32Array.from([0, 1, 2, 3, 4]),
+    });
+    expect(getBounds).not.toHaveBeenCalled();
   });
 
   it("skips heikin-ashi transform when OHLC is incomplete", () => {
