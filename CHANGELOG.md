@@ -11,6 +11,13 @@ All notable changes to this project will be documented in this file.
 - **`chart.setPanMode(boolean)`**: use `chart.setMode('pan' | 'select')`. **Removal: v4.0**.
 - **`chart.syncDragLayout()`**: prefer CSS pane transforms during resize. **Removal: v4.0**.
 - Crosshair **`showAxisLabels`**: use `valueDisplayMode`. **Removal: v4.0**.
+- Stacked **`getChart(id)`**: prefer `getPane(id)` (alias kept). **Removal: v4.0**.
+
+### Deprecated (still work — aliases)
+
+- React / framework: `SciPlot`, `SciChart`, `useSciPlot`, `useSciChart` → use `VeloPlot` / `useVeloPlot`.
+- Angular: `SciPlotComponent`, `useSciPlotAngular` → `VeloPlotComponent` / `useVeloPlotAngular`.
+- Svelte: `createSciPlot` → `createVeloPlot`.
 
 ### Added
 

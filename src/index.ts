@@ -346,6 +346,10 @@ export {
   useIndicator,
   useChartSync,
   useChartGroup,
+  SciPlot,
+  SciChart,
+  useSciPlot,
+  useSciChart,
   type VeloPlotProps,
   type VeloPlotRef,
   type VeloPlotSeries,
@@ -357,6 +361,16 @@ export {
   type UseStackedPlotReturn,
   type UseIndicatorReturn,
   type UseChartSyncReturn,
+  type SciPlotProps,
+  type SciPlotRef,
+  type SciPlotSeries,
+  type SciChartProps,
+  type SciChartRef,
+  type SciChartSeries,
+  type UseSciPlotOptions,
+  type UseSciPlotReturn,
+  type UseSciChartOptions,
+  type UseSciChartReturn,
 } from "./react";
 
 // ============================================
