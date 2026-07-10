@@ -70,7 +70,7 @@ export function autoScaleAll(ctx: NavigationContext): void {
           if (yRange <= 0 || !isFinite(yRange)) yRange = Math.abs(bounds.min) * 0.1 || 1;
           const yPad = Math.min(yRange * 0.005, 1e10);
           
-          let newMin = Math.max(MIN_VAL, bounds.min - yPad);
+          const newMin = Math.max(MIN_VAL, bounds.min - yPad);
           const newMax = Math.min(MAX_VAL, bounds.max + yPad);
           scale.setDomain(newMin, newMax);
           
@@ -226,7 +226,7 @@ export function autoScaleYOnly(ctx: NavigationContext): void {
       if (yRange <= 0 || !isFinite(yRange)) yRange = Math.abs(bounds.min) * 0.1 || 1;
       const yPad = Math.min(yRange * 0.005, 1e10);
       
-      let newMin = Math.max(MIN_VAL, bounds.min - yPad);
+      const newMin = Math.max(MIN_VAL, bounds.min - yPad);
       const newMax = Math.min(MAX_VAL, bounds.max + yPad);
       scale.setDomain(newMin, newMax);
       

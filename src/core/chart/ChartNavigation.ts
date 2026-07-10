@@ -139,7 +139,7 @@ export function applyPan(
       const moveY = (deltaY / pa.height) * range;
       
       let nextMin = scale.domain[0] + moveY;
-      let nextMax = scale.domain[1] + moveY;
+      const nextMax = scale.domain[1] + moveY;
 
       if (pinBarBaseline) {
         nextMin = 0;

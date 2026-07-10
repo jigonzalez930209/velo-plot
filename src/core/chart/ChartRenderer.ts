@@ -15,8 +15,7 @@ import type { OverlayRenderer } from "../OverlayRenderer";
 import type { PlotArea, CursorState, ChartEventMap } from "../../types";
 import type { EventEmitter } from "../EventEmitter";
 import type { SelectionManager } from "../selection";
-import { drawGauge } from "../../renderer/GaugeRenderer";
-import { drawSankey } from "../../renderer/SankeyRenderer";
+import { drawRegisteredOverlaySeries } from "./overlaySeriesRegistry";
 
 export interface RenderContext {
   webglCanvas: HTMLCanvasElement;
@@ -453,25 +452,7 @@ export function renderOverlay(
     );
   }
 
-  // Draw series-specific overlay elements (Gauge, Sankey)
-  ctx.series.forEach((s) => {
-    if (!s.isVisible()) return;
-    const type = s.getType();
-
-    if (type === 'gauge') {
-      const gData = s.getGaugeData();
-      const gStyle = s.getGaugeStyle();
-      if (gData && gStyle) {
-        drawGauge(ctx.overlayCtx, gData, gStyle, plotArea);
-      }
-    } else if (type === 'sankey') {
-      const sData = s.getSankeyData();
-      const sStyle = s.getSankeyStyle();
-      if (sData && sStyle) {
-        drawSankey(ctx.overlayCtx, sData, sStyle, plotArea);
-      }
-    }
-  });
+  drawRegisteredOverlaySeries(ctx.overlayCtx, ctx.series.values(), plotArea);
 
   // Only draw cartesian axes if not special
   if (!isSpecialChart) {

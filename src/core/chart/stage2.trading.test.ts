@@ -5,7 +5,7 @@ import { ChartAlertManager } from "./ChartAlerts";
 
 describe("heikinAshi", () => {
   it("transforms OHLC to Heikin-Ashi values", () => {
-    const n = 3;
+    const _n = 3;
     const open = Float32Array.from([10, 11, 12]);
     const high = Float32Array.from([12, 13, 14]);
     const low = Float32Array.from([9, 10, 11]);

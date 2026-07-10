@@ -24,7 +24,6 @@ import {
   parseColor,
   brightenColor,
 } from "../../renderer/NativeWebGLRenderer";
-import { createGpuChartRenderer } from "../../renderer/GpuChartRenderer";
 import type { ChartSeriesRenderer } from "../../renderer/ChartSeriesRenderer";
 import type { Scale } from "../../scales";
 import {
@@ -59,7 +58,6 @@ import {
 
 import type { Chart, ExportOptions } from "./types";
 import { exportToCSV, exportToJSON, exportToImage } from "./ChartExporter";
-import { exportToSVG } from "./exporter/SVGExporter";
 import { applyZoom, applyPan, type NavigationContext } from "./ChartNavigation";
 import { autoScaleAll, autoScaleYOnly, handleBoxZoom, fitToData } from "./ChartScaling";
 import {
@@ -88,7 +86,7 @@ import {
   getAxesLayout,
   resizeCanvases,
 } from "./ChartSetup";
-import { PluginManagerImpl } from "../../plugins";
+import { PluginManagerImpl } from "../../plugins/PluginManager";
 import {
   initControls as createControls,
   initLegend as createLegend,
@@ -96,29 +94,21 @@ import {
 import {
   markInitComplete,
 } from "../ChartInitQueue";
-import { PluginLoading } from "../../plugins/loading";
 import { ChartPluginBridge } from "./ChartPluginBridge";
 import { mergeLayoutOptions } from "../layout";
 import { ChartAxisManager } from "./ChartAxisManager";
 import { ChartStateManager } from "./ChartStateManager";
 import { ChartRenderLoop } from "./ChartRenderLoop";
-import {
-  addIndicatorToChart,
-  type AddIndicatorOptions,
-  type AddIndicatorResult,
-  type IndicatorPresetName,
-} from "../indicator/addIndicator";
-import { ChartAlertManager, type PriceAlertOptions } from "./ChartAlerts";
-import {
-  buildPositionLineAnnotation,
-  type PositionLineOptions,
-} from "./positionLines";
+import type { ChartFeatureHooks } from "./ChartFeatureHooks";
 import type { BusinessDayMapping } from "../time/TimeScale";
 // ============================================
 // Chart Implementation
 // ============================================
 
 export class ChartImpl implements Chart {
+  /** Optional hook for extended bundles (WebGPU, etc.). */
+  static afterConstruct: ((chart: ChartImpl, options: ChartOptions) => void) | null = null;
+
   private container: HTMLDivElement;
   private webglCanvas: HTMLCanvasElement;
   private overlayCanvas: HTMLCanvasElement;
@@ -145,7 +135,6 @@ export class ChartImpl implements Chart {
   private plotAreaBackground: [number, number, number, number];
   private renderer!: ChartSeriesRenderer;
   private activeRendererType: "webgl" | "webgpu" = "webgl";
-  private rendererInitPromise: Promise<void> | null = null;
   private overlay: OverlayRenderer;
   private interaction: InteractionManager;
   private xScale: Scale;
@@ -248,9 +237,8 @@ export class ChartImpl implements Chart {
   }
   private selectionManager: SelectionManager;
   private responsiveManager: ResponsiveManager;
-  private alertManager: ChartAlertManager;
+  private featureHooks: ChartFeatureHooks | null = null;
   private timeScaleMapping: BusinessDayMapping | null = null;
-  private positionLineCounter = 0;
 
   constructor(options: ChartOptions) {
     this.initialOptions = options;
@@ -328,16 +316,20 @@ export class ChartImpl implements Chart {
     // Initialize composed modules
     this.pluginBridge = new ChartPluginBridge(this.pluginManager);
 
-    // 3. Show loading indicator INSTANTLY if enabled
-    if (options.loading !== false) {
+    // 3. Show loading indicator when explicitly enabled
+    if (options.loading === true || typeof options.loading === "object") {
       const loadingConfig = typeof options.loading === 'object' ? options.loading : {
         message: 'Loading VeloPlot...',
         overlayOpacity: 0.1,
       };
-      this.use(PluginLoading({
-        ...loadingConfig,
-        autoShow: true // Ensure it shows immediately
-      }));
+      void import("../../plugins/loading").then(({ PluginLoading }) => {
+        if (!this._isDestroyed) {
+          this.use(PluginLoading({
+            ...loadingConfig,
+            autoShow: true,
+          }));
+        }
+      });
     }
 
     // 4. Load initial plugins
@@ -345,14 +337,12 @@ export class ChartImpl implements Chart {
       options.plugins.forEach(p => this.use(p));
     }
 
-    const requestedRenderer = options.renderer ?? "webgl";
-    if (requestedRenderer === "webgpu") {
-      this.rendererInitPromise = this.initGpuRenderer();
-    } else {
-      this.renderer = new NativeWebGLRenderer(this.webglCanvas);
-      this.activeRendererType = "webgl";
-      this.renderer.setDPR(this.dpr);
-    }
+    this.renderer = new NativeWebGLRenderer(this.webglCanvas);
+    this.activeRendererType = "webgl";
+    this.renderer.setDPR(this.dpr);
+
+    ChartImpl.afterConstruct?.(this, options);
+
     this.overlay = new OverlayRenderer(this.overlayCtx, this.theme);
 
     // Initialize selection manager EARLY so plugins can use it for hit-testing
@@ -389,13 +379,6 @@ export class ChartImpl implements Chart {
       },
       responsiveConfig
     );
-
-    this.alertManager = new ChartAlertManager(this.events, (seriesId) => {
-      const s = seriesId ? this.series.get(seriesId) : undefined;
-      if (s) return s as import("./ChartAlerts").AlertableSeries;
-      const first = this.series.values().next().value;
-      return first as import("./ChartAlerts").AlertableSeries | undefined;
-    });
 
     // Initialize axis manager
     this.axisManager = new ChartAxisManager({
@@ -463,7 +446,7 @@ export class ChartImpl implements Chart {
       pixelToDataX: (px) => this.pixelToDataX(px),
       pixelToDataY: (py, yAxisId) => this.pixelToDataY(py, yAxisId),
       getBusinessDayMapping: () => this.timeScaleMapping,
-      getAlerts: () => this.alertManager.getAlerts(),
+      getAlerts: () => this.featureHooks?.getAlerts?.() ?? [],
       get yScale() { return this.yScales.get(this.primaryYAxisId) || this.yScales.values().next().value as Scale; },
     });
 
@@ -643,9 +626,9 @@ export class ChartImpl implements Chart {
   async startInit(): Promise<void> {
     if (this.renderLoop.isInitStarted() || this._isDestroyed) return;
 
-    if (this.rendererInitPromise) {
-      await this.rendererInitPromise;
-      this.rendererInitPromise = null;
+    if ((this as { _webgpuInitPromise?: Promise<void> })._webgpuInitPromise) {
+      await (this as { _webgpuInitPromise?: Promise<void> })._webgpuInitPromise;
+      (this as { _webgpuInitPromise?: Promise<void> })._webgpuInitPromise = undefined;
     }
     if (!this.renderer) {
       this.renderer = new NativeWebGLRenderer(this.webglCanvas);
@@ -908,28 +891,20 @@ export class ChartImpl implements Chart {
     );
   }
 
+  setFeatureHooks(hooks: ChartFeatureHooks | null): void {
+    this.featureHooks?.destroy?.();
+    this.featureHooks = hooks;
+  }
+
   exportSVG(): string {
-    const rect = this.container.getBoundingClientRect();
-    return exportToSVG(
-      this.getAllSeries(),
-      this.viewBounds,
-      this.getPlotArea(),
-      this.xScale,
-      this.yScales,
-      this.theme,
-      rect.width || this.container.clientWidth,
-      rect.height || this.container.clientHeight,
-      {
-        xAxis: this.xAxisOptions,
-        yAxis: this.yAxisOptionsMap.get(this.primaryYAxisId),
-        primaryYAxisId: this.primaryYAxisId,
-      },
+    throw new Error(
+      "[VeloPlot] exportSVG() is not available in the core bundle. " +
+        "Use exportImage() or import from 'velo-plot/trading', 'velo-plot/scientific', or 'velo-plot/full'.",
     );
   }
 
   // Series Management (delegates to ChartSeries)
   private getSeriesContext() {
-    const self = this;
     return {
       series: this.series,
       renderer: this.renderer,
@@ -945,11 +920,9 @@ export class ChartImpl implements Chart {
       updateLegend: () => {
         if (this.legend) this.legend.update(this.getAllSeries());
       },
-      get timeScaleMapping() {
-        return self.timeScaleMapping;
-      },
-      set timeScaleMapping(v: BusinessDayMapping | null) {
-        self.timeScaleMapping = v;
+      getTimeScaleMapping: () => this.timeScaleMapping,
+      setTimeScaleMapping: (v: BusinessDayMapping | null) => {
+        this.timeScaleMapping = v;
       },
     };
   }
@@ -986,7 +959,7 @@ export class ChartImpl implements Chart {
         bounds: series.getBounds() ?? this.viewBounds,
       });
     }
-    this.alertManager.evaluate();
+    this.featureHooks?.onDataUpdate?.();
   }
   appendData(
     id: string,
@@ -1004,7 +977,7 @@ export class ChartImpl implements Chart {
         bounds: series.getBounds() ?? this.viewBounds,
       });
     }
-    this.alertManager.evaluate();
+    this.featureHooks?.onDataUpdate?.();
   }
   setAutoScroll(enabled: boolean): void {
     this.autoScroll = enabled;
@@ -1027,42 +1000,45 @@ export class ChartImpl implements Chart {
     return id;
   }
 
-  /**
-   * Calculate and render a trading indicator preset (RSI, MACD, Bollinger, EMA, SMA).
-   * For stacked layouts use buildIndicatorPaneFromPreset() when creating panes.
-   */
+  private tradingRequired(method: string): never {
+    throw new Error(
+      `[VeloPlot] ${method}() requires the trading bundle. Import from 'velo-plot/trading'.`,
+    );
+  }
+
   async addIndicator(
-    preset: IndicatorPresetName,
-    options?: AddIndicatorOptions,
-  ): Promise<AddIndicatorResult> {
-    return addIndicatorToChart(this, preset, options);
+    _preset: import("../indicator/addIndicator").IndicatorPresetName,
+    _options?: import("../indicator/addIndicator").AddIndicatorOptions,
+  ): Promise<import("../indicator/addIndicator").AddIndicatorResult> {
+    this.tradingRequired("addIndicator");
   }
 
-  addAlert(options: PriceAlertOptions): string {
-    return this.alertManager.addAlert(options);
+  addAlert(_options: import("./ChartAlerts").PriceAlertOptions): string {
+    this.tradingRequired("addAlert");
   }
 
-  removeAlert(id: string): boolean {
-    return this.alertManager.removeAlert(id);
+  removeAlert(_id: string): boolean {
+    this.tradingRequired("removeAlert");
   }
 
   clearAlerts(): void {
-    this.alertManager.clearAlerts();
+    this.tradingRequired("clearAlerts");
   }
 
-  getAlerts(): PriceAlertOptions[] {
-    return this.alertManager.getAlerts();
+  getAlerts(): import("./ChartAlerts").PriceAlertOptions[] {
+    this.tradingRequired("getAlerts");
   }
 
-  addPositionLine(options: PositionLineOptions): string {
-    const id = options.id ?? `position-${++this.positionLineCounter}`;
-    this.addAnnotation(buildPositionLineAnnotation(options, id));
-    return id;
+  addPositionLine(
+    _options: import("./positionLines").PositionLineOptions,
+  ): string {
+    this.tradingRequired("addPositionLine");
   }
 
-  setDrawingMode(mode: import("../../plugins/drawing-tools").DrawingMode): void {
-    const plugin = this.getPluginAPI<any>("velo-plot-drawing-tools");
-    plugin?.setMode?.(mode);
+  setDrawingMode(
+    _mode: import("../../plugins/drawing-tools").DrawingMode,
+  ): void {
+    this.tradingRequired("setDrawingMode");
   }
 
   getSeries(id: string): Series | undefined {
@@ -1387,30 +1363,6 @@ export class ChartImpl implements Chart {
   /** Runtime chart renderer backend in use. */
   getActiveRenderer(): "webgl" | "webgpu" {
     return this.activeRendererType;
-  }
-
-  private async initGpuRenderer(): Promise<void> {
-    const gpu = await createGpuChartRenderer(this.webglCanvas, {
-      backend: "webgpu",
-      powerPreference: "high-performance",
-    });
-
-    if (gpu) {
-      this.renderer = gpu;
-      this.activeRendererType = gpu.backend;
-      this.renderer.setDPR(this.dpr);
-      this.renderLoop?.setRenderer(this.renderer);
-      return;
-    }
-
-    console.warn(
-      "[VeloPlot] WebGPU unavailable — falling back to WebGL2. " +
-        "See docs/adr/001-webgpu-renderer-strategy.md.",
-    );
-    this.renderer = new NativeWebGLRenderer(this.webglCanvas);
-    this.activeRendererType = "webgl";
-    this.renderer.setDPR(this.dpr);
-    this.renderLoop?.setRenderer(this.renderer);
   }
 
   /**
@@ -1853,7 +1805,8 @@ export class ChartImpl implements Chart {
     }
     this.animationEngine.destroy();
     this.selectionManager.destroy();
-    this.alertManager.destroy();
+    this.featureHooks?.destroy?.();
+    this.featureHooks = null;
     this.responsiveManager.destroy();
     this.interaction.destroy();
     this.series.forEach((s) => {

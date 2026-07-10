@@ -61,7 +61,7 @@ export function applyAnimatedZoom(
   const targetXMin = options.x ? options.x[0] : ctx.viewBounds.xMin;
   const targetXMax = options.x ? options.x[1] : ctx.viewBounds.xMax;
   let targetYMin = options.y ? options.y[0] : ctx.viewBounds.yMin;
-  let targetYMax = options.y ? options.y[1] : ctx.viewBounds.yMax;
+  const targetYMax = options.y ? options.y[1] : ctx.viewBounds.yMax;
 
   if (pinBarBaseline && options.y) {
     targetYMin = 0;
