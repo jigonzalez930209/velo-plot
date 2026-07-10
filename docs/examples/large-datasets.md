@@ -19,7 +19,7 @@ import { ref } from 'vue'
 ## Code
 
 ```typescript
-import { createChart } from 'velo-plot'
+import { createChart } from 'velo-plot/scientific'
 
 const chart = createChart({
   container: document.getElementById('chart'),
@@ -88,7 +88,7 @@ Velo Plot uses WebGL:
 For even larger datasets, use LTTB downsampling:
 
 ```typescript
-import { downsampleLTTB } from 'velo-plot'
+import { downsampleLTTB } from 'velo-plot/scientific'
 
 // Original: 10 million points
 const originalX = new Float32Array(10000000)

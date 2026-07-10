@@ -11,7 +11,8 @@ Capture the WebGL plot area and all 2D overlays (axes, annotations, legends). Su
 ### Single-chart code
 
 ```typescript
-import { createChart, PluginSnapshot } from 'velo-plot';
+import { createChart } from 'velo-plot';
+import { PluginSnapshot } from 'velo-plot/plugins/snapshot';
 
 const chart = createChart({ container });
 chart.use(PluginSnapshot());
@@ -69,12 +70,10 @@ Extract raw data for external analysis in CSV, JSON, and more.
 ## API Reference Summary
 
 ```typescript
-import {
-  PluginSnapshot,
-  PluginVideoRecorder,
-  PluginDataExport,
-  createStackedChart,
-} from 'velo-plot';
+import { PluginSnapshot } from 'velo-plot/plugins/snapshot';
+import { PluginVideoRecorder } from 'velo-plot/plugins/video-recorder';
+import { PluginDataExport } from 'velo-plot/plugins/data-export';
+import { createStackedChart } from 'velo-plot/trading';
 
 // Single chart — raster + SVG
 chart.use(PluginSnapshot());

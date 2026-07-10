@@ -22,8 +22,8 @@ The following demo compares two different products across six key performance me
 ## Example Code
 
 ```typescript
-import { createChart } from 'velo-plot';
-import { PluginRadar } from 'velo-plot/plugins';
+import { createChart } from 'velo-plot/scientific';
+import { PluginRadar } from 'velo-plot/plugins/radar';
 
 const chart = createChart({ container });
 

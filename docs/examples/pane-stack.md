@@ -56,7 +56,7 @@ Before stacked API, Price / Volume / RSI required:
 ## Full Implementation
 
 ```typescript
-import { createStackedChart, buildIndicatorPane, detectIndicatorMarkers } from 'velo-plot';
+import { createStackedChart, buildIndicatorPane, detectIndicatorMarkers } from 'velo-plot/full';
 
 const markers = detectIndicatorMarkers(x, wt1, 4);
 

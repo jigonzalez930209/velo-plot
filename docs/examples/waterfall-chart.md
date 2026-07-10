@@ -30,7 +30,7 @@ Optional horizontal lines connect consecutive bars, making it easy to follow the
 ## Usage
 
 ```typescript
-import { createChart } from 'velo-plot'
+import { createChart } from 'velo-plot/scientific'
 
 const chart = createChart({ container: '#chart' })
 

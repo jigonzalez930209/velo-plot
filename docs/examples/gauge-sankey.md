@@ -10,7 +10,7 @@ Beautiful KPI visualization.
 The Gauge chart is ideal for showing a single value within a predefined range.
 
 ```typescript
-import { VeloPlot } from 'velo-plot';
+import { VeloPlot } from 'velo-plot/react';
 
 const chart = new VeloPlot({
   container: document.getElementById('chart-container'),

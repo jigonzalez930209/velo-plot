@@ -54,7 +54,7 @@ See [Trading Indicators example](/examples/trading/indicators) and [addIndicator
 import { 
   sma, ema, bollingerBands, rsi, macd,
   type IndicatorResult, type OHLCData 
-} from 'velo-plot';
+} from 'velo-plot/plugins/analysis';
 
 // Moving averages on close prices
 const prices = chart.getSeries('price').getYValues();

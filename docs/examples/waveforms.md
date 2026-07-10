@@ -34,7 +34,7 @@ import {
   generateSawtoothWave,
   generateCVData,
   generateNyquistData,
-} from 'velo-plot';
+} from 'velo-plot/full';
 
 // Basic waveforms
 const sine = generateSineWave({
@@ -69,7 +69,7 @@ const nyquist = generateNyquistData({
 Use the testing utilities for performance benchmarking:
 
 ```typescript
-import { benchmarkRender, assertPerformance } from 'velo-plot';
+import { benchmarkRender, assertPerformance } from 'velo-plot/full';
 
 // Measure render performance
 const result = await benchmarkRender(chart, {
@@ -90,7 +90,7 @@ assertPerformance(result, {
 ## Snapshot Testing
 
 ```typescript
-import { createSnapshot, compareSnapshots } from 'velo-plot';
+import { createSnapshot, compareSnapshots } from 'velo-plot/full';
 
 // Create a snapshot of chart state
 const snapshot = createSnapshot(chart);

@@ -24,7 +24,8 @@ Even with high-frequency updates, the UI remains perfectly responsive.
 ## Implementation
 
 ```typescript
-import { createChart, PluginOffscreen } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
+import { PluginOffscreen } from 'velo-plot/plugins/offscreen';
 
 const chart = createChart({ container });
 

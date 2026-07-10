@@ -20,7 +20,8 @@ The `PluginForecasting` provides a suite of algorithms to predict future values 
 To use forecasting, register the plugin and then call the forecasting API.
 
 ```typescript
-import { createChart, PluginForecasting } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
+import { PluginForecasting } from 'velo-plot/plugins/forecasting';
 
 const chart = createChart({ container: 'chart-id' });
 

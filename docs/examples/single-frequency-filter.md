@@ -44,7 +44,7 @@ You can use the filter as a standalone function or through the `PluginAnalysis`.
 #### 1. Standalone Function
 
 ```typescript
-import { singleFrequencyFilter } from 'velo-plot';
+import { singleFrequencyFilter } from 'velo-plot/scientific';
 
 const filteredData = singleFrequencyFilter(noisyBuffer, {
   frequency: 50,      // Hz to remove
@@ -56,7 +56,7 @@ const filteredData = singleFrequencyFilter(noisyBuffer, {
 #### 2. Via Analysis Plugin
 
 ```typescript
-import { PluginAnalysis } from 'velo-plot/plugins';
+import { PluginAnalysis } from 'velo-plot/plugins/analysis';
 
 chart.use(PluginAnalysis());
 

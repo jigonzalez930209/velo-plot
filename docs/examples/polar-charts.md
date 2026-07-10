@@ -70,7 +70,7 @@ Simulates electrochemical measurements showing oxidation-reduction peaks. Critic
 ## Basic Implementation
 
 ```typescript
-import { createChart } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
 
 const chart = createChart({
   container: document.getElementById('chart')
