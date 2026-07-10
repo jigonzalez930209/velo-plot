@@ -5,7 +5,8 @@ The `PluginForecasting` adds advanced time-series prediction capabilities to the
 ## Initialization
 
 ```typescript
-import { createChart, PluginForecasting } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
+import { PluginForecasting } from 'velo-plot/plugins/forecasting';
 
 const chart = createChart({ ... });
 await chart.use(PluginForecasting({

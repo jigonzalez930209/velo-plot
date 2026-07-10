@@ -19,7 +19,8 @@ High-performance caching system with LRU/LFU/FIFO strategies, TTL support, and a
 ## Basic Usage
 
 ```typescript
-import { createChart, PluginCaching } from 'velo-plot';
+import { createChart } from 'velo-plot';
+import { PluginCaching } from 'velo-plot/plugins/caching';
 
 const chart = createChart({
   container: document.getElementById('chart')!

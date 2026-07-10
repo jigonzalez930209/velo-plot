@@ -7,7 +7,8 @@ The `PluginSnapshot` allows capturing the current state of the chart as a high-r
 ### Basic Usage
 
 ```typescript
-import { createChart, PluginSnapshot } from 'velo-plot';
+import { createChart } from 'velo-plot';
+import { PluginSnapshot } from 'velo-plot/plugins/snapshot';
 
 const chart = createChart({ container });
 await chart.use(PluginSnapshot({ defaultFormat: 'png' }));
@@ -48,7 +49,8 @@ Captures the chart's animation loop, including transitions, real-time data strea
 ### Basic Usage
 
 ```typescript
-import { createChart, PluginVideoRecorder } from 'velo-plot';
+import { createChart } from 'velo-plot';
+import { PluginVideoRecorder } from 'velo-plot/plugins/video-recorder';
 
 const chart = createChart({ container });
 await chart.use(PluginVideoRecorder({ fps: 60, bitrate: 5000000 }));
@@ -79,7 +81,8 @@ Extracts scientific data from chart series into various standard formats for ext
 ### Basic Usage
 
 ```typescript
-import { createChart, PluginDataExport } from 'velo-plot';
+import { createChart } from 'velo-plot';
+import { PluginDataExport } from 'velo-plot/plugins/data-export';
 
 const chart = createChart({ container });
 await chart.use(PluginDataExport());

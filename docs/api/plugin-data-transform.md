@@ -9,8 +9,8 @@ See this plugin in action in our [Process Monitoring Dashboard](/examples/gauge-
 ## Installation
 
 ```typescript
-import { VeloPlot } from 'velo-plot';
-import { PluginDataTransform } from 'velo-plot/plugins';
+import { VeloPlot } from 'velo-plot/react';
+import { PluginDataTransform } from 'velo-plot/plugins/data-transform';
 
 const chart = new VeloPlot({
   // ...
