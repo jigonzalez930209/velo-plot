@@ -127,16 +127,39 @@ describe("SeriesActions lifecycle", () => {
     expect(ctx.renderer.deleteBuffer).not.toHaveBeenCalled();
   });
 
-  it("appendData with autoscroll pans view when at trailing edge", () => {
+  it("updateSeries append with autoscroll keeps a fixed X window", () => {
     const ctx = makeCtx({
       autoScrollEnabled: true,
       viewBounds: { xMin: 90, xMax: 100, yMin: 0, yMax: 50 },
       yAxisOptionsMap: new Map([["y", { auto: true }]]),
     });
     addSeries(ctx, lineSeries("s", 101));
-    appendData(ctx, "s", [101, 102], [200, 202]);
+    const spanBefore = ctx.viewBounds.xMax - ctx.viewBounds.xMin;
+    updateSeries(ctx, "s", {
+      x: Float32Array.from([101, 102]),
+      y: Float32Array.from([200, 202]),
+      append: true,
+    });
+    const spanAfter = ctx.viewBounds.xMax - ctx.viewBounds.xMin;
     expect(ctx.viewBounds.xMax).toBeGreaterThan(100);
+    expect(spanAfter).toBeCloseTo(spanBefore, 5);
     expect(ctx.autoScaleYOnly).toHaveBeenCalled();
+  });
+
+  it("updateSeries append without autoscroll expands X when axis.auto", () => {
+    const ctx = makeCtx({
+      autoScrollEnabled: false,
+      xAxisOptions: { auto: true },
+      viewBounds: { xMin: 0, xMax: 5, yMin: 0, yMax: 50 },
+      yAxisOptionsMap: new Map([["y", { auto: true }]]),
+    });
+    addSeries(ctx, lineSeries("s", 20));
+    updateSeries(ctx, "s", {
+      x: Float32Array.from([20, 21, 22]),
+      y: Float32Array.from([1, 2, 3]),
+      append: true,
+    });
+    expect(ctx.viewBounds.xMax).toBeGreaterThan(5);
   });
 
   it("appendData without autoscroll may expand x bounds when auto x", () => {

@@ -117,16 +117,68 @@ export function updateSeries(
   data: SeriesUpdateData
 ): void {
   const s = ctx.series.get(id);
-  if (s) {
-    let patch = data;
-    if (data.x && isBusinessDayScaleActive(ctx.xAxisOptions)) {
-      const { displayX, mapping } = applyBusinessDayX(data.x, ctx.xAxisOptions);
-      ctx.timeScaleMapping = mapping;
-      patch = { ...data, x: displayX };
+  if (!s) return;
+
+  const isAppend = !!data.append;
+  const oldMaxX = isAppend ? (s.getBounds()?.xMax ?? -Infinity) : -Infinity;
+
+  let patch = data;
+  if (data.x && isBusinessDayScaleActive(ctx.xAxisOptions)) {
+    const { displayX, mapping } = applyBusinessDayX(data.x, ctx.xAxisOptions);
+    ctx.timeScaleMapping = mapping;
+    patch = { ...data, x: displayX };
+  }
+  s.updateData(patch);
+  updateSeriesBuffer(ctx, s);
+
+  if (isAppend) {
+    applyStreamingViewport(ctx, s, oldMaxX);
+  }
+
+  ctx.requestRender();
+}
+
+/**
+ * After an append: either keep a fixed X window scrolling to the latest point
+ * (autoScroll), or grow the X domain to fit all history.
+ */
+function applyStreamingViewport(ctx: any, series: Series, oldMaxX: number): void {
+  if (ctx.autoScrollEnabled) {
+    const newBounds = series.getBounds();
+    if (newBounds) {
+      const xRange = ctx.viewBounds.xMax - ctx.viewBounds.xMin;
+      // Follow only when the view was already near the live edge
+      if (oldMaxX >= ctx.viewBounds.xMax - Math.max(xRange * 0.05, 1e-9)) {
+        const range = xRange > 0 ? xRange : Math.max(newBounds.xMax - newBounds.xMin, 1);
+        ctx.viewBounds.xMax = newBounds.xMax;
+        ctx.viewBounds.xMin = ctx.viewBounds.xMax - range;
+      }
     }
-    s.updateData(patch);
-    updateSeriesBuffer(ctx, s);
-    ctx.requestRender();
+    if (Array.from(ctx.yAxisOptionsMap.values()).some((o: any) => o.auto)) {
+      ctx.autoScaleYOnly();
+    }
+    return;
+  }
+
+  // Expand mode: auto-scale Y; optionally grow X when axis.auto
+  if (Array.from(ctx.yAxisOptionsMap.values()).some((o: any) => o.auto)) {
+    ctx.autoScaleYOnly();
+  }
+  if (ctx.xAxisOptions.auto) {
+    const newBounds = series.getBounds();
+    if (newBounds) {
+      const currentXRange = ctx.viewBounds.xMax - ctx.viewBounds.xMin;
+      const dataXRange = newBounds.xMax - newBounds.xMin;
+      if (
+        newBounds.xMax > ctx.viewBounds.xMax ||
+        newBounds.xMin < ctx.viewBounds.xMin ||
+        (currentXRange > 0 && Math.abs(dataXRange - currentXRange) / currentXRange > 0.1)
+      ) {
+        const xPad = Math.min(dataXRange * 0.005, 1e10);
+        ctx.viewBounds.xMin = Math.max(-1e15, newBounds.xMin - xPad);
+        ctx.viewBounds.xMax = Math.min(1e15, newBounds.xMax + xPad);
+      }
+    }
   }
 }
 
@@ -141,41 +193,7 @@ export function appendData(
   const oldMaxX = s.getBounds()?.xMax ?? -Infinity;
   s.updateData({ x: x as any, y: y as any, append: true });
   updateSeriesBuffer(ctx, s);
-
-  if (ctx.autoScrollEnabled) {
-    const newBounds = s.getBounds();
-    if (newBounds) {
-      const xRange = ctx.viewBounds.xMax - ctx.viewBounds.xMin;
-      if (oldMaxX >= ctx.viewBounds.xMax - xRange * 0.05) {
-        ctx.viewBounds.xMax = newBounds.xMax;
-        ctx.viewBounds.xMin = ctx.viewBounds.xMax - xRange;
-      }
-    }
-    if (Array.from(ctx.yAxisOptionsMap.values()).some((o: any) => o.auto)) {
-      ctx.autoScaleYOnly();
-    }
-  } else {
-    // During streaming (not autoscroll), only auto-scale Y to prevent X-axis shift
-    if (Array.from(ctx.yAxisOptionsMap.values()).some((o: any) => o.auto)) {
-      ctx.autoScaleYOnly();
-    }
-    // Only auto-scale X if explicitly enabled and data bounds changed significantly
-    if (ctx.xAxisOptions.auto) {
-      const newBounds = s.getBounds();
-      if (newBounds) {
-        const currentXRange = ctx.viewBounds.xMax - ctx.viewBounds.xMin;
-        const dataXRange = newBounds.xMax - newBounds.xMin;
-        // Only update X-axis if data extends significantly beyond current view
-        if (newBounds.xMax > ctx.viewBounds.xMax || 
-            newBounds.xMin < ctx.viewBounds.xMin ||
-            Math.abs(dataXRange - currentXRange) / currentXRange > 0.1) {
-          const xPad = Math.min(dataXRange * 0.005, 1e10);
-          ctx.viewBounds.xMin = Math.max(-1e15, newBounds.xMin - xPad);
-          ctx.viewBounds.xMax = Math.min(1e15, newBounds.xMax + xPad);
-        }
-      }
-    }
-  }
+  applyStreamingViewport(ctx, s, oldMaxX);
   ctx.requestRender();
 }
 
