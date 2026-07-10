@@ -11,4 +11,10 @@ describe("solid index", () => {
     expect(solid.useChartSync).toBeTypeOf("function");
     expect(solid.useChartGroup).toBe(solid.useChartSync);
   });
+
+  it("keeps SciPlot aliases for backward compatibility", () => {
+    expect(solid.SciPlot).toBe(solid.VeloPlot);
+    expect(solid.useSciPlot).toBe(solid.useVeloPlot);
+    expect(solid.useSciChart).toBe(solid.useVeloPlot);
+  });
 });
