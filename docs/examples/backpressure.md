@@ -39,7 +39,7 @@ import {
   BackpressureManager,
   createBackpressureManager,
   createRealtimeBackpressure,
-} from 'velo-plot';
+} from 'velo-plot/full';
 
 // Create a backpressure manager
 const bp = createBackpressureManager(10000, 'drop-oldest');
@@ -102,7 +102,7 @@ const bp = new BackpressureManager({
 For custom implementations, use the CircularBuffer directly:
 
 ```typescript
-import { CircularBuffer } from 'velo-plot';
+import { CircularBuffer } from 'velo-plot/full';
 
 const buffer = new CircularBuffer(1000);
 

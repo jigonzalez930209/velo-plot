@@ -27,7 +27,7 @@ Toggle modes with the buttons above the demo. Cursor sync can be toggled separat
 ## Using ChartGroup
 
 ```typescript
-import { createChart, linkCharts } from 'velo-plot';
+import { createChart, linkCharts } from 'velo-plot/full';
 
 const chart1 = createChart({ container: el1, id: 'temp' });
 const chart2 = createChart({ container: el2, id: 'humidity' });
@@ -51,7 +51,7 @@ group.updateOptions({ syncZoom: false });
 When only one chart should drive sync:
 
 ```typescript
-import { createMasterSlave } from 'velo-plot';
+import { createMasterSlave } from 'velo-plot/full';
 
 createMasterSlave(priceChart, volumeChart, 'x');
 ```

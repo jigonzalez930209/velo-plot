@@ -21,7 +21,7 @@ Experiment with real-time analysis functions:
 The Savitzky-Golay filter fits a local polynomial to a window of points, removing noise while preserving the shape, width, and height of peaks.
 
 ```typescript
-import { PluginAnalysis } from 'velo-plot';
+import { PluginAnalysis } from 'velo-plot/plugins/analysis';
 
 // Using the analysis plugin
 const analysis = chart.getPluginAPI('velo-plot-analysis');
@@ -40,7 +40,7 @@ const smoothed = analysis.savitzkyGolay(rawSignal, 11, 3);
 Eliminates linear drift or signal shifts to isolate true peaks.
 
 ```typescript
-import { subtractBaseline } from 'velo-plot';
+import { subtractBaseline } from 'velo-plot/scientific';
 
 // Subtract linear baseline between x=0 and x=10
 const corrected = subtractBaseline(x, y, 0, 10);

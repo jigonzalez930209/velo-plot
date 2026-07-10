@@ -11,7 +11,7 @@ Velo Plot supports high-performance bar charts for categorical data or discrete 
 You can add a bar series using the `addSeries` method with `type: 'bar'` or the convenience method `addBar`.
 
 ```typescript
-import { createChart } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
 
 const chart = createChart({
   container: document.getElementById('chart'),

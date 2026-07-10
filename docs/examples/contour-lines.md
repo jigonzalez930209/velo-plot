@@ -16,7 +16,9 @@ at any zoom level.
 ## Usage
 
 ```typescript
-import { createChart, PluginAnnotations, generateContours } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
+import { PluginAnnotations } from 'velo-plot/plugins/annotations';
+import { generateContours } from 'velo-plot/scientific';
 
 const chart = createChart({ container });
 await chart.use(PluginAnnotations());

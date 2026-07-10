@@ -169,7 +169,7 @@ chart.addSeries({ id: 's3', type: 'line', data: { x, y } })  // Ocean colors
 Create your own scheme:
 
 ```typescript
-import { type ColorScheme } from 'velo-plot'
+import { type ColorScheme } from 'velo-plot/scientific'
 
 const customScheme: ColorScheme = {
   name: 'corporate',

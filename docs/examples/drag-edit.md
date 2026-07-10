@@ -32,7 +32,7 @@ Drag & drop editing allows users to click and drag data points to new positions,
 ## Basic Usage
 
 ```typescript
-import { createChart, PluginDragEdit } from 'velo-plot';
+import { createChart, PluginDragEdit } from 'velo-plot/full';
 
 const chart = createChart({
   container: document.getElementById('chart')!
