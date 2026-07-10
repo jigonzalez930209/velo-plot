@@ -140,11 +140,20 @@ onUnmounted(() => {
   background: rgba(255, 255, 255, 0.05);
 }
 
+.tool-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--vp-c-text-1);
+}
 .tool-btn.active {
   background: #00f2ff;
   color: #000;
   border-color: #00f2ff;
   font-weight: 600;
+}
+.tool-btn.active:hover {
+  background: #00f2ff;
+  color: #000;
+  filter: brightness(1.05);
 }
 
 .mask-toggle {

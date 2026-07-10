@@ -250,7 +250,7 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 
-.presets-grid button:hover {
+.presets-grid button:hover:not(.active) {
   border-color: #00f2ff;
 }
 

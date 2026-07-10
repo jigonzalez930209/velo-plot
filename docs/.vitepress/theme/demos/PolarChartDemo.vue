@@ -330,9 +330,8 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 
-.pattern-buttons button:hover {
+.pattern-buttons button:hover:not(.active) {
   border-color: #00f2ff;
-  transform: translateY(-2px);
 }
 
 .pattern-buttons button.active {

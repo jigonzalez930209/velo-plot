@@ -593,7 +593,7 @@ onUnmounted(() => {
   transition: all 0.2s ease;
 }
 
-.tab-btn:hover {
+.tab-btn:hover:not(.active) {
   background: rgba(51, 65, 85, 0.9);
   border-color: rgba(100, 116, 139, 0.5);
 }
@@ -670,6 +670,11 @@ select {
 .btn-action.active {
   background: linear-gradient(135deg, #00f2ff, #0096ff);
   color: #0f172a;
+}
+.btn-action.active:hover {
+  background: linear-gradient(135deg, #00f2ff, #0096ff);
+  color: #0f172a;
+  filter: brightness(1.05);
 }
 
 .stats-box {

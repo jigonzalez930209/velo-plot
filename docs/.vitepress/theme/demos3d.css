@@ -64,9 +64,13 @@
     color: rgba(0, 0, 0, 0.8);
 }
 
-.btn:hover {
+.btn:hover:not(.active) {
     background: rgba(255, 255, 255, 0.2);
     border-color: #00f2ff;
+}
+
+.btn.active:hover {
+    filter: brightness(1.05);
 }
 
 .chart-wrapper {

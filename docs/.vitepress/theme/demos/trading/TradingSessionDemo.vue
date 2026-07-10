@@ -71,4 +71,5 @@ watch(isDark, () => { build() })
   border: 1px solid var(--vp-c-divider); background: var(--vp-c-bg-soft); cursor: pointer;
 }
 .btn.active { background: var(--vp-c-brand); color: var(--vp-c-bg); border-color: var(--vp-c-brand); }
+.btn.active:hover { background: var(--vp-c-brand); color: var(--vp-c-bg); border-color: var(--vp-c-brand); filter: brightness(1.05); }
 </style>

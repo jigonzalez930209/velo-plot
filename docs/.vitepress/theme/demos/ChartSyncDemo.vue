@@ -202,7 +202,7 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 
-.sync-controls button:hover {
+.sync-controls button:hover:not(.active) {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }

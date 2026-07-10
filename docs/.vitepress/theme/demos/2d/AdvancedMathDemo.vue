@@ -457,10 +457,17 @@ watch(isDark, () => {
   white-space: nowrap;
 }
 
-.mini-btn:hover {
+.mini-btn:hover:not(.active) {
   background: var(--vp-c-brand-soft);
   border-color: var(--vp-c-brand);
   color: var(--vp-c-text-1);
+}
+
+.mini-btn.active:hover {
+  background: var(--vp-c-brand);
+  color: white;
+  border-color: var(--vp-c-brand);
+  filter: brightness(1.05);
 }
 
 .mini-btn.active {

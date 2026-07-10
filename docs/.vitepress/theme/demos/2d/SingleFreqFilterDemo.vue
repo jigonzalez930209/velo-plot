@@ -343,6 +343,14 @@ onUnmounted(() => {
   border-color: #00f2ff;
   box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
 }
+.filter-btn.active:hover {
+  background: #00f2ff;
+  color: #0f172a;
+}
+.mode-btn.active:hover {
+  background: #1e293b;
+  color: #00f2ff;
+}
 
 .params-bar {
   display: flex;

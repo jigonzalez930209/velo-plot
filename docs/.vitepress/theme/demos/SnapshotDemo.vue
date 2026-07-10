@@ -287,7 +287,7 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 
-.radio-group button:hover {
+.radio-group button:hover:not(.active) {
   border-color: #00f2ff;
 }
 
