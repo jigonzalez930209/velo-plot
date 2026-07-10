@@ -62,7 +62,9 @@ export default defineConfig({
             { text: "Multi-Pane Layouts", link: "/guide/multi-pane" },
             { text: "Series & Data", link: "/guide/series" },
             { text: "Integration Guide", link: "/guide/react" },
+            { text: "What's new in v3", link: "/guide/whats-new-v3" },
             { text: "Migration v1 → v2", link: "/guide/migration-v2" },
+            { text: "Migration v2 → v3", link: "/guide/migration-v3" },
           ],
         },
         {
