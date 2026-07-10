@@ -37,6 +37,8 @@ import { createChart } from 'velo-plot/full'
 | `chart.setPanMode(boolean)` | Use `chart.setMode('pan' \| 'select')`. **Removed in v4.0** |
 | `chart.syncDragLayout()` | Prefer CSS transforms on pane wrappers during resize. **Removed in v4.0** |
 | Crosshair `showAxisLabels` | Use `valueDisplayMode: 'floating' \| 'disabled'`. **Removed in v4.0** |
+| Stacked `getChart(id)` | Prefer `getPane(id)` (alias kept). **Removed in v4.0** |
+| `SciPlot` / `useSciPlot` / `SciChart` / `useSciChart` | Prefer `VeloPlot` / `useVeloPlot` (aliases kept). **Removed in v4.0** |
 
 v2 trading APIs (`addIndicator`, business-day scale, drawings, replay, alerts) are unchanged.
 
