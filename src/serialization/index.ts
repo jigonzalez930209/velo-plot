@@ -155,7 +155,7 @@ export function compressString(str: string): string {
     }
     
     return btoa(compressed);
-  } catch (e) {
+  } catch {
     // Fallback to just base64
     return btoa(str);
   }
@@ -182,7 +182,7 @@ export function decompressString(compressed: string): string {
     }
     
     return result;
-  } catch (e) {
+  } catch {
     // Fallback to just base64 decode
     return atob(compressed);
   }
@@ -223,8 +223,8 @@ export function urlHashToState(hash: string, compressed: boolean = true): ChartS
     }
     
     return state;
-  } catch (e) {
-    console.error('[VeloPlot] Failed to parse URL hash:', e);
+  } catch {
+    console.error('[VeloPlot] Failed to parse URL hash');
     return null;
   }
 }
