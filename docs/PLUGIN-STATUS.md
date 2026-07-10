@@ -1,6 +1,6 @@
 # Plugin Status Registry
 
-> Last updated: 2026-07-10 (v3.0.0-rc.1 / Stage 5)
+> Last updated: 2026-07-10 (v3.0.0 GA / Stage 5)
 
 Status key:
 

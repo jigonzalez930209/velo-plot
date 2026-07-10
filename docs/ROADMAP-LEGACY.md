@@ -55,13 +55,15 @@ What follows is the **historical catalog** of that proposal, with **reconciled s
 
 ### Current bundles (v3)
 
-| Import | Contents |
-|--------|----------|
-| `velo-plot` | Core |
-| `velo-plot/trading` | Candles, stacked, indicators, drawings, replay, alerts |
-| `velo-plot/scientific` | Analysis, FFT, regression, forecasting, LaTeX, 3D |
-| `velo-plot/full` | Everything |
-| `velo-plot/react` (and other frameworks) | Bindings |
+See **[Bundle Architecture](/guide/bundle-architecture)** for sizes, decision tree, and registration model.
+
+| Import | Gzip (approx.) | Contents |
+|--------|----------------|----------|
+| `velo-plot` | ~51 KB | Line/scatter/step/band, plugins API |
+| `velo-plot/trading` | ~72 KB | + candles, stacked, indicators, alerts, WebGPU |
+| `velo-plot/scientific` | ~114 KB | + heatmap, analysis, 3D, LaTeX |
+| `velo-plot/full` | heavier | Everything |
+| `velo-plot/react` (and other frameworks) | — | Bindings |
 
 **Branding aliases (deprecated, still work):** `SciPlot` / `useSciPlot` / `SciChart` / `useSciChart` → `VeloPlot` / `useVeloPlot` (**removed in v4.0**).
 
