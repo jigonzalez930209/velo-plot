@@ -14,7 +14,7 @@ This chart automatically syncs with the documentation theme. Toggle dark/light m
 
 ## Built-in Themes
 
-Sci Plot includes four pre-built themes:
+Velo Plot includes four pre-built themes:
 
 | Theme | Description | Best For |
 |-------|-------------|----------|
@@ -320,7 +320,7 @@ chart.addSeries({
 
 ## Color Schemes
 
-For multi-series charts, Sci Plot provides **5 professional color schemes** with 20 distinct colors each, plus a unique highlight color for hover states.
+For multi-series charts, Velo Plot provides **5 professional color schemes** with 20 distinct colors each, plus a unique highlight color for hover states.
 
 ### Available Schemes
 
@@ -426,7 +426,7 @@ for (let i = 0; i < 25; i++) {
 
 ## Layout vs Theme
 
-Beyond visual styling (colors, fonts, etc.), Sci Plot provides a separate **layout system** for controlling component positioning and behavior.
+Beyond visual styling (colors, fonts, etc.), Velo Plot provides a separate **layout system** for controlling component positioning and behavior.
 
 | Concern | Use Theme | Use Layout |
 |---------|-----------|------------|

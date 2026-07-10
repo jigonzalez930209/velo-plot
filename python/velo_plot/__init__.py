@@ -1,6 +1,6 @@
 """
-Sci Plot Python Bindings
-A Python library to interact with and generate configurations for Sci Plot.
+Velo Plot Python Bindings
+A Python library to interact with and generate configurations for Velo Plot.
 """
 
 __version__ = "0.1.0"

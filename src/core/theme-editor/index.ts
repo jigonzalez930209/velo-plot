@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Theme Editor Module
+ * Velo Plot - Theme Editor Module
  * 
  * Provides a visual theme editor for customizing chart appearance:
  * - Color pickers for all theme elements

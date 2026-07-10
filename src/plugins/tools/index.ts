@@ -1,5 +1,5 @@
 /**
- * SciPlot Engine - Interactive Tools Plugin
+ * VeloPlot Engine - Interactive Tools Plugin
  * 
  * Provides specialized interaction tools:
  * - Delta Tool: Measurement between two points
@@ -32,7 +32,7 @@ const manifestTools: PluginManifest = {
 };
 
 /**
- * SciPlot Tools Plugin
+ * VeloPlot Tools Plugin
  * 
  * Adds specialized tools for scientific data analysis and interaction.
  */

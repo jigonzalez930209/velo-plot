@@ -280,7 +280,7 @@ onUnmounted(() => {
     transition: all 0.2s;
 }
 
-.btn:hover {
+.btn:hover:not(.active) {
     color: #fff;
     background: rgba(255,255,255,0.1);
 }
@@ -288,6 +288,12 @@ onUnmounted(() => {
 .btn.active {
     background: #00f2ff;
     color: #000;
+}
+
+.btn.active:hover {
+    background: #00f2ff;
+    color: #000;
+    filter: brightness(1.05);
 }
 
 .btn.sm {

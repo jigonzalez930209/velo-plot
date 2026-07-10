@@ -1,5 +1,5 @@
 /**
- * SciPlot Engine - Data Analysis Plugin
+ * VeloPlot Engine - Data Analysis Plugin
  * 
  * Provides mathematical and statistical tools including:
  * - FFT (Fast Fourier Transform)
@@ -190,7 +190,7 @@ const manifestAnalysis: PluginManifest = {
 };
 
 /**
- * SciPlot Analysis Plugin
+ * VeloPlot Analysis Plugin
  * 
  * Adds comprehensive data analysis capabilities to the chart.
  */

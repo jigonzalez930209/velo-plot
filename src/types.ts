@@ -1,5 +1,5 @@
 /**
- * Core type definitions for Sci Plot
+ * Core type definitions for Velo Plot
  */
 
 // ============================================

@@ -44,7 +44,8 @@ export function buildIndicatorPane(options: BuildIndicatorPaneOptions): StackedP
         tickCount: options.tickCount ?? 5,
         scientific: false,
       },
-      xAxis: { showLabels: false, showTicks: false, showLine: false },
+      // X-axis visibility is owned by createStackedChart (sharedXAxis / showXAxis).
+      // Do not force labels off here — the new bottom pane must show dates.
       animations: false,
       loading: false,
       showLegend: false,

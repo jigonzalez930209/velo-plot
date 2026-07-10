@@ -1,6 +1,6 @@
 # Core Concepts
 
-Understanding the architecture of Sci Plot.
+Understanding the architecture of Velo Plot.
 
 ## Architecture Overview
 
@@ -158,7 +158,7 @@ Events are synchronous and fire immediately after the action.
 
 ## Render Loop
 
-Sci Plot uses `requestAnimationFrame` for smooth rendering:
+Velo Plot uses `requestAnimationFrame` for smooth rendering:
 
 ```
 ┌─────────────────────────────────────┐

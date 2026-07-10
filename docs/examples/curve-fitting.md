@@ -5,7 +5,7 @@ description: Automatic trend lines and regression analysis
 
 # Curve Fitting Demo
 
-Sci Plot provides a powerful and flexible curve fitting system. You can automatically calculate and render trend lines for any existing series using various mathematical models.
+Velo Plot provides a powerful and flexible curve fitting system. You can automatically calculate and render trend lines for any existing series using various mathematical models.
 
 ## Interactive Example
 

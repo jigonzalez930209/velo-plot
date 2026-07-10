@@ -29,7 +29,16 @@ interface IndicatorTaskResult extends IndicatorResult {
   duration: number;
 }
 
+/**
+ * Below this point count, always compute on the main thread.
+ * Trading demos (~100 bars) and typical charts stay instant — workers only help
+ * for very large series, and VitePress often never answers worker messages.
+ */
+const SYNC_THRESHOLD = 5_000;
+
 let pool: WorkerPool<IndicatorTaskPayload, IndicatorTaskResult> | null = null;
+/** After a silent-worker timeout, skip the pool for the rest of the session. */
+let preferSync = false;
 
 /**
  * Synchronous indicator computation shared by the sync fallback path.
@@ -99,6 +108,8 @@ function getPool(): WorkerPool<IndicatorTaskPayload, IndicatorTaskResult> {
       {
         poolSize: 2,
         syncFallback: true,
+        // Short timeout — if the worker is silent (broken Vite URL), don't stall UI.
+        timeoutMs: 250,
         syncHandler: computeIndicatorSync,
       },
     );
@@ -111,9 +122,9 @@ function toTypedArray(data: Float32Array | Float64Array | number[]): Float32Arra
   return Float32Array.from(data);
 }
 
-async function runIndicator(task: Omit<IndicatorTaskPayload, "id" | "type">): Promise<IndicatorResult & { duration: number }> {
-  const id = nextTaskId(task.indicator);
-  const result = await getPool().run({ id, type: "indicator", ...task });
+function toPublicResult(
+  result: IndicatorResult & { duration: number },
+): IndicatorResult & { duration: number } {
   return {
     values: result.values,
     signal: result.signal,
@@ -122,6 +133,26 @@ async function runIndicator(task: Omit<IndicatorTaskPayload, "id" | "type">): Pr
     histogram: result.histogram,
     duration: result.duration,
   };
+}
+
+async function runIndicator(
+  task: Omit<IndicatorTaskPayload, "id" | "type">,
+): Promise<IndicatorResult & { duration: number }> {
+  const id = nextTaskId(task.indicator);
+  const fullTask: IndicatorTaskPayload = { id, type: "indicator", ...task };
+
+  // Small series: sync is microseconds — avoid worker round-trip / docs hang.
+  if (preferSync || task.data.length < SYNC_THRESHOLD) {
+    return toPublicResult(computeIndicatorSync(fullTask));
+  }
+
+  const started = performance.now();
+  const result = await getPool().run(fullTask);
+  // Worker answered after our soft timeout window → it was silent; prefer sync next time.
+  if (performance.now() - started >= 200) {
+    preferSync = true;
+  }
+  return toPublicResult(result);
 }
 
 /** Async RSI — non-blocking for large datasets */
@@ -177,9 +208,15 @@ export async function bollingerBandsAsync(
 export function destroyIndicatorPool(): void {
   pool?.destroy();
   pool = null;
+  preferSync = false;
 }
 
 /** Exposed for tests */
 export function getIndicatorPoolSize(): number {
   return getPool().size();
+}
+
+/** Exposed for tests */
+export function isIndicatorPreferSync(): boolean {
+  return preferSync;
 }

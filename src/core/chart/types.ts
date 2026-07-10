@@ -207,7 +207,7 @@ export interface Chart {
 
   /** 
    * Set pan mode (true = pan, false = selection) 
-   * @deprecated Use setMode('pan') or setMode('select') instead
+   * @deprecated Use setMode('pan') or setMode('select') instead. **Removed in v4.0.**
    */
   setPanMode(enabled: boolean): void;
 

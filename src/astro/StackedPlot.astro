@@ -1,0 +1,19 @@
+---
+import { StackedPlot as StackedPlotReact } from "velo-plot/react";
+
+interface Props {
+  panes: import("velo-plot").StackedPaneConfig[];
+  width?: number | string;
+  height?: number | string;
+  theme?: string;
+  class?: string;
+}
+
+const { panes, width = "100%", height = 480, theme, class: className = "" } = Astro.props as Props;
+---
+
+<StackedPlotReact client:only="react" panes={panes} width={width} height={height} theme={theme} className={className} />
+
+<noscript>
+  <p>Stacked chart requires JavaScript.</p>
+</noscript>

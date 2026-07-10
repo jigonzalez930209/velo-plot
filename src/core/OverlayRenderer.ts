@@ -58,6 +58,14 @@ export class OverlayRenderer {
   }
 
   /**
+   * Grid X lines use the full viewport domain (nice even spacing), including
+   * regions past the loaded series. Axis labels stay filtered to real data.
+   */
+  private resolveGridXTicks(xScale: Scale, tickCount: number): number[] {
+    return xScale.ticks(tickCount);
+  }
+
+  /**
    * Set LaTeX API for rendering mathematical expressions
    */
   setLatexAPI(api: any): void {
@@ -178,7 +186,9 @@ export class OverlayRenderer {
 
     const xTickCount = xAxisOptions?.tickCount ?? 8;
     const yTickCount = yAxisOptions?.tickCount ?? 6;
-    const xTicks = this.resolveXTicks(xScale, xTickCount);
+    // Symmetric vertical divisions across the whole visible X domain
+    // (not clipped to existing business-day bars / loaded series).
+    const xTicks = this.resolveGridXTicks(xScale, xTickCount);
     const yTicks = yScale.ticks(yTickCount);
 
     // Major grid lines — batched into two strokes (vertical + horizontal)

@@ -1,6 +1,6 @@
 # Theming & Design System
 
-Sci Plot uses a powerful CSS-in-JS design system that allows for global themes and granular overrides.
+Velo Plot uses a powerful CSS-in-JS design system that allows for global themes and granular overrides.
 
 ## Predefined Themes
 - `midnight`: High-contrast blue-on-black (Standard for Lab software).
@@ -56,7 +56,7 @@ const cssTheme = createTheme({
 
 ## Layout Configuration
 
-Beyond visual styling, SciPlot provides a dedicated `layout` system for controlling component positioning and behavior. See [Layout & Positioning Guide](./layout-positioning.md) for full details.
+Beyond visual styling, VeloPlot provides a dedicated `layout` system for controlling component positioning and behavior. See [Layout & Positioning Guide](./layout-positioning.md) for full details.
 
 ### Key Layout Options
 

@@ -1,6 +1,6 @@
 # Interactions
 
-Sci Plot provides rich built-in interactions for exploring data.
+Velo Plot provides rich built-in interactions for exploring data.
 
 <script setup>
 import { ref } from 'vue'
@@ -23,7 +23,7 @@ Scroll the mouse wheel to zoom in/out centered on the cursor position.
 
 ### Interaction Modes
 
-Sci Plot uses a mode-based interaction system. You can switch between different modes depending on the desired user interaction:
+Velo Plot uses a mode-based interaction system. You can switch between different modes depending on the desired user interaction:
 
 | Mode | Action | Best For |
 |------|--------|----------|
@@ -278,7 +278,7 @@ chart.on('pan', ({ deltaX, deltaY }) => {
 
 ## Touch Support
 
-Sci Plot supports touch gestures on mobile devices:
+Velo Plot supports touch gestures on mobile devices:
 
 | Gesture | Action |
 |---------|--------|

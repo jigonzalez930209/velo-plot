@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Testing Utilities
+ * Velo Plot - Testing Utilities
  * 
  * Provides utilities for testing chart applications:
  * - Mock data generators

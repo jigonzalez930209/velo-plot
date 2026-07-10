@@ -5,7 +5,7 @@ description: Interactive demo showcasing chart annotations
 
 # Annotations Demo
 
-This demo showcases all annotation types available in Sci Plot. The chart displays a cyclic voltammetry simulation with various annotations highlighting key features.
+This demo showcases all annotation types available in Velo Plot. The chart displays a cyclic voltammetry simulation with various annotations highlighting key features.
 
 ## Interactive Example
 

@@ -1,6 +1,6 @@
 ---
 title: Cycle Detection API
-description: Detect cycles in oscillating or periodic data with Sci Plot's detectCycles utility, perfect for cyclic voltammetry and signal processing.
+description: Detect cycles in oscillating or periodic data with Velo Plot's detectCycles utility, perfect for cyclic voltammetry and signal processing.
 ---
 
 # Cycle Detection

@@ -77,7 +77,7 @@ const x = new Float64Array(1000000)
 
 ### 3. Why It's Fast
 
-Sci Plot uses WebGL:
+Velo Plot uses WebGL:
 
 - Data uploaded to GPU once
 - Zoom/pan only updates shader uniforms
@@ -180,7 +180,7 @@ largeArray = null
 
 ```tsx
 import { useMemo } from 'react'
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 
 function LargeDatasetChart() {
   const series = useMemo(() => {
@@ -197,7 +197,7 @@ function LargeDatasetChart() {
   }, [])
 
   return (
-    <SciPlot
+    <VeloPlot
       series={series}
       xAxis={{ label: 'Index', auto: true }}
       yAxis={{ label: 'Value', auto: true }}

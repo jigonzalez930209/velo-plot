@@ -231,7 +231,7 @@ All annotations support common styling options:
 ## React Usage
 
 ```tsx
-import { SciPlot } from 'velo-plot/react';
+import { VeloPlot } from 'velo-plot/react';
 import { useRef, useEffect } from 'react';
 
 function ChartWithAnnotations() {
@@ -250,7 +250,7 @@ function ChartWithAnnotations() {
   }, []);
 
   return (
-    <SciPlot
+    <VeloPlot
       ref={chartRef}
       series={[{ id: 'data', x: xData, y: yData }]}
       xAxis={{ label: 'X' }}

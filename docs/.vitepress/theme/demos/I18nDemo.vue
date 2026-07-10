@@ -209,7 +209,7 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 
-.locale-buttons button:hover {
+.locale-buttons button:hover:not(.active) {
   border-color: #00f2ff;
 }
 

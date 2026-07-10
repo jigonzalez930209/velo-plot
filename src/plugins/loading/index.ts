@@ -1,5 +1,5 @@
 /**
- * SciPlot Engine - Loading Indicator Plugin
+ * VeloPlot Engine - Loading Indicator Plugin
  * 
  * Provides customizable loading and progress indicators.
  * 
@@ -24,7 +24,7 @@ const manifestLoading: PluginManifest = {
 };
 
 /**
- * SciPlot Loading Plugin
+ * VeloPlot Loading Plugin
  * 
  * Adds sleek loading indicators and progress trackers to the chart.
  */

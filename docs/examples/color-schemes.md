@@ -241,7 +241,7 @@ for (let i = 0; i < 20; i++) {
 ## React Example
 
 ```tsx
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 import { useState } from 'react'
 
 function MultiSeriesChart() {
@@ -265,7 +265,7 @@ function MultiSeriesChart() {
         <option value="ocean">Ocean</option>
       </select>
       
-      <SciPlot
+      <VeloPlot
         series={series}
         theme="dark"
         colorScheme={scheme}

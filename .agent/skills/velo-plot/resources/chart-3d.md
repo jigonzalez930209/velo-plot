@@ -1,4 +1,4 @@
-# SciPlot 3D Engine
+# VeloPlot 3D Engine
 
 The engine includes a specialized high-performance 3D renderer for volumetric data, surfaces, and point clouds.
 

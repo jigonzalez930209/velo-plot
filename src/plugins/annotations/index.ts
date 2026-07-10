@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Annotations Plugin
+ * Velo Plot - Annotations Plugin
  * 
  * Provides annotation capabilities including:
  * - Line, Rectangle, Band, Text, Arrow annotations
@@ -26,7 +26,7 @@ const manifestAnnotations: PluginManifest = {
 };
 
 /**
- * SciPlot Annotations Plugin
+ * VeloPlot Annotations Plugin
  * 
  * Adds support for drawing lines, shapes, and labels on the chart.
  */

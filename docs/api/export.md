@@ -5,7 +5,7 @@ description: Export chart data to CSV, JSON and PNG formats
 
 # Data Export
 
-Sci Plot provides built-in methods to export chart **data** (CSV, JSON) and **images** (PNG, JPEG, WebP, SVG). This page covers data export; for raster, vector, and multi-pane stack images see **[Image & Vector Export](/api/image-export)**.
+Velo Plot provides built-in methods to export chart **data** (CSV, JSON) and **images** (PNG, JPEG, WebP, SVG). This page covers data export; for raster, vector, and multi-pane stack images see **[Image & Vector Export](/api/image-export)**.
 
 ::: tip Image & SVG export
 - Single chart: `chart.exportImage()`, `chart.exportSVG()`, or `PluginSnapshot`
@@ -204,7 +204,7 @@ See [Image & Vector Export](/api/image-export#single-chart--svg-vector) for down
 
 ```tsx
 import { useRef } from 'react';
-import { SciPlot } from 'velo-plot/react';
+import { VeloPlot } from 'velo-plot/react';
 
 function ChartWithExport() {
   const chartRef = useRef(null);
@@ -228,7 +228,7 @@ function ChartWithExport() {
 
   return (
     <div>
-      <SciPlot ref={chartRef} series={[...]} />
+      <VeloPlot ref={chartRef} series={[...]} />
       <button onClick={handleExportCSV}>Export CSV</button>
       <button onClick={handleExportJSON}>Export JSON</button>
     </div>

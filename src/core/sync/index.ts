@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Chart Synchronization Module
+ * Velo Plot - Chart Synchronization Module
  *
  * @module sync
  */

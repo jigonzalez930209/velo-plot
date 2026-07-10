@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Theme Editor Plugin
+ * Velo Plot - Theme Editor Plugin
  * 
  * Provides a visual interface for editing chart themes in real-time.
  * 
@@ -26,7 +26,7 @@ const manifestThemeEditor: PluginManifest = {
 };
 
 /**
- * SciPlot Theme Editor Plugin
+ * VeloPlot Theme Editor Plugin
  * 
  * Adds a visual panel to customize chart colors and styles.
  */

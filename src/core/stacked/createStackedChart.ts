@@ -75,7 +75,20 @@ function computeAlignedRightMargin(panes: StackedPaneConfig[], baseRight: number
 // the numeric flex-grow form.
 function paneFlexStyle(ratio: number, direction: StackDirection): string {
   const minDim = direction === "horizontal" ? "min-width:0;" : "min-height:0;";
+  // Grow factors must sum to ≥1 across siblings or free space stays empty
+  // (CSS: grow < 1 only absorbs that fraction of free space).
   return `flex:${ratio} 1 0;${minDim}`;
+}
+
+/** Keep ratios summing to 1 so a lone pane always fills the host. */
+function normalizePaneRatios(ratios: number[]): void {
+  const sum = ratios.reduce((a, b) => a + b, 0);
+  if (sum <= 0) {
+    const even = 1 / Math.max(1, ratios.length);
+    for (let i = 0; i < ratios.length; i++) ratios[i] = even;
+    return;
+  }
+  for (let i = 0; i < ratios.length; i++) ratios[i] /= sum;
 }
 
 function expandPaneSeries(series?: SeriesOptions[]): SeriesOptions[] {
@@ -130,7 +143,10 @@ function buildPaneChartOptions(
             : alignedMargins.bottom,
       };
 
-  const baseX = pane.chart?.xAxis ?? {};
+  const baseX = {
+    ...(stack.xAxis ?? {}),
+    ...(pane.chart?.xAxis ?? {}),
+  };
   const xAxis = {
     ...baseX,
     showLine: showXAxis ? baseX.showLine ?? true : false,
@@ -169,6 +185,10 @@ function buildPaneChartOptions(
       margins: { ...margins, ...stack.layout?.margins, ...pane.chart?.layout?.margins },
     }),
   };
+}
+
+function paneChartDivStyle(): string {
+  return "position:absolute;inset:0;width:100%;height:100%;min-width:0;min-height:0;";
 }
 
 function wrapperStyle(ratio: number, gap: number, index: number, direction: StackDirection): string {
@@ -235,32 +255,45 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
   const alignedLeft = computeAlignedLeftMargin(panes, baseLeft);
   const alignedRight = computeAlignedRightMargin(panes, baseRight);
 
+  // Capture host-owned size BEFORE mutating styles. Demos often set
+  // style="height:480px" / CSS height on this same element.
+  const hostInlineHeight = container.style.height;
+  const hostInlineWidth = container.style.width;
+  const hostInlineMinHeight = container.style.minHeight;
+  const hostInlineMinWidth = container.style.minWidth;
+  const computed = getComputedStyle(container);
+  const measuredHeight =
+    container.offsetHeight || parseInt(computed.height, 10) || 0;
+
   container.replaceChildren();
+  // Fill the host box exactly — never invent a new size or freeze max-* during drag.
+  // The host (inline style / CSS class / parent layout) owns width & height.
   container.style.display = "flex";
   container.style.flexDirection = isHorizontal ? "row" : "column";
-  container.style.width = "100%";
-  const existingHeight = container.offsetHeight || parseInt(getComputedStyle(container).height, 10);
-  const existingWidth = container.offsetWidth || parseInt(getComputedStyle(container).width, 10);
-  if (isHorizontal) {
-    if (existingWidth > 0) {
-      container.style.width = `${existingWidth}px`;
-      container.style.minWidth = `${existingWidth}px`;
-    }
-    container.style.height = existingHeight > 0 ? `${existingHeight}px` : "320px";
-    container.style.minHeight = container.style.height;
-  } else {
-    if (existingHeight > 0) {
-      container.style.height = `${existingHeight}px`;
-      container.style.minHeight = `${existingHeight}px`;
-    } else if (!container.style.height) {
-      container.style.minHeight = "320px";
-    }
-  }
+  container.style.boxSizing = "border-box";
   container.style.overflow = "hidden";
   container.style.position = "relative";
+  container.style.maxWidth = "none";
+  container.style.maxHeight = "none";
+  container.style.width = hostInlineWidth || "100%";
+  container.style.minWidth = hostInlineMinWidth || "0";
+
+  if (hostInlineHeight) {
+    container.style.height = hostInlineHeight;
+  } else if (measuredHeight > 0) {
+    // CSS-class sized host: pin the measured height so flex children have a
+    // definite size (plain height:100% collapses without an ancestor height).
+    container.style.height = `${measuredHeight}px`;
+  } else {
+    container.style.height = "100%";
+    container.style.minHeight = hostInlineMinHeight || "320px";
+  }
+  if (hostInlineMinHeight) container.style.minHeight = hostInlineMinHeight;
+  else if (!container.style.minHeight) container.style.minHeight = "0";
 
   const paneIds = panes.map((p) => p.id);
   const paneRatios = panes.map((p) => initialPaneRatio(p.height));
+  normalizePaneRatios(paneRatios);
   const paneCharts = new Map<string, Chart>();
   const paneWrappers: HTMLDivElement[] = [];
   const paneAxisMetas: PaneAxisMeta[] = [];
@@ -323,7 +356,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     for (const wrapper of paneWrappers) {
       const chartDiv = wrapper.firstElementChild as HTMLDivElement | null;
       if (chartDiv) {
-        chartDiv.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
+        chartDiv.style.cssText = paneChartDivStyle();
       }
     }
   };
@@ -334,12 +367,21 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
       isHorizontal ? w.getBoundingClientRect().width : w.getBoundingClientRect().height,
     );
     const sum = measured.reduce((s, h) => s + h, 0);
-    return sum > 0 ? measured.map((h) => h * (avail / sum)) : measured;
+    if (sum <= 0) {
+      const even = Math.floor(avail / Math.max(1, paneWrappers.length));
+      return paneWrappers.map((_, i) =>
+        i === paneWrappers.length - 1 ? avail - even * (paneWrappers.length - 1) : even,
+      );
+    }
+    // Keep integer px that sum exactly to avail so panes always fill the host.
+    return normalizePaneHeights(measured, avail);
   };
 
   const applyDragPaneSizes = (sizesPx: number[]) => {
+    // Always redistribute inside the current host box — never grow/shrink it.
+    const normalized = normalizePaneHeights(sizesPx, stackAvailSize());
     for (let i = 0; i < paneWrappers.length; i++) {
-      const size = Math.max(1, Math.round(sizesPx[i]));
+      const size = Math.max(1, normalized[i]);
       const gapStyle =
         gap > 0 && i > 0
           ? isHorizontal
@@ -348,7 +390,10 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
           : "";
       const dim = isHorizontal ? "width" : "height";
       paneWrappers[i].style.cssText = `${dim}:${size}px;flex:0 0 auto;min-height:0;min-width:0;position:relative;overflow:hidden;${gapStyle}`;
+      const chartDiv = paneWrappers[i].firstElementChild as HTMLDivElement | null;
+      if (chartDiv) chartDiv.style.cssText = paneChartDivStyle();
     }
+    for (let i = 0; i < sizesPx.length; i++) sizesPx[i] = normalized[i];
   };
 
   const flushDragLayout = () => {
@@ -426,7 +471,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     wrapper.style.cssText = wrapperStyle(paneRatios[i], gap, i, direction);
 
     const chartDiv = document.createElement("div");
-    chartDiv.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
+    chartDiv.style.cssText = paneChartDivStyle();
 
     wrapper.appendChild(chartDiv);
     container.appendChild(wrapper);
@@ -450,6 +495,8 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
         direction,
       ),
     );
+    // createChart may touch container styles — keep the absolute fill for flex panes.
+    chartDiv.style.cssText = paneChartDivStyle();
 
     const seriesList = expandPaneSeries(pane.series);
     if (seriesList.length) {
@@ -471,7 +518,11 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     });
   }
 
-  if (resizable && panes.length > 1) {
+  const rebuildPaneResize = () => {
+    paneResizeCtrl?.destroy();
+    paneResizeCtrl = null;
+    if (!resizable || paneWrappers.length < 2) return;
+
     const resizeOpts =
       typeof resizableOpt === "object"
         ? {
@@ -513,7 +564,9 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
         },
       },
     );
-  }
+  };
+
+  rebuildPaneResize();
 
   const master = paneCharts.get(masterPaneId);
   if (!master) {
@@ -594,11 +647,21 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
 
     if (!isHorizontal && sharedXAxis === "bottom" && paneIds.length > 0) {
       const prevId = paneIds[paneIds.length - 1];
-      paneCharts.get(prevId)?.updateXAxis({
+      const prevChart = paneCharts.get(prevId);
+      const prevMeta = paneAxisMetas[paneAxisMetas.length - 1];
+      // Hide shared X labels on the previous bottom pane and reclaim the
+      // ~55px date-row margin so panes sit flush (no empty strip).
+      prevChart?.updateXAxis({
         showLabels: false,
         showTicks: false,
         showLine: false,
       });
+      prevChart?.updateLayout({
+        margins: {
+          bottom: gap > 0 ? STACKED_COMPACT_MARGIN.bottom : 0,
+        },
+      });
+      if (prevMeta) prevMeta.showXAxis = false;
     }
 
     const newRatio = initialPaneRatio(pane.height ?? 0.25);
@@ -609,16 +672,21 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     const index = paneIds.length;
     paneIds.push(pane.id);
     paneRatios.push(newRatio);
+    normalizePaneRatios(paneRatios);
 
     const wrapper = document.createElement("div");
     wrapper.dataset.paneId = pane.id;
     wrapper.style.cssText = wrapperStyle(paneRatios[index], gap, index, direction);
 
     const chartDiv = document.createElement("div");
-    chartDiv.style.cssText = "position:absolute;inset:0;width:100%;height:100%;";
+    chartDiv.style.cssText = paneChartDivStyle();
     wrapper.appendChild(chartDiv);
     container.appendChild(wrapper);
     paneWrappers.push(wrapper);
+
+    // Rebalance flex on existing panes before createChart so the new
+    // container has a non-zero size on first render (avoids zero-size overlay skip).
+    applyFlexCss();
 
     const isLast = true;
     const showXAxis = isHorizontal
@@ -646,6 +714,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
         direction,
       ),
     );
+    chartDiv.style.cssText = paneChartDivStyle();
 
     const seriesList = expandPaneSeries(pane.series);
     for (const s of seriesList) chart.addSeries(s);
@@ -663,7 +732,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     });
 
     group.add(chart);
-    applyFlexCss();
+    rebuildPaneResize();
     commitPaneLayout();
     return chart;
   };
@@ -671,6 +740,10 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
   const stack: StackedChart = {
     container,
     getPane(id: string) {
+      return paneCharts.get(id);
+    },
+    /** @deprecated Prefer `getPane(id)`. **Removed in v4.0.** */
+    getChart(id: string) {
       return paneCharts.get(id);
     },
     getPanes() {
@@ -728,7 +801,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
       return mountPane(pane);
     },
     async addIndicator(preset: IndicatorPresetName, opts: AddIndicatorOptions = {}) {
-      const priceChart = paneCharts.get(masterPaneId) ?? master;
+      const priceChart = master;
       if (opts.pane !== "new") {
         const overlay = await addIndicatorToChart(priceChart, preset, opts);
         return { ...overlay, chart: priceChart };

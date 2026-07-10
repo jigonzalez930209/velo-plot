@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Debug Overlay Module
+ * Velo Plot - Debug Overlay Module
  * 
  * Provides a visual debug overlay showing performance metrics,
  * rendering info, and chart state for development and debugging.
@@ -405,7 +405,7 @@ export function createDebugOverlay(
 export function enableDebugMode(options?: DebugOverlayOptions): DebugOverlay | null {
   const container = document.querySelector('.velo-plot-container') as HTMLElement;
   if (!container) {
-    console.warn('[SciPlot] No chart container found for debug overlay');
+    console.warn('[VeloPlot] No chart container found for debug overlay');
     return null;
   }
   

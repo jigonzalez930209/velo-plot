@@ -66,7 +66,11 @@ export function PluginReplay(config: PluginReplayConfig): ChartPlugin<PluginRepl
       speed = Math.max(0.1, s);
       if (timer) clearInterval(timer);
       timer = setInterval(() => {
-        if (index >= buffer!.x.length - 1) {
+        if (!ctx || !buffer) {
+          api.pause();
+          return;
+        }
+        if (index >= buffer.x.length - 1) {
           api.pause();
           return;
         }

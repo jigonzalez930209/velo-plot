@@ -619,7 +619,7 @@ watch(chartTheme, (theme) => {
   transition: border-color 0.15s, color 0.15s;
 }
 
-.preset-btn:hover {
+.preset-btn:hover:not(.active) {
   border-color: #00f2ff;
   color: var(--vp-c-text-1);
 }
@@ -700,7 +700,7 @@ watch(chartTheme, (theme) => {
   font-size: 13px;
 }
 
-.btn:hover {
+.btn:hover:not(.active) {
   border-color: #00f2ff;
 }
 

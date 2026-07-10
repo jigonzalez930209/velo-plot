@@ -1,11 +1,11 @@
 ---
 title: Built-in Themes
-description: Explore Sci Plot's high-contrast dark, light, midnight, and specialized electrochemistry themes for professional scientific data visualization.
+description: Explore Velo Plot's high-contrast dark, light, midnight, and specialized electrochemistry themes for professional scientific data visualization.
 ---
 
 # Built-in Themes
 
-Sci Plot includes several pre-built themes optimized for different use cases.
+Velo Plot includes several pre-built themes optimized for different use cases.
 
 ## Available Themes
 

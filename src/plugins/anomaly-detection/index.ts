@@ -39,7 +39,7 @@ export const manifestAnomalyDetection = {
   name: 'Anomaly Detection',
   version: '1.0.0' as `${number}.${number}.${number}`,
   description: 'Real-time anomaly detection with multiple algorithms',
-  author: 'Sci Plot',
+  author: 'Velo Plot',
   category: 'analysis' as const
 };
 

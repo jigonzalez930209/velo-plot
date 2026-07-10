@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Global Plugin Registry
+ * Velo Plot - Global Plugin Registry
  * 
  * Provides a global registry for third-party plugins that can be
  * discovered and loaded by name without explicit imports.
@@ -30,7 +30,7 @@ class PluginRegistryImpl implements PluginRegistry {
 
         if (this.entries.has(name)) {
             console.warn(
-                `[SciPlot Registry] Plugin "${name}" is already registered, overwriting`
+                `[VeloPlot Registry] Plugin "${name}" is already registered, overwriting`
             );
         }
 
@@ -178,7 +178,7 @@ export async function loadPlugin<TConfig = unknown>(
 ): Promise<import("./types").ChartPlugin<TConfig> | undefined> {
     const factory = getPluginRegistry().get(name);
     if (!factory) {
-        console.warn(`[SciPlot] Plugin "${name}" not found in registry`);
+        console.warn(`[VeloPlot] Plugin "${name}" not found in registry`);
         return undefined;
     }
     return factory(config) as import("./types").ChartPlugin<TConfig>;

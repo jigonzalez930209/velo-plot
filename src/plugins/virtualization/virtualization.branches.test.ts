@@ -316,4 +316,220 @@ describe("PluginVirtualization branch coverage", () => {
     await tick();
     expect(updates).toHaveLength(0);
   });
+
+  it("downsamples bar series with the minmax strategy", async () => {
+    const bars = new Series({
+      id: "bars",
+      type: "bar",
+      data: {
+        x: Float32Array.from({ length: 3000 }, (_, i) => i),
+        y: Float32Array.from({ length: 3000 }, (_, i) => i % 5),
+      },
+    });
+    const { byId } = setup({ config: { targetPoints: 40, strategy: "lttb" }, series: bars });
+    await tick();
+    expect(byId.get("bars")!.getData().x.length).toBeLessThanOrEqual(40);
+  });
+
+  it("append path replaces cache when reuseOriginalData is false", async () => {
+    const { chart, byId } = setup({ config: { targetPoints: 40, reuseOriginalData: false } });
+    await tick();
+    const before = byId.get("line")!.getData().x.length;
+    (chart.appendData as (id: string, x: Float32Array, y: Float32Array) => void)(
+      "line",
+      Float32Array.from([3000]),
+      Float32Array.from([9]),
+    );
+    flushRaf();
+    await tick();
+    expect(byId.get("line")!.getData().x.length).toBeLessThanOrEqual(40);
+    expect(before).toBeLessThanOrEqual(40);
+  });
+
+  it("viewport slice keeps full source when slice spans entire series", async () => {
+    const { api } = setup({
+      config: { targetPoints: 40, viewportBuffer: 0 },
+      viewBounds: { xMin: 0, xMax: 2999, yMin: -1, yMax: 1 },
+    });
+    await tick();
+    expect((api.getStats("line") as { originalPoints: number }).originalPoints).toBe(3000);
+  });
+
+  it("handleUpdateSeries restores cached payload before applying external updates", async () => {
+    const { chart, byId } = setup({ config: { targetPoints: 40, reuseOriginalData: true } });
+    await tick();
+    const before = byId.get("line")!.getData().x.length;
+    (chart.updateSeries as (id: string, d: unknown) => void)("line", {
+      x: Float32Array.from([0, 1, 2, 3, 4]),
+      y: Float32Array.from([1, 2, 3, 4, 5]),
+    });
+    flushRaf();
+    await tick();
+    expect(byId.get("line")!.getData().x.length).toBeLessThanOrEqual(Math.max(before, 5));
+  });
+
+  it("skips cacheOriginal when the series was already captured", async () => {
+    const { chart } = setup({ config: { targetPoints: 40, reuseOriginalData: true } });
+    await tick();
+    (chart.updateSeries as (id: string, d: unknown) => void)("line", {
+      x: Float32Array.from([0, 1, 2]),
+      y: Float32Array.from([1, 2, 3]),
+    });
+    flushRaf();
+    await tick();
+    expect(() =>
+      (chart.updateSeries as (id: string, d: unknown) => void)("line", {
+        x: Float32Array.from([0, 1, 2, 3]),
+        y: Float32Array.from([1, 2, 3, 4]),
+      }),
+    ).not.toThrow();
+  });
+
+  it("wrapped chart methods no-op after destroy", async () => {
+    const { plugin, ctx, chart } = setup({ config: { targetPoints: 40 } });
+    await tick();
+    const update = chart.updateSeries as (id: string, d: unknown) => void;
+    const append = chart.appendData as (id: string, x: Float32Array, y: Float32Array) => void;
+    plugin.onDestroy!(ctx);
+    expect(() => {
+      update("line", { x: Float32Array.from([0]), y: Float32Array.from([1]) });
+      append("line", Float32Array.from([1]), Float32Array.from([2]));
+    }).not.toThrow();
+  });
+
+  it("drops stale downsamples when a newer virtualization pass starts", async () => {
+    const downsampleMod = await import("../../workers/downsampleAsync");
+    const deferred: Array<(value: { x: Float32Array; y: Float32Array }) => void> = [];
+    const asyncSpy = vi
+      .spyOn(downsampleMod, "downsampleAsync")
+      .mockImplementation(() => new Promise((resolve) => deferred.push(resolve)));
+
+    const line = makeLine(3000);
+    const { api, byId } = setup({
+      config: { targetPoints: 40, useWorker: true, workerThreshold: 100 },
+      series: line,
+    });
+    await tick();
+    (api.invalidate as (id?: string) => void)("line");
+    (api.invalidate as (id?: string) => void)("line");
+    expect(deferred.length).toBeGreaterThan(0);
+    deferred.forEach((resolve) =>
+      resolve({ x: new Float32Array([0, 1]), y: new Float32Array([1, 2]) }),
+    );
+    await tick();
+    expect(byId.get("line")!.getData().x.length).toBeLessThanOrEqual(40);
+    asyncSpy.mockRestore();
+  });
+
+  it("ignores candlestick virtualization when viewport OHLC fields are missing", async () => {
+    const downsampleMod = await import("../../workers/downsample");
+    const sliceSpy = vi.spyOn(downsampleMod, "sliceSeriesToViewport").mockReturnValue({
+      start: 0,
+      end: 50,
+      x: Float32Array.from({ length: 50 }, (_, i) => i),
+    } as ReturnType<typeof downsampleMod.sliceSeriesToViewport>);
+
+    const ohlc = makeOhlc(200, "partial");
+    const { updates } = setup({
+      config: { targetPoints: 20, viewportBuffer: 0 },
+      series: ohlc,
+      viewBounds: { xMin: 0, xMax: 199, yMin: -10, yMax: 10 },
+    });
+    await tick();
+    expect(updates.some((u) => u.id === "partial" && "open" in u)).toBe(false);
+    sliceSpy.mockRestore();
+  });
+
+  it("ignores line virtualization when viewport source has no y values", async () => {
+    const downsampleMod = await import("../../workers/downsample");
+    const sliceSpy = vi.spyOn(downsampleMod, "sliceSeriesToViewport").mockReturnValue({
+      start: 0,
+      end: 50,
+      x: Float32Array.from({ length: 50 }, (_, i) => i),
+    } as ReturnType<typeof downsampleMod.sliceSeriesToViewport>);
+
+    const line = makeLine(200, "noYViewport");
+    const { updates } = setup({
+      config: { targetPoints: 20, viewportBuffer: 0 },
+      series: line,
+      viewBounds: { xMin: 0, xMax: 199, yMin: -1, yMax: 1 },
+    });
+    await tick();
+    expect(updates.some((u) => u.id === "noYViewport")).toBe(false);
+    sliceSpy.mockRestore();
+  });
+
+  it("cacheOriginal no-ops when the cache entry already exists", async () => {
+    const { chart, api } = setup({ config: { targetPoints: 40, reuseOriginalData: true } });
+    await tick();
+    const before = (api.getStats("line") as { originalPoints: number }).originalPoints;
+    (chart.appendData as (id: string, x: Float32Array, y: Float32Array) => void)(
+      "line",
+      Float32Array.from([3000, 3001]),
+      Float32Array.from([1, 2]),
+    );
+    flushRaf();
+    await tick();
+    const after = (api.getStats("line") as { originalPoints: number }).originalPoints;
+    expect(after).toBe(before + 2);
+  });
+
+  it("drops stale OHLC downsamples when a newer pass starts", async () => {
+    const downsampleMod = await import("../../workers/downsampleAsync");
+    const deferred: Array<(value: {
+      x: Float32Array;
+      open: Float32Array;
+      high: Float32Array;
+      low: Float32Array;
+      close: Float32Array;
+    }) => void> = [];
+    const asyncSpy = vi
+      .spyOn(downsampleMod, "ohlcDownsampleAsync")
+      .mockImplementation(() => new Promise((resolve) => deferred.push(resolve)));
+
+    const ohlc = makeOhlc(3000);
+    const { api, byId } = setup({
+      config: { targetPoints: 40, useWorker: true, workerThreshold: 100 },
+      series: ohlc,
+      viewBounds: { xMin: 0, xMax: 3000, yMin: -10, yMax: 10 },
+    });
+    await tick();
+    (api.invalidate as (id?: string) => void)("ohlc");
+    (api.invalidate as (id?: string) => void)("ohlc");
+    deferred.forEach((resolve) =>
+      resolve({
+        x: new Float32Array([0, 1]),
+        open: new Float32Array([0, 1]),
+        high: new Float32Array([1, 2]),
+        low: new Float32Array([0, 1]),
+        close: new Float32Array([0, 1]),
+      }),
+    );
+    await tick();
+    expect(byId.get("ohlc")!.getData().x.length).toBeLessThanOrEqual(40);
+    asyncSpy.mockRestore();
+  });
+
+  it("uses explicit targetPoints when ctx is unavailable during async work", async () => {
+    const downsampleMod = await import("../../workers/downsampleAsync");
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const asyncSpy = vi.spyOn(downsampleMod, "downsampleAsync").mockImplementation(async () => {
+      await gate;
+      return { x: new Float32Array([0, 1]), y: new Float32Array([1, 2]) };
+    });
+
+    const { plugin, ctx, chart } = setup({ config: { targetPoints: 25, useWorker: true, workerThreshold: 100 } });
+    await tick();
+    (chart.updateSeries as (id: string, d: unknown) => void)("line", {
+      x: Float32Array.from({ length: 3000 }, (_, i) => i),
+      y: Float32Array.from({ length: 3000 }, (_, i) => Math.sin(i)),
+    });
+    plugin.onDestroy!(ctx);
+    release();
+    await tick();
+    asyncSpy.mockRestore();
+  });
 });

@@ -245,6 +245,36 @@ describe("PluginLazyLoad", () => {
     err.mockRestore();
   });
 
+  it("invokes onLoadError callback from config", async () => {
+    const onLoadError = vi.fn();
+    const provider = makeProvider(1000);
+    provider.loadChunk = async () => {
+      throw new Error("chunk failed");
+    };
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 100, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false, onLoadError });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as { lazyLoad: { registerSeries: (id: string, p: typeof provider) => void; loadRange: (id: string, from: number, to: number) => Promise<void> } }).lazyLoad;
+    api.registerSeries("s1", provider);
+    await api.loadRange("s1", 0, 100);
+    expect(onLoadError).toHaveBeenCalledWith(expect.any(Error), "s1");
+  });
+
+  it("loadVisible skips work when view bounds are unavailable", () => {
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => null },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: true });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as { lazyLoad: { registerSeries: (id: string, p: ReturnType<typeof makeProvider>) => void } }).lazyLoad;
+    api.registerSeries("s1", makeProvider(500));
+    expect((ctx.chart as { updateSeries: ReturnType<typeof vi.fn> }).updateSeries).not.toHaveBeenCalled();
+  });
+
   it("updateSeriesData bails and empty-merge is a no-op after destroy", async () => {
     const ctx = {
       chart: { updateSeries: vi.fn(), on: vi.fn() },
@@ -304,6 +334,61 @@ describe("PluginLazyLoad", () => {
     api.unregisterSeries("ghost"); // debug-logs even for unknown ids
     expect(log).toHaveBeenCalled();
     log.mockRestore();
+  });
+
+  it("invokes default onLoadError when no handler is configured", async () => {
+    const provider: DataProvider = {
+      getTotalCount: () => 1000,
+      loadChunk: async () => {
+        throw new Error("network down");
+      },
+    };
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 100, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as { lazyLoad: { registerSeries: (id: string, p: DataProvider) => void; loadRange: (id: string, from: number, to: number) => Promise<void> } }).lazyLoad;
+    api.registerSeries("s1", provider);
+    await expect(api.loadRange("s1", 0, 100)).resolves.toBeUndefined();
+  });
+
+  it("updateSeriesData returns early when all chunks were unloaded", async () => {
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 5000, xMax: 6000, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({
+      chunkSize: 10,
+      autoLoad: false,
+      autoUnload: true,
+      viewportBuffer: 0,
+      unloadThreshold: 0,
+    });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as { lazyLoad: { registerSeries: (id: string, p: ReturnType<typeof makeProvider>) => void; loadRange: (id: string, from: number, to: number) => Promise<void>; unloadDistant: () => number } }).lazyLoad;
+    api.registerSeries("s1", makeProvider(100));
+    await api.loadRange("s1", 0, 30);
+    const updateSeries = (ctx.chart as { updateSeries: ReturnType<typeof vi.fn> }).updateSeries;
+    updateSeries.mockClear();
+    const unloaded = api.unloadDistant();
+    expect(unloaded).toBeGreaterThan(0);
+    expect(updateSeries).not.toHaveBeenCalled();
+  });
+
+  it("getVisibleRange returns null after destroy", async () => {
+    const ctx = {
+      chart: { updateSeries: vi.fn(), on: vi.fn() },
+      data: { getViewBounds: () => ({ xMin: 0, xMax: 100, yMin: 0, yMax: 1 }) },
+    } as unknown as PluginContext;
+    const plugin = PluginLazyLoad({ chunkSize: 100, autoLoad: false, autoUnload: true });
+    plugin.onInit!(ctx);
+    const api = (ctx.chart as { lazyLoad: { registerSeries: (id: string, p: ReturnType<typeof makeProvider>) => void; loadRange: (id: string, from: number, to: number) => Promise<void>; unloadDistant: () => number } }).lazyLoad;
+    api.registerSeries("s1", makeProvider(1000));
+    await api.loadRange("s1", 0, 200);
+    plugin.onDestroy!(ctx);
+    expect(api.unloadDistant()).toBe(0);
   });
 
   it("registerSeries fires onLoadStart and debug logging", async () => {

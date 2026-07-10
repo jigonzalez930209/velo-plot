@@ -1,5 +1,5 @@
 /**
- * SciPlot - Snapshot Plugin
+ * VeloPlot - Snapshot Plugin
  * 
  * Provides high-resolution image export capabilities.
  * Supports different formats (PNG, JPEG, WebP) and resolutions (Standard, 2K, 4K, 8K).
@@ -52,7 +52,7 @@ function resolutionToScale(res: SnapshotResolution): number {
 }
 
 /**
- * SciPlot Snapshot Plugin
+ * VeloPlot Snapshot Plugin
  * 
  * Captures the current chart view with all layers (WebGL + Overlay).
  */

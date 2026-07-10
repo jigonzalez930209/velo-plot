@@ -20,6 +20,7 @@ describe("buildIndicatorPane", () => {
     expect(pane.yRange).toEqual([0, 100]);
     expect(pane.series?.length).toBeGreaterThan(0);
     expect(pane.chart?.yAxis).toMatchObject({ label: "RSI", scientific: false });
+    expect(pane.chart?.xAxis).toBeUndefined();
     expect(pane.showXAxis).toBeUndefined();
   });
 

@@ -34,7 +34,7 @@ export class ChartAxisManager {
     const id = options.id || `y${existingIds.length}`;
 
     if (this.ctx.yAxisOptionsMap.has(id)) {
-      console.warn(`[SciPlot] Y axis with id '${id}' already exists`);
+      console.warn(`[VeloPlot] Y axis with id '${id}' already exists`);
       return id;
     }
 
@@ -63,7 +63,7 @@ export class ChartAxisManager {
    */
   removeYAxis(id: string): boolean {
     if (id === this.ctx.primaryYAxisId) {
-      console.warn(`[SciPlot] Cannot remove primary Y axis '${id}'`);
+      console.warn(`[VeloPlot] Cannot remove primary Y axis '${id}'`);
       return false;
     }
 
@@ -92,7 +92,7 @@ export class ChartAxisManager {
   updateYAxis(id: string, options: Partial<AxisOptions>): void {
     const existing = this.ctx.yAxisOptionsMap.get(id);
     if (!existing) {
-      console.warn(`[SciPlot] Y axis '${id}' not found`);
+      console.warn(`[VeloPlot] Y axis '${id}' not found`);
       return;
     }
 

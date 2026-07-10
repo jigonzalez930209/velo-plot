@@ -315,9 +315,8 @@ button {
   transition: all 0.3s;
 }
 
-button:hover {
+button:hover:not(.active) {
   background: rgba(51, 65, 85, 0.9);
-  transform: translateY(-2px);
 }
 
 button.active {
@@ -325,6 +324,12 @@ button.active {
   color: #0f172a;
   border-color: transparent;
   box-shadow: 0 4px 15px rgba(0, 242, 255, 0.3);
+}
+
+button.active:hover {
+  background: linear-gradient(135deg, #00f2ff, #0096ff);
+  color: #0f172a;
+  filter: brightness(1.05);
 }
 
 .dashboard-grid {

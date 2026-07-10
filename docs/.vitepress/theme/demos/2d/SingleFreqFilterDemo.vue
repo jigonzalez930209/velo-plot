@@ -13,7 +13,7 @@ const isInitialized = ref(false)
 const initError = ref<string | null>(null)
 
 let chart: any = null
-let SciPlot: any = null
+let VeloPlot: any = null
 
 const N = 2048
 const SAMPLE_RATE = 1000
@@ -38,8 +38,8 @@ onMounted(async () => {
   }
   
   try {
-    SciPlot = await import('@src/index')
-    const { createChart, PluginTools, PluginAnalysis, PluginAnnotations } = SciPlot;
+    VeloPlot = await import('@src/index')
+    const { createChart, PluginTools, PluginAnalysis, PluginAnnotations } = VeloPlot;
     
     chart = createChart({
       container: chartContainer.value,
@@ -82,10 +82,10 @@ function generateSignal() {
 }
 
 async function draw() {
-  if (!chart || chart.isDestroyed || !SciPlot) return
+  if (!chart || chart.isDestroyed || !VeloPlot) return
 
   try {
-    const { singleFrequencyFilter, powerSpectrum } = SciPlot;
+    const { singleFrequencyFilter, powerSpectrum } = VeloPlot;
     const { t, yClean, yNoisy } = generateSignal()
     
     const yFiltered = singleFrequencyFilter(yNoisy, {
@@ -342,6 +342,14 @@ onUnmounted(() => {
   color: #0f172a;
   border-color: #00f2ff;
   box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+}
+.filter-btn.active:hover {
+  background: #00f2ff;
+  color: #0f172a;
+}
+.mode-btn.active:hover {
+  background: #1e293b;
+  color: #00f2ff;
 }
 
 .params-bar {

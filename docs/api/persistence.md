@@ -1,6 +1,6 @@
 # Serialization & Persistence
 
-The Sci Plot provides a robust serialization system to save, restore, and share chart configurations and data.
+The Velo Plot provides a robust serialization system to save, restore, and share chart configurations and data.
 
 ## Interactive Demo
 <ChartDemo type="persistence" height="400px" />

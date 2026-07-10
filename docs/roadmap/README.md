@@ -1,12 +1,14 @@
 # velo-plot Development Roadmap → v3.0.0
 
-> **Current version:** 1.13.0  
-> **Last updated:** 2026-07-05  
-> **Status:** Active planning document
+> **Current version:** 3.0.0-rc.1  
+> **Last updated:** 2026-07-10  
+> **Status:** Stage 5 RC open — GA checklist in progress
 
 This roadmap defines the path from **velo-plot v1.12.0** to a **v3.0.0** release that delivers an exponential leap in quality, performance, and developer experience — for both **scientific visualization** and **financial/trading** use cases.
 
-The previous roadmap ([ROADMAP-LEGACY.md](../ROADMAP-LEGACY.md)) is archived. It listed many features as "COMPLETED" that are actually stubs or partial implementations. This document is grounded in a full codebase audit (July 2026).
+The previous roadmap ([ROADMAP-LEGACY.md](../ROADMAP-LEGACY.md)) is archived (English historical catalog with reconciled status). It listed many features as "COMPLETED" that were stubs or partial. This document is grounded in a full codebase audit (July 2026).
+
+**RC status:** `3.0.0-rc.1` ships scientific bundle, migration/whats-new docs, semver policy, CI lint, and plugin registry updates. Remaining GA items: public `any` cleanup, size budget CI, known-limitations on all API pages, npm `latest`.
 
 ---
 
@@ -123,6 +125,6 @@ All releases require an updated `CHANGELOG.md` entry following [Keep a Changelog
 
 - [Plugin status registry](../PLUGIN-STATUS.md) — plugin audit (Stage 0)
 - [CHANGELOG.md](../../CHANGELOG.md) — release history
-- [ROADMAP-LEGACY.md](../ROADMAP-LEGACY.md) — archived v1.6.2 plan (historical reference only)
+- [ROADMAP-LEGACY.md](../ROADMAP-LEGACY.md) — historical v1.6.2 catalog (reference only; reconciled status)
 - [Multi-Pane Guide](../guide/multi-pane.md) — current stacked chart docs
 - [Chart Sync API](../api/chart-sync.md) — current sync docs

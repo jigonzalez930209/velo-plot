@@ -32,7 +32,7 @@ chart.addSeries({
 
 ## Step Modes
 
-Sci Plot supports three step modes that control where the step transition occurs:
+Velo Plot supports three step modes that control where the step transition occurs:
 
 ### After (Default)
 

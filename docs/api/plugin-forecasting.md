@@ -1,6 +1,6 @@
 # PluginForecasting API Reference
 
-The `PluginForecasting` adds advanced time-series prediction capabilities to the Sci Plot. It implements several statistical forecasting models natively in TypeScript.
+The `PluginForecasting` adds advanced time-series prediction capabilities to the Velo Plot. It implements several statistical forecasting models natively in TypeScript.
 
 ## Initialization
 

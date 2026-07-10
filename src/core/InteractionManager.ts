@@ -43,6 +43,8 @@ export interface InteractionCallbacks {
   onDragStart?: () => void;
   /** Called when any drag operation ends */
   onDragEnd?: () => void;
+  /** Called on double-tap (mobile reset zoom) */
+  onDoubleTap?: () => void;
   /** Called for all raw interaction events for plugin processing */
   onInteraction?: (event: import("../plugins/types").InteractionEvent) => void;
 }
@@ -80,6 +82,10 @@ export class InteractionManager {
   private lastMousePos = { x: 0, y: 0 };
   private mouseDownPos = { x: 0, y: 0 };
   private mode: InteractionMode = 'pan';
+  private pinchStartDistance = 0;
+  private pinchStartBounds: Bounds | null = null;
+  private lastTapTime = 0;
+  private readonly doubleTapMs = 300;
 
   // Bound handlers for cleanup
   private boundWheel: (e: WheelEvent) => void;
@@ -143,7 +149,7 @@ export class InteractionManager {
 
   /**
    * Set the interaction mode
-   * @deprecated Use setMode instead
+   * @deprecated Use setMode instead. **Removed in v4.0.**
    */
   public setPanMode(enabled: boolean): void {
     this.mode = enabled ? 'pan' : 'select';
@@ -496,6 +502,17 @@ export class InteractionManager {
   // ----------------------------------------
 
   private handleTouchStart(e: TouchEvent): void {
+    if (e.touches.length === 2) {
+      this.isDragging = false;
+      const [t0, t1] = [e.touches[0], e.touches[1]];
+      this.pinchStartDistance = Math.hypot(
+        t1.clientX - t0.clientX,
+        t1.clientY - t0.clientY,
+      );
+      this.pinchStartBounds = this.getBounds();
+      return;
+    }
+
     if (e.touches.length === 1) {
       const touch = e.touches[0];
       this.isDragging = true;
@@ -505,6 +522,31 @@ export class InteractionManager {
   }
 
   private handleTouchMove(e: TouchEvent): void {
+    if (e.touches.length === 2 && this.pinchStartBounds && this.pinchStartDistance > 0) {
+      e.preventDefault();
+      const [t0, t1] = [e.touches[0], e.touches[1]];
+      const distance = Math.hypot(
+        t1.clientX - t0.clientX,
+        t1.clientY - t0.clientY,
+      );
+      const scale = this.pinchStartDistance / distance;
+      const b = this.pinchStartBounds;
+      const cx = (b.xMin + b.xMax) / 2;
+      const cy = (b.yMin + b.yMax) / 2;
+      const halfX = ((b.xMax - b.xMin) / 2) * scale;
+      const halfY = ((b.yMax - b.yMin) / 2) * scale;
+      this.callbacks.onZoom(
+        {
+          xMin: cx - halfX,
+          xMax: cx + halfX,
+          yMin: cy - halfY,
+          yMax: cy + halfY,
+        },
+        this.panningAxisId,
+      );
+      return;
+    }
+
     if (!this.isDragging || e.touches.length !== 1) return;
 
     e.preventDefault();
@@ -518,9 +560,23 @@ export class InteractionManager {
     this.lastMousePos = { x: touch.clientX, y: touch.clientY };
   }
 
-  private handleTouchEnd(): void {
-    this.isDragging = false;
-    this.panningAxisId = undefined;
+  private handleTouchEnd(e: TouchEvent): void {
+    if (e.touches.length < 2) {
+      this.pinchStartDistance = 0;
+      this.pinchStartBounds = null;
+    }
+
+    if (e.touches.length === 0) {
+      const now = Date.now();
+      if (now - this.lastTapTime < this.doubleTapMs) {
+        this.callbacks.onDoubleTap?.();
+        this.lastTapTime = 0;
+      } else {
+        this.lastTapTime = now;
+      }
+      this.isDragging = false;
+      this.panningAxisId = undefined;
+    }
   }
 
   // ----------------------------------------

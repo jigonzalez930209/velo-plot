@@ -348,10 +348,15 @@ function runCinematic() {
   gap: 0.75rem;
 }
 
-.btn-cinematic:hover {
+.btn-cinematic:hover:not(.active) {
   background: rgba(168, 85, 247, 0.3);
-  transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+}
+
+.btn-cinematic.active:hover {
+  background: #a855f7;
+  color: white;
+  filter: brightness(1.08);
 }
 
 .btn-cinematic.active {

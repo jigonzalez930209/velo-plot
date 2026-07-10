@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Keyboard Shortcuts Plugin
+ * Velo Plot - Keyboard Shortcuts Plugin
  */
 
 import { KeyBindingManager, DEFAULT_KEY_BINDINGS } from "../../core/keybindings";

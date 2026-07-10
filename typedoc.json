@@ -1,0 +1,7 @@
+{
+  "entryPoints": ["src/index.core.ts", "src/react/index.ts", "src/vue/index.ts"],
+  "out": "docs/api/generated",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "readme": "none"
+}

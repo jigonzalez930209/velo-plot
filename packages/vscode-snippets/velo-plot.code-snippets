@@ -1,0 +1,48 @@
+{
+  "velo-plot chart": {
+    "prefix": "velo",
+    "body": [
+      "import { createChart } from 'velo-plot';",
+      "",
+      "const chart = createChart({",
+      "  container: document.getElementById('chart')!,",
+      "  xAxis: { label: '${1:X}' },",
+      "  yAxis: { label: '${2:Y}' },",
+      "});",
+      "",
+      "chart.addSeries({",
+      "  id: '${3:series-1}',",
+      "  type: 'line',",
+      "  data: { x: ${4:xData}, y: ${5:yData} },",
+      "});"
+    ],
+    "description": "Create a velo-plot chart with a line series"
+  },
+  "velo-plot react": {
+    "prefix": "vreact",
+    "body": [
+      "import { VeloPlot } from 'velo-plot/react';",
+      "",
+      "<VeloPlot",
+      "  series={[{ id: '${1:id}', x: ${2:x}, y: ${3:y} }]}",
+      "  height={${4:400}}",
+      "/>"
+    ],
+    "description": "React VeloPlot component"
+  },
+  "velo-plot stacked": {
+    "prefix": "vstack",
+    "body": [
+      "import { StackedPlot } from 'velo-plot/react';",
+      "",
+      "<StackedPlot",
+      "  panes={[",
+      "    { id: 'price', height: 0.7, series: [] },",
+      "    { id: 'volume', height: 0.3, series: [] },",
+      "  ]}",
+      "  sync={{ axis: 'x', syncCursor: true }}",
+      "/>"
+    ],
+    "description": "React StackedPlot multi-pane chart"
+  }
+}

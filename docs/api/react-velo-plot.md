@@ -1,25 +1,25 @@
 ---
-title: SciPlot React Component
-description: Declarative React component for Sci Plot, simplifying chart integration with props for series, axes, themes, and automated lifecycle management.
+title: VeloPlot React Component
+description: Declarative React component for Velo Plot, simplifying chart integration with props for series, axes, themes, and automated lifecycle management.
 ---
 
-# SciPlot Component
+# VeloPlot Component
 
 React component for declarative chart creation.
 
 ## Import
 
 ```tsx
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 // or
-import { SciPlot } from 'velo-plot'
+import { VeloPlot } from 'velo-plot'
 ```
 
 ## Props
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `series` | `SciPlotSeries[]` | `[]` | Array of series to display |
+| `series` | `VeloPlotSeries[]` | `[]` | Array of series to display |
 | `xAxis` | `AxisOptions` | `{ auto: true }` | X-axis configuration, including `invertAxis` |
 | `yAxis` | `AxisOptions` | `{ auto: true }` | Y-axis configuration, including `invertAxis` |
 | `theme` | `string \| ChartTheme` | `'dark'` | Theme name or object |
@@ -30,12 +30,12 @@ import { SciPlot } from 'velo-plot'
 | `showLegend` | `boolean` | `false` | Show legend |
 | `layout` | `LayoutOptions` | defaults | Margin and axis title spacing configuration |
 | `cursor` | `CursorOptions` | `undefined` | Cursor configuration |
-| `ref` | `React.Ref<SciPlotRef>` | - | Ref for imperative access |
+| `ref` | `React.Ref<VeloPlotRef>` | - | Ref for imperative access |
 
-### SciPlotSeries
+### VeloPlotSeries
 
 ```typescript
-interface SciPlotSeries {
+interface VeloPlotSeries {
   id: string
   x: Float32Array | Float64Array
   y: Float32Array | Float64Array
@@ -51,7 +51,7 @@ interface SciPlotSeries {
 ## Basic Usage
 
 ```tsx
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 
 function MyChart() {
   const series = [{
@@ -62,7 +62,7 @@ function MyChart() {
   }]
 
   return (
-    <SciPlot
+    <VeloPlot
       series={series}
       xAxis={{ label: 'X', auto: true }}
       yAxis={{ label: 'Y', auto: true }}
@@ -77,7 +77,7 @@ function MyChart() {
 Because the React props inherit `ChartOptions`, you can tune axis title spacing with `layout.xAxisLayout.titleGap` and `layout.yAxisLayout.titleGap`.
 
 ```tsx
-<SciPlot
+<VeloPlot
   series={series}
   layout={{
     xAxisLayout: { titleGap: 48 },
@@ -92,7 +92,7 @@ Because the React props inherit `ChartOptions`, you can tune axis title spacing 
 Use `invertAxis: true` for descending scientific domains such as IR wavenumbers.
 
 ```tsx
-<SciPlot
+<VeloPlot
   series={series}
   xAxis={{ label: 'Wavenumber (cm^-1)', auto: true, invertAxis: true }}
   yAxis={{ label: 'Transmittance (%)', auto: true }}
@@ -103,7 +103,7 @@ Use `invertAxis: true` for descending scientific domains such as IR wavenumbers.
 ## With Controls and Legend
 
 ```tsx
-<SciPlot
+<VeloPlot
   series={series}
   xAxis={{ label: 'Time (s)', auto: true }}
   yAxis={{ label: 'Value', auto: true }}
@@ -121,10 +121,10 @@ Use a ref to access the underlying chart instance:
 
 ```tsx
 import { useRef } from 'react'
-import { SciPlot, type SciPlotRef } from 'velo-plot/react'
+import { VeloPlot, type VeloPlotRef } from 'velo-plot/react'
 
 function MyChart() {
-  const chartRef = useRef<SciPlotRef>(null)
+  const chartRef = useRef<VeloPlotRef>(null)
 
   const handleZoomIn = () => {
     const chart = chartRef.current?.getChart()
@@ -145,16 +145,16 @@ function MyChart() {
   return (
     <>
       <button onClick={handleZoomIn}>Zoom In</button>
-      <SciPlot ref={chartRef} series={series} />
+      <VeloPlot ref={chartRef} series={series} />
     </>
   )
 }
 ```
 
-## SciPlotRef Methods
+## VeloPlotRef Methods
 
 ```typescript
-interface SciPlotRef {
+interface VeloPlotRef {
   getChart(): Chart | null
 }
 ```
@@ -198,7 +198,7 @@ function RealtimeChart() {
     color: '#00f2ff',
   }]
 
-  return <SciPlot series={series} />
+  return <VeloPlot series={series} />
 }
 ```
 
@@ -224,7 +224,7 @@ function MultiSeriesChart() {
   ]
 
   return (
-    <SciPlot
+    <VeloPlot
       series={series}
       showLegend={true}
       height="400px"
@@ -243,7 +243,7 @@ For high-frequency updates with large datasets:
 
 ```tsx
 function HighPerformanceChart() {
-  const chartRef = useRef<SciPlotRef>(null)
+  const chartRef = useRef<VeloPlotRef>(null)
   const dataRef = useRef({ x: new Float32Array(0), y: new Float32Array(0) })
 
   useEffect(() => {
@@ -276,6 +276,6 @@ function HighPerformanceChart() {
     return () => cancelAnimationFrame(animationId)
   }, [])
 
-  return <SciPlot ref={chartRef} series={[]} />
+  return <VeloPlot ref={chartRef} series={[]} />
 }
 ```

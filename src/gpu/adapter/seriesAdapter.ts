@@ -1,7 +1,7 @@
 /**
- * Series Adapter - Converts SciPlot series data to GPU DrawCalls
+ * Series Adapter - Converts VeloPlot series data to GPU DrawCalls
  * 
- * This adapter bridges the gap between the existing SciPlot series system
+ * This adapter bridges the gap between the existing VeloPlot series system
  * and the new backend-agnostic GPU abstraction layer.
  */
 

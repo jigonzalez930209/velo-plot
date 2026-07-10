@@ -1,6 +1,6 @@
 ---
 title: 3D API Reference
-description: Documentation for Sci Plot's high-performance 3D rendering module, featuring specialized renderers for waterfall, point cloud, and volumetric visualizations.
+description: Documentation for Velo Plot's high-performance 3D rendering module, featuring specialized renderers for waterfall, point cloud, and volumetric visualizations.
 ---
 
 # 3D API Reference
@@ -9,7 +9,7 @@ Complete API documentation for the 3D rendering module.
 
 ## Architecture
 
-Sci Plot 3D uses specialized renderer classes that manage their own WebGL2 context, camera, and interaction. This provides maximum performance for complex visualizations like surface meshes or high-density point clouds.
+Velo Plot 3D uses specialized renderer classes that manage their own WebGL2 context, camera, and interaction. This provides maximum performance for complex visualizations like surface meshes or high-density point clouds.
 
 ## Core Renderers
 

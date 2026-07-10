@@ -71,7 +71,7 @@ const manifestPatternRecognition: PluginManifest = {
   name: 'pattern-recognition',
   version: '1.0.0',
   description: 'Technical pattern recognition for financial and scientific data',
-  author: 'Sci Plot Team',
+  author: 'Velo Plot Team',
   provides: ['patterns', 'technical-analysis', 'chart-patterns']
 };
 

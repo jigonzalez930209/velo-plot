@@ -1,4 +1,4 @@
-# Sci Plot Series Types
+# Velo Plot Series Types
 
 The engine supports various series types, each optimized for specific scientific and analytical data.
 

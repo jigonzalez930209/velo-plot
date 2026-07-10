@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.0.0-rc.1] - 2026-07-10
+
+### Breaking
+
+- Prefer dedicated entry points: `velo-plot` (core), `velo-plot/trading`, `velo-plot/scientific`, `velo-plot/full`. Root/`full` remain available; trading and scientific apps should migrate imports.
+- **`PluginSync`**: deprecated stub — use `ChartGroup` / `createChartGroup`. **Removal: v4.0**.
+- **`chart.setPanMode(boolean)`**: use `chart.setMode('pan' | 'select')`. **Removal: v4.0**.
+- **`chart.syncDragLayout()`**: prefer CSS pane transforms during resize. **Removal: v4.0**.
+- Crosshair **`showAxisLabels`**: use `valueDisplayMode`. **Removal: v4.0**.
+- Stacked **`getChart(id)`**: prefer `getPane(id)` (alias kept). **Removal: v4.0**.
+
+### Deprecated (still work — aliases)
+
+- React / framework: `SciPlot`, `SciChart`, `useSciPlot`, `useSciChart` → use `VeloPlot` / `useVeloPlot`.
+- Angular: `SciPlotComponent`, `useSciPlotAngular` → `VeloPlotComponent` / `useVeloPlotAngular`.
+- Svelte: `createSciPlot` → `createVeloPlot`.
+
+### Added
+
+- **`velo-plot/scientific`**: analysis, FFT, regression, forecasting, LaTeX, 3D, and related scientific plugins.
+- [Migration guide v2 → v3](/docs/guide/migration-v3.md) and [What's new in v3](/docs/guide/whats-new-v3.md).
+- Semantic versioning policy in `CONTRIBUTING.md`.
+- CI runs `pnpm lint`; docs deploy also triggers on `v*` tags.
+
+### Changed
+
+- Package version **3.0.0-rc.1** (Stage 5 release candidate).
+- Plugin status registry updated for v3 acceptance (experimental / documented partials).
+- Landing page and README reflect v3 RC and bundle table.
+
 ## [2.0.0] - 2026-07-07
 
 ### Added — Trading Experience (Stage 2)

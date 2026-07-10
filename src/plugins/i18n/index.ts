@@ -1,5 +1,5 @@
 /**
- * SciPlot Engine - Internationalization (i18n) Plugin
+ * VeloPlot Engine - Internationalization (i18n) Plugin
  * 
  * Provides localization support for dates, numbers, and strings.
  * 
@@ -27,7 +27,7 @@ const manifestI18n: PluginManifest = {
 };
 
 /**
- * SciPlot i18n Plugin
+ * VeloPlot i18n Plugin
  * 
  * Adds support for multiple languages and local data formatting.
  */

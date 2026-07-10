@@ -25,10 +25,16 @@ import { createChart } from 'velo-plot';
 import { PluginTools, PluginAnalysis, PluginAnnotations } from 'velo-plot';
 
 // React components
-import { SciPlot, useSciPlot } from 'velo-plot/react';
+import { VeloPlot, useVeloPlot } from 'velo-plot/react';
 
 // Trading dashboard bundle (tree-shaken — no 3D/scientific plugins)
 import { createStackedChart, PluginDrawingTools } from 'velo-plot/trading';
+
+// Scientific bundle (analysis, FFT, regression, forecasting, LaTeX, 3D)
+import { createChart, PluginAnalysis, PluginForecasting } from 'velo-plot/scientific';
+
+// Full bundle (everything — heavier)
+import { createChart } from 'velo-plot/full';
 
 // Built-in Themes
 import { MIDNIGHT_THEME, DARK_THEME, LIGHT_THEME } from 'velo-plot';
@@ -36,7 +42,7 @@ import { MIDNIGHT_THEME, DARK_THEME, LIGHT_THEME } from 'velo-plot';
 
 ### TypeScript Usage
 
-Sci Plot is written in TypeScript and includes full type definitions.
+Velo Plot is written in TypeScript and includes full type definitions.
 
 ```typescript
 import { 

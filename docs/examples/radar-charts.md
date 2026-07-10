@@ -47,7 +47,7 @@ radar.api.addSeries({
 });
 ```
 
-## Features in Sci Plot
+## Features in Velo Plot
 
 - **Smooth Animations**: Update series data and the chart will smoothly transition.
 - **Customizable Grid**: Change colors, line styles, and the number of grid levels.

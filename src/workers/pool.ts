@@ -8,6 +8,12 @@ export interface WorkerPoolOptions {
   poolSize?: number;
   /** Run tasks on main thread when Worker is unavailable */
   syncFallback?: boolean;
+  /**
+   * If a worker never answers (common with broken Vite worker URLs in docs),
+   * fall back to syncHandler after this many ms (default: 250).
+   * Set 0 to disable.
+   */
+  timeoutMs?: number;
 }
 
 export class WorkerPool<TMessage extends { id: string }, TResult = unknown> {
@@ -18,11 +24,13 @@ export class WorkerPool<TMessage extends { id: string }, TResult = unknown> {
       resolve: (value: TResult) => void;
       reject: (error: Error) => void;
       task: TMessage;
+      timer?: ReturnType<typeof setTimeout>;
     }
   >();
   private nextWorker = 0;
   private readonly poolSize: number;
   private readonly syncFallback: boolean;
+  private readonly timeoutMs: number;
   private readonly workerFactory: () => Worker;
   private readonly syncHandler?: (task: TMessage) => TResult | Promise<TResult>;
   private destroyed = false;
@@ -36,6 +44,7 @@ export class WorkerPool<TMessage extends { id: string }, TResult = unknown> {
     this.workerFactory = workerFactory;
     this.poolSize = options.poolSize ?? 2;
     this.syncFallback = options.syncFallback ?? true;
+    this.timeoutMs = options.timeoutMs ?? 250;
     this.syncHandler = options.syncHandler;
 
     if (typeof Worker !== "undefined") {
@@ -64,12 +73,29 @@ export class WorkerPool<TMessage extends { id: string }, TResult = unknown> {
     this.pending.clear();
 
     for (const [, entry] of entries) {
+      this.clearTaskTimer(entry);
       if (this.syncFallback && this.syncHandler) {
         Promise.resolve(this.syncHandler(entry.task)).then(entry.resolve).catch(entry.reject);
         continue;
       }
       entry.reject(new Error(message));
     }
+  }
+
+  private clearTaskTimer(entry: { timer?: ReturnType<typeof setTimeout> }): void {
+    if (entry.timer !== undefined) clearTimeout(entry.timer);
+  }
+
+  private settleWithSync(entry: {
+    resolve: (value: TResult) => void;
+    reject: (error: Error) => void;
+    task: TMessage;
+  }): void {
+    if (this.syncFallback && this.syncHandler) {
+      Promise.resolve(this.syncHandler(entry.task)).then(entry.resolve).catch(entry.reject);
+      return;
+    }
+    entry.reject(new Error("Worker task timed out"));
   }
 
   private spawnWorker(): void {
@@ -82,13 +108,14 @@ export class WorkerPool<TMessage extends { id: string }, TResult = unknown> {
       if (!task) return;
 
       this.pending.delete(data.id);
+      this.clearTaskTimer(task);
 
       if (data.type === "error" || data.error) {
         if (this.syncFallback && this.syncHandler) {
-          Promise.resolve(this.syncHandler(task.task)).then(task.resolve).catch(task.reject);
-          return;
+          this.settleWithSync(task);
+        } else {
+          task.reject(new Error(data.error ?? "Worker task failed"));
         }
-        task.reject(new Error(data.error ?? "Worker task failed"));
         return;
       }
 
@@ -116,10 +143,37 @@ export class WorkerPool<TMessage extends { id: string }, TResult = unknown> {
     }
 
     return new Promise((resolve, reject) => {
-      this.pending.set(task.id, { resolve, reject, task });
+      const entry: {
+        resolve: (value: TResult) => void;
+        reject: (error: Error) => void;
+        task: TMessage;
+        timer?: ReturnType<typeof setTimeout>;
+      } = { resolve, reject, task };
+
+      if (this.timeoutMs > 0) {
+        entry.timer = setTimeout(() => {
+          if (!this.pending.has(task.id)) return;
+          this.pending.delete(task.id);
+          // Silent worker (Vite docs often loads a broken worker URL that never
+          // answers and never fires onerror) — fall back to main-thread calc.
+          this.settleWithSync(entry);
+        }, this.timeoutMs);
+      }
+
+      this.pending.set(task.id, entry);
       const workerIndex = this.nextWorker;
       this.nextWorker = (this.nextWorker + 1) % this.workers.length;
-      this.workers[workerIndex].postMessage(task);
+      try {
+        this.workers[workerIndex].postMessage(task);
+      } catch (err) {
+        this.pending.delete(task.id);
+        this.clearTaskTimer(entry);
+        if (this.syncFallback && this.syncHandler) {
+          Promise.resolve(this.syncHandler(task)).then(resolve).catch(reject);
+          return;
+        }
+        reject(err instanceof Error ? err : new Error(String(err)));
+      }
     });
   }
 
@@ -133,6 +187,9 @@ export class WorkerPool<TMessage extends { id: string }, TResult = unknown> {
 
   destroy(): void {
     this.destroyed = true;
+    for (const entry of this.pending.values()) {
+      this.clearTaskTimer(entry);
+    }
     for (const worker of this.workers) {
       worker.terminate();
     }

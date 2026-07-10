@@ -1,11 +1,11 @@
 import React, { useRef } from 'react';
-import { SciPlot, type SciPlotRef } from 'velo-plot/react';
+import { VeloPlot, type VeloPlotRef } from 'velo-plot/react';
 
 /**
- * Declarative React pattern using the built-in SciPlot component
+ * Declarative React pattern using the built-in VeloPlot component
  */
 export const DeclarativeChart: React.FC = () => {
-    const chartRef = useRef<SciPlotRef>(null);
+    const chartRef = useRef<VeloPlotRef>(null);
 
     const series = [
         {
@@ -40,7 +40,7 @@ export const DeclarativeChart: React.FC = () => {
             <button onClick={handleExport} style={{ alignSelf: 'flex-start', marginBottom: '10px' }}>
                 Export Snapshot
             </button>
-            <SciPlot
+            <VeloPlot
                 ref={chartRef}
                 series={series}
                 xAxis={{ label: 'Time (s)', auto: true }}

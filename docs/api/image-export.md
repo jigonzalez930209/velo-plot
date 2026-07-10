@@ -5,7 +5,7 @@ description: Export charts as PNG, JPEG, WebP, SVG, and full multi-pane stack im
 
 # Image & Vector Export
 
-Sci Plot supports **raster** (PNG, JPEG, WebP) and **vector** (SVG) export for single charts, plus **composite stack export** for multi-pane layouts.
+Velo Plot supports **raster** (PNG, JPEG, WebP) and **vector** (SVG) export for single charts, plus **composite stack export** for multi-pane layouts.
 
 ## Quick reference
 
@@ -171,7 +171,7 @@ Works for **vertical** and **horizontal** (`direction: 'horizontal'`) stacks.
 
 ```tsx
 import { useRef } from 'react';
-import { SciPlot } from 'velo-plot/react';
+import { VeloPlot } from 'velo-plot/react';
 import { PluginSnapshot } from 'velo-plot';
 
 function ExportableChart() {
@@ -192,7 +192,7 @@ function ExportableChart() {
 
   return (
     <>
-      <SciPlot ref={ref} onReady={(c) => c.use(PluginSnapshot())} series={[...]} />
+      <VeloPlot ref={ref} onReady={(c) => c.use(PluginSnapshot())} series={[...]} />
       <button onClick={exportPng}>PNG 4K</button>
       <button onClick={exportSvg}>SVG</button>
     </>

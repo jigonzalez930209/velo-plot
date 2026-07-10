@@ -38,7 +38,7 @@ export function initializeChart(
   container: HTMLDivElement,
   options: ChartOptions
 ): SetupResult {
-  if (!container) throw new Error("[SciPlot] Container element is required");
+  if (!container) throw new Error("[VeloPlot] Container element is required");
 
   const dpr = options.devicePixelRatio ?? window.devicePixelRatio;
 
@@ -87,8 +87,12 @@ export function initializeChart(
     yScales.set(id, fullOptions.scale === "log" ? new LogScale() : new LinearScale());
   });
 
-  // Create DOM structure
-  container.style.position = "relative";
+  // Create DOM structure. Preserve absolute fill used by stacked panes —
+  // overwriting with `relative` collapses height (absolute canvases don't
+  // contribute) and breaks pane resize / shared-axis layouts.
+  if (container.style.position !== "absolute") {
+    container.style.position = "relative";
+  }
   container.style.overflow = "hidden";
   container.style.backgroundColor = options.background ?? theme.backgroundColor;
 

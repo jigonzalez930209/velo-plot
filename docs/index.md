@@ -2,19 +2,19 @@
 layout: home
 
 hero:
-  name: "Sci Plot"
-  text: "Ultra-fast WebGL Scientific Charts"
-  tagline: Render millions of points at 60 FPS with WebGL-powered precision
+  name: "Velo Plot"
+  text: "Ultra-fast WebGL Charts — v3"
+  tagline: Trading dashboards and scientific precision at 60 FPS. Now in 3.0 RC.
   actions:
     - theme: brand
       text: Get Started
       link: /guide/
     - theme: alt
+      text: What's new in v3
+      link: /guide/whats-new-v3
+    - theme: alt
       text: View Examples
       link: /examples/
-    - theme: alt
-      text: Roadmap
-      link: /roadmap/
     - theme: alt
       text: GitHub
       link: https://github.com/jigonzalez930209/velo-plot
@@ -23,6 +23,9 @@ features:
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><defs><linearGradient id="rocketGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#00f2ff"/><stop offset="100%" style="stop-color:#a855f7"/></linearGradient></defs><path d="M48 16c0 0-4-4-16 8S20 48 20 48l-4 8 8-4s12-4 24-16 0-20 0-20z" stroke="url(#rocketGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="36" cy="28" r="4" fill="url(#rocketGrad)"/><path d="M16 48l-4 4M20 52l-4 4M12 44l-4 4" stroke="url(#rocketGrad)" stroke-width="2" stroke-linecap="round"/></svg>'
     title: Blazing Fast Performance
     details: Render 10M+ data points at 60 FPS using native WebGL. No canvas limitations, no performance bottlenecks.
+  - icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><defs><linearGradient id="v3Grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#00f2ff"/><stop offset="100%" style="stop-color:#a855f7"/></linearGradient></defs><rect x="10" y="14" width="44" height="36" rx="4" stroke="url(#v3Grad)" stroke-width="3"/><text x="32" y="40" text-anchor="middle" fill="url(#v3Grad)" font-size="16" font-weight="700" font-family="sans-serif">v3</text></svg>'
+    title: v3.0 Stable Platform
+    details: Dedicated trading and scientific bundles, React StackedPlot, migration guides, and release-candidate quality gates.
   - icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none"><defs><linearGradient id="chartGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#00f2ff"/><stop offset="100%" style="stop-color:#a855f7"/></linearGradient></defs><rect x="8" y="8" width="48" height="48" rx="6" stroke="url(#chartGrad)" stroke-width="3"/><polyline points="16,40 26,28 36,34 48,18" stroke="url(#chartGrad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="16" cy="40" r="3" fill="url(#chartGrad)"/><circle cx="26" cy="28" r="3" fill="url(#chartGrad)"/><circle cx="36" cy="34" r="3" fill="url(#chartGrad)"/><circle cx="48" cy="18" r="3" fill="url(#chartGrad)"/></svg>'
     title: Scientific Precision
     details: Built for scientific data with Float32/Float64 array support, automatic SI prefixes, and proper axis scaling.
@@ -86,7 +89,7 @@ chart.addSeries({
 ### React Usage
 
 ```tsx
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 
 function MyChart() {
   const series = [{
@@ -97,7 +100,7 @@ function MyChart() {
   }]
 
   return (
-    <SciPlot
+    <VeloPlot
       series={series}
       xAxis={{ label: 'Time', auto: true }}
       yAxis={{ label: 'Value', auto: true }}
@@ -107,9 +110,9 @@ function MyChart() {
 }
 ```
 
-## Why Sci Plot?
+## Why Velo Plot?
 
-| Feature | Sci Plot | Chart.js | Plotly |
+| Feature | Velo Plot | Chart.js | Plotly |
 |---------|----------------|----------|--------|
 | Max Points (60 FPS) | **10M+** | ~10k | ~100k |
 | Rendering | WebGL | Canvas 2D | SVG/WebGL |

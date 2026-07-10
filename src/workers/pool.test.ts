@@ -259,4 +259,34 @@ describe("WorkerPool", () => {
     pool.destroy();
     globalThis.Worker = originalWorker;
   });
+
+  it("falls back to sync when the worker stays silent past timeoutMs", async () => {
+    class SilentWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(_task: { id: string }) {
+        // Never responds — simulates broken Vite worker URL in docs.
+      }
+      terminate() {}
+    }
+
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error mock
+    globalThis.Worker = SilentWorker;
+
+    const pool = new WorkerPool<{ id: string; value: number }, { v: number }>(
+      () => new SilentWorker() as unknown as Worker,
+      {
+        poolSize: 1,
+        syncFallback: true,
+        timeoutMs: 30,
+        syncHandler: (t) => ({ v: t.value * 5 }),
+      },
+    );
+
+    const result = await pool.run({ id: "silent-1", value: 3 });
+    expect(result.v).toBe(15);
+    pool.destroy();
+    globalThis.Worker = originalWorker;
+  });
 });

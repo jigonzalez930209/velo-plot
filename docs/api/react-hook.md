@@ -1,30 +1,30 @@
 ---
-title: useSciPlot React Hook
-description: Master the useSciPlot hook for imperative control over your charts in React, enabling direct access to the Chart instance and custom interaction logic.
+title: useVeloPlot React Hook
+description: Master the useVeloPlot hook for imperative control over your charts in React, enabling direct access to the Chart instance and custom interaction logic.
 ---
 
-# useSciPlot Hook
+# useVeloPlot Hook
 
 Low-level React hook for imperative chart control.
 
 ## Import
 
 ```tsx
-import { useSciPlot } from 'velo-plot/react'
+import { useVeloPlot } from 'velo-plot/react'
 // or
-import { useSciPlot } from 'velo-plot'
+import { useVeloPlot } from 'velo-plot'
 ```
 
 ## Signature
 
 ```typescript
-function useSciPlot(options?: UseSciPlotOptions): UseSciPlotReturn
+function useVeloPlot(options?: UseVeloPlotOptions): UseVeloPlotReturn
 ```
 
 ## Options
 
 ```typescript
-interface UseSciPlotOptions {
+interface UseVeloPlotOptions {
   xAxis?: AxisOptions
   yAxis?: AxisOptions
   theme?: string | ChartTheme
@@ -40,7 +40,7 @@ The hook also inherits `layout`, so `layout.xAxisLayout.titleGap` and `layout.yA
 ## Returns
 
 ```typescript
-interface UseSciPlotReturn {
+interface UseVeloPlotReturn {
   containerRef: React.RefObject<HTMLDivElement>
   chart: Chart | null
   isReady: boolean
@@ -56,10 +56,10 @@ interface UseSciPlotReturn {
 ## Basic Usage
 
 ```tsx
-import { useSciPlot } from 'velo-plot/react'
+import { useVeloPlot } from 'velo-plot/react'
 
 function MyChart() {
-  const { containerRef, addSeries, isReady } = useSciPlot({
+  const { containerRef, addSeries, isReady } = useVeloPlot({
     xAxis: { label: 'Wavenumber (cm^-1)', auto: true, invertAxis: true },
     yAxis: { label: 'Y', auto: true },
     layout: {
@@ -95,7 +95,7 @@ function MyChart() {
 
 ```tsx
 function RealtimeChart() {
-  const { containerRef, updateSeries, addSeries, isReady } = useSciPlot()
+  const { containerRef, updateSeries, addSeries, isReady } = useVeloPlot()
   const dataRef = useRef({ x: new Float32Array(0), y: new Float32Array(0) })
   const tRef = useRef(0)
 
@@ -138,7 +138,7 @@ function RealtimeChart() {
 
 ```tsx
 function ChartWithControls() {
-  const { containerRef, chart, isReady, bounds } = useSciPlot()
+  const { containerRef, chart, isReady, bounds } = useVeloPlot()
 
   const handleExport = () => {
     if (chart) {
@@ -168,13 +168,13 @@ function ChartWithControls() {
 
 ## When to Use
 
-Use `useSciPlot` when you need:
+Use `useVeloPlot` when you need:
 - Full control over chart lifecycle
 - Custom container styling
 - Direct access to chart instance
 - Integration with complex state management
 
-Use `<SciPlot>` component when you want:
+Use `<VeloPlot>` component when you want:
 - Simpler declarative API
 - Automatic series management
 - Less boilerplate code

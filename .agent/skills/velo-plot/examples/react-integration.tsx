@@ -2,9 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { createChart, type Chart } from 'velo-plot';
 
 /**
- * React Component pattern for Sci Plot
+ * React Component pattern for Velo Plot
  */
-export const SciPlotComponent: React.FC = () => {
+export const VeloPlotComponent: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const chartRef = useRef<Chart | null>(null);
 

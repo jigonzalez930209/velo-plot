@@ -3,14 +3,14 @@ from typing import List, Dict, Any, Optional
 
 class PythonChart:
     """
-    Python equivalent of the SciPlot object.
+    Python equivalent of the VeloPlot object.
     It helps in building a configuration that can be serialized to JSON.
     """
     def __init__(self, container_id: str = "chart-container"):
         self.container_id = container_id
         self.series = []
         self.options = {
-            "title": "SciPlot from Python",
+            "title": "VeloPlot from Python",
             "xAxis": {"title": "X Axis"},
             "yAxis": {"title": "Y Axis"},
             "theme": "dark"

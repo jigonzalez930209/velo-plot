@@ -74,7 +74,7 @@ const manifestRegression: PluginManifest = {
   name: 'regression',
   version: '1.0.0',
   description: 'Advanced scientific regression and curve fitting',
-  author: 'Sci Plot Team',
+  author: 'Velo Plot Team',
   provides: ['regression', 'curve-fitting', 'scientific-analysis']
 };
 

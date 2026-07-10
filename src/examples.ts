@@ -1,7 +1,7 @@
 /**
- * Sci Plot - Usage Example
+ * Velo Plot - Usage Example
  *
- * This file demonstrates how to use the Sci Plot
+ * This file demonstrates how to use the Velo Plot
  * for electrochemical data visualization.
  */
 

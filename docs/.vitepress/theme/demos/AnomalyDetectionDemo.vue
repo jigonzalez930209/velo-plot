@@ -557,9 +557,8 @@ onUnmounted(() => {
   transition: all 0.2s;
 }
 
-.method-buttons button:hover {
+.method-buttons button:hover:not(.active) {
   border-color: #00f2ff;
-  transform: translateY(-2px);
 }
 
 .method-buttons button.active {
@@ -679,7 +678,7 @@ onUnmounted(() => {
   border: 1px solid var(--vp-c-divider);
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(.active) {
   border-color: #00f2ff;
   color: #00f2ff;
 }

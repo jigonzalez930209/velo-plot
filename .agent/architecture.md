@@ -28,6 +28,6 @@ Extensions connect to the core `createChart` instance via lifecycle hooks:
 ## 4. React Integration
 
 When modifying `/src/react/`:
-- The React wrapper (`<SciPlot />`) instantiates the vanilla `createChart` engine.
+- The React wrapper (`<VeloPlot />`) instantiates the vanilla `createChart` engine.
 - A `useRef` binds the engine instance to a DOM element.
 - Updates to `props.series` or `props.options` trigger engine delta-updates. **Do not unmount and remount the canvas** on prop changes; use the engine's `.updateSeries()` techniques.

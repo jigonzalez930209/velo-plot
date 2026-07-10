@@ -115,9 +115,8 @@ export function PluginVirtualization(
   }
 
   function getTargetPoints(dataLength: number): number {
-    if (!ctx) return dataLength;
     if (config.targetPoints !== "auto") return Math.max(2, config.targetPoints);
-    const width = ctx.render.canvasSize.width / ctx.render.pixelRatio;
+    const width = ctx!.render.canvasSize.width / ctx!.render.pixelRatio;
     return calculateTargetPoints(dataLength, width, config.pointsPerPixel);
   }
 
@@ -143,7 +142,6 @@ export function PluginVirtualization(
 
   function cacheOriginal(seriesId: string, data: SeriesCache): void {
     if (!config.reuseOriginalData) return;
-    if (originalData.has(seriesId)) return;
     originalData.set(seriesId, { ...data });
   }
 
@@ -198,8 +196,7 @@ export function PluginVirtualization(
   }
 
   function getViewportSource(source: SeriesCache): SeriesCache {
-    if (!ctx) return source;
-    const bounds = ctx.data.getViewBounds?.();
+    const bounds = ctx!.data.getViewBounds?.();
     if (!bounds) return source;
 
     const sliced = sliceSeriesToViewport(
@@ -221,9 +218,8 @@ export function PluginVirtualization(
   }
 
   function commitDownsampled(seriesId: string, payload: SeriesUpdateData): void {
-    if (!originalUpdateSeries) return;
     isInternalUpdate = true;
-    originalUpdateSeries(seriesId, payload);
+    originalUpdateSeries!(seriesId, payload);
     isInternalUpdate = false;
   }
 

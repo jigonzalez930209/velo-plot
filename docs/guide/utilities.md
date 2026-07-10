@@ -5,7 +5,7 @@ description: Developer experience utilities including keyboard shortcuts, clipbo
 
 # Utilities & Developer Experience
 
-Sci Plot includes several utilities to enhance developer experience and improve productivity.
+Velo Plot includes several utilities to enhance developer experience and improve productivity.
 
 ## Keyboard Shortcuts
 

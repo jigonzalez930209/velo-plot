@@ -411,9 +411,13 @@ const phaseNote = computed(() => {
   transition: all 0.15s;
 }
 
-.btn-group button:hover {
+.btn-group button:hover:not(.active) {
   color: #94a3b8;
   background: rgba(255,255,255,0.05);
+}
+
+.btn-group button.active:hover {
+  filter: brightness(1.05);
 }
 
 .btn-group button.active {

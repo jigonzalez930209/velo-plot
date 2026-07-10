@@ -48,7 +48,7 @@ chart.addSeries({
 
 ### 📊 Error Bars (Measurement Uncertainty)
 
-Error bars visualize the uncertainty or variability in measurements. Sci Plot supports:
+Error bars visualize the uncertainty or variability in measurements. Velo Plot supports:
 
 - **Symmetric errors**: Single ±error value
 - **Asymmetric errors**: Separate positive and negative errors

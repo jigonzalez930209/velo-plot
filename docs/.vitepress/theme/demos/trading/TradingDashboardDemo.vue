@@ -24,6 +24,7 @@ async function build() {
     container: containerRef.value,
     theme: chartTheme.value,
     animations: false,
+    resizable: true,
     panes: [
       {
         id: 'price',
@@ -54,8 +55,12 @@ async function build() {
   await stack.whenReady?.()
   const priceChart = stack.getChart('price')
   await priceChart.use(PluginAnnotations())
-  await stack.addIndicator('rsi', { period: 14, pane: 'new' })
-  await stack.addIndicator('macd', { pane: 'new', paneHeight: 0.2 })
+  try {
+    await stack.addIndicator('rsi', { period: 14, pane: 'new', paneHeight: 0.18 })
+    await stack.addIndicator('macd', { pane: 'new', paneHeight: 0.2 })
+  } catch (err) {
+    console.error('[TradingDashboardDemo] addIndicator failed', err)
+  }
   const buyIdx = findLowestBarIndex(data.low)
   const entry = data.close[buyIdx]
   priceChart.getSeries('ohlc')?.setMarkers([
@@ -73,6 +78,7 @@ async function build() {
   await priceChart.use(PluginReplay({ seriesId: 'ohlc', frameMs: 120 }))
   priceChart.setDrawingMode('trendline')
   stack.fitAll?.()
+  stack.resize?.()
 }
 
 function toggleMagnet() {
@@ -92,7 +98,9 @@ watch(isDark, () => { build() })
       <button class="btn" :class="{ active: magnet }" @click="toggleMagnet">Magnet</button>
     </div>
     <p class="demo-hint">Price + volume + RSI + MACD · business-day axis · markers · position lines · live drawing preview</p>
-    <div ref="containerRef" class="chart-container" style="height: 560px" />
+    <div class="chart-shell">
+      <div ref="containerRef" class="chart-container" />
+    </div>
   </div>
 </template>
 
@@ -101,15 +109,22 @@ watch(isDark, () => { build() })
 .trading-demo { margin: 1rem 0 1.5rem; }
 .toolbar { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
 .demo-hint { font-size: 13px; color: var(--vp-c-text-2); margin: 0 0 0.75rem; }
-.chart-container {
+.chart-shell {
   width: 100%;
+  height: 560px;
   border: 1px solid var(--vp-c-divider);
   border-radius: 8px;
   overflow: hidden;
+}
+.chart-container {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
 .btn {
   padding: 4px 10px; font-size: 12px; border-radius: 6px;
   border: 1px solid var(--vp-c-divider); background: var(--vp-c-bg-soft); cursor: pointer;
 }
 .btn.active { background: var(--vp-c-brand); color: var(--vp-c-bg); border-color: var(--vp-c-brand); }
+.btn.active:hover { background: var(--vp-c-brand); color: var(--vp-c-bg); border-color: var(--vp-c-brand); filter: brightness(1.05); }
 </style>

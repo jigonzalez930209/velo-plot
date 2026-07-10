@@ -1,6 +1,6 @@
 # Example: Gauge & Sankey Diagrams
 
-This example demonstrates how to implement Gauge (for individual metrics) and Sankey (for data flows) visualizations in Sci Plot.
+This example demonstrates how to implement Gauge (for individual metrics) and Sankey (for data flows) visualizations in Velo Plot.
 
 <ProcessMonitoringDemo />
 
@@ -10,9 +10,9 @@ Beautiful KPI visualization.
 The Gauge chart is ideal for showing a single value within a predefined range.
 
 ```typescript
-import { SciPlot } from 'velo-plot';
+import { VeloPlot } from 'velo-plot';
 
-const chart = new SciPlot({
+const chart = new VeloPlot({
   container: document.getElementById('chart-container'),
   theme: 'midnight'
 });

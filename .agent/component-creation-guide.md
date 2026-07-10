@@ -96,6 +96,6 @@ chart.getPlugin('custom-analysis').calculateMean('signal1');
 
 ## TASK C: React Wrapper Integrations
 
-If you added a new WebGL series type or Plugin, you must expose it in `/src/react/SciPlot.tsx` if it requires a UI lifecycle wrapper (e.g., a React prop that feeds data into the plugin on change).
+If you added a new WebGL series type or Plugin, you must expose it in `/src/react/VeloPlot.tsx` if it requires a UI lifecycle wrapper (e.g., a React prop that feeds data into the plugin on change).
 
-**Rule**: The React component handles the DOM and `ResizeObserver`. The React hooks (`useSciPlot`) manage syncing `props.series` into internal WebGL series (`engine.updateSeries(id, newData)`).
+**Rule**: The React component handles the DOM and `ResizeObserver`. The React hooks (`useVeloPlot`) manage syncing `props.series` into internal WebGL series (`engine.updateSeries(id, newData)`).

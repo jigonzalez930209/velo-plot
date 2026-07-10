@@ -9,10 +9,10 @@ See this plugin in action in our [Process Monitoring Dashboard](/examples/gauge-
 ## Installation
 
 ```typescript
-import { SciPlot } from 'velo-plot';
+import { VeloPlot } from 'velo-plot';
 import { PluginDataTransform } from 'velo-plot/plugins';
 
-const chart = new SciPlot({
+const chart = new VeloPlot({
   // ...
 });
 

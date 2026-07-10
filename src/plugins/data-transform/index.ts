@@ -1,7 +1,7 @@
 /**
  * PluginDataTransform - Implementation
  * 
- * Provides a pipeline-based data transformation system for Sci Plot.
+ * Provides a pipeline-based data transformation system for Velo Plot.
  */
 
 import type { 
@@ -31,7 +31,7 @@ const manifest: PluginManifest = {
   version: '1.0.0',
   description: 'Advanced data transformation pipeline',
   provides: ['data-transform', 'processing'],
-  author: 'Sci Plot Team'
+  author: 'Velo Plot Team'
 };
 
 export function PluginDataTransform(

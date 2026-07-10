@@ -20,6 +20,7 @@ import {
 
 const stack = createStackedChart({
   container: document.getElementById('chart'),
+  resizable: true,
   panes: [
     {
       id: 'price',

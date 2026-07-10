@@ -25,6 +25,7 @@ function buildMockChart(id: string): Chart & Record<string, ReturnType<typeof vi
     setResizeSuspended: vi.fn(),
     updateYAxis: vi.fn(),
     updateXAxis: vi.fn(),
+    updateLayout: vi.fn(),
     on: vi.fn(),
     off: vi.fn(),
     pan: vi.fn(),
@@ -393,6 +394,131 @@ describe("createStackedChart (DOM)", () => {
     document.body.removeChild(container);
   });
 
+  it("keeps stack height stable when clicking a resize divider", async () => {
+    const queued: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      queued.push(cb);
+      return queued.length;
+    });
+
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    container.style.height = "400px";
+    Object.defineProperty(container, "clientHeight", {
+      get: () => parseInt(container.style.height, 10) || 400,
+      configurable: true,
+    });
+    Object.defineProperty(container, "clientWidth", { value: 600, configurable: true });
+    const rectSpy = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      const isContainer = this === container;
+      const h = isContainer
+        ? 400
+        : this.classList?.contains("velo-pane-divider")
+          ? 6
+          : 197;
+      const w = 600;
+      return {
+        width: w,
+        height: h,
+        top: 0,
+        left: 0,
+        right: w,
+        bottom: h,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      } as DOMRect;
+    });
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      resizable: true,
+      panes: [
+        { id: "price", height: 0.7 },
+        { id: "vol", height: 0.3 },
+      ],
+    });
+
+    const heightBefore = container.style.height;
+    const divider = container.querySelector(".velo-pane-divider") as HTMLDivElement;
+    divider.setPointerCapture = vi.fn();
+    divider.releasePointerCapture = vi.fn();
+    divider.dispatchEvent(
+      new PointerEvent("pointerdown", { clientY: 280, bubbles: true, pointerId: 40 }),
+    );
+    while (queued.length) queued.shift()?.(0);
+
+    // Host size must stay owned by the container — never grow on divider click.
+    expect(container.style.height).toBe(heightBefore);
+    expect(container.style.maxHeight).toBe("none");
+    expect(parseInt(container.style.height, 10)).toBe(400);
+
+    divider.dispatchEvent(
+      new PointerEvent("pointerup", { clientY: 280, bubbles: true, pointerId: 40 }),
+    );
+    expect(container.style.height).toBe(heightBefore);
+    expect(container.style.maxHeight).toBe("none");
+
+    rectSpy.mockRestore();
+    stack.destroy();
+    document.body.removeChild(container);
+    vi.unstubAllGlobals();
+  });
+
+  it("preserves host height and fills width on create", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    container.style.height = "480px";
+    container.style.width = "100%";
+    Object.defineProperty(container, "clientHeight", { value: 480, configurable: true });
+    Object.defineProperty(container, "clientWidth", { value: 800, configurable: true });
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      panes: [
+        { id: "a", height: 0.6 },
+        { id: "b", height: 0.4 },
+      ],
+    });
+
+    expect(container.style.height).toBe("480px");
+    expect(container.style.width).toBe("100%");
+    expect(container.style.maxHeight).toBe("none");
+    expect(container.style.display).toBe("flex");
+
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("rebuilds resize dividers when a pane is added to a resizable stack", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    container.style.height = "400px";
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      resizable: true,
+      sharedXAxis: "bottom",
+      panes: [{ id: "price", height: 1 }],
+    });
+    expect(container.querySelectorAll(".velo-pane-divider")).toHaveLength(0);
+
+    stack.addPane({ id: "rsi", height: 0.3 });
+    expect(container.querySelectorAll(".velo-pane-divider")).toHaveLength(1);
+    expect(container.querySelector(".velo-pane-divider-handle")?.textContent).toBe("⇕");
+
+    stack.addPane({ id: "macd", height: 0.25 });
+    expect(container.querySelectorAll(".velo-pane-divider")).toHaveLength(2);
+
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
   it("addPane appends a pane, hides the previous x-axis, and rebalances ratios", async () => {
     const createStackedChart = await loadStack();
     const container = document.createElement("div");
@@ -415,10 +541,54 @@ describe("createStackedChart (DOM)", () => {
     });
     expect(chart).toBeDefined();
     expect(stack.getPanes()).toHaveLength(3);
+    expect(stack.getChart("extra")).toBe(chart);
     // previous last pane's x-axis is hidden so only the new bottom pane shows it
-    expect((stack.getPane("vol") as Record<string, ReturnType<typeof vi.fn>>).updateXAxis).toHaveBeenCalled();
+    const vol = stack.getPane("vol") as Record<string, ReturnType<typeof vi.fn>>;
+    expect(vol.updateXAxis).toHaveBeenCalledWith({
+      showLabels: false,
+      showTicks: false,
+      showLine: false,
+    });
+    expect(vol.updateLayout).toHaveBeenCalledWith({
+      margins: { bottom: 0 },
+    });
+    // new bottom pane should request X labels (createChart options)
+    const extraOpts = mockCreateChart.mock.calls.find((c) => c[0]?.id === "extra")?.[0];
+    expect(extraOpts?.xAxis?.showLabels).toBe(true);
 
     stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("propagates stack-level xAxis defaults to every pane", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    container.style.height = "400px";
+    document.body.appendChild(container);
+
+    createStackedChart({
+      container,
+      sharedXAxis: "bottom",
+      xAxis: { type: "time", timeScale: { calendar: "business-day" } },
+      panes: [
+        { id: "price", height: 0.7 },
+        { id: "rsi", height: 0.3 },
+      ],
+    });
+
+    const priceOpts = mockCreateChart.mock.calls.find((c) => c[0]?.id === "price")?.[0];
+    const rsiOpts = mockCreateChart.mock.calls.find((c) => c[0]?.id === "rsi")?.[0];
+    expect(priceOpts?.xAxis).toMatchObject({
+      type: "time",
+      timeScale: { calendar: "business-day" },
+      showLabels: false,
+    });
+    expect(rsiOpts?.xAxis).toMatchObject({
+      type: "time",
+      timeScale: { calendar: "business-day" },
+      showLabels: true,
+    });
+
     document.body.removeChild(container);
   });
 
@@ -644,6 +814,173 @@ describe("createStackedChart (DOM)", () => {
     document.body.removeChild(container);
   });
 
+  it("uses default layout margins when layout is omitted", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    container.style.height = "400px";
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      panes: [
+        { id: "a", height: 0.5, chart: { yAxis: { position: "left" } } },
+        { id: "b", height: 0.5 },
+      ],
+    });
+
+    expect(stack.getPanes()).toHaveLength(2);
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("skips stack resize RAF while pane drag is active", async () => {
+    const queued: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      queued.push(cb);
+      return queued.length;
+    });
+
+    let observerCb: ResizeObserverCallback | undefined;
+    class TestResizeObserver {
+      constructor(cb: ResizeObserverCallback) {
+        observerCb = cb;
+      }
+      observe = vi.fn();
+      disconnect = vi.fn();
+    }
+    vi.stubGlobal("ResizeObserver", TestResizeObserver);
+
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    Object.defineProperty(container, "clientHeight", { value: 400, configurable: true });
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      resizable: true,
+      panes: [
+        { id: "a", height: 0.5 },
+        { id: "b", height: 0.5 },
+      ],
+    });
+
+    const divider = container.querySelector(".velo-pane-divider") as HTMLDivElement;
+    divider.setPointerCapture = vi.fn();
+    divider.releasePointerCapture = vi.fn();
+    divider.dispatchEvent(
+      new PointerEvent("pointerdown", { clientY: 150, bubbles: true, pointerId: 21 }),
+    );
+    observerCb?.([], {} as ResizeObserver);
+    expect(queued.length).toBeGreaterThan(0);
+    queued.shift()?.(0);
+
+    divider.dispatchEvent(
+      new PointerEvent("pointerup", { clientY: 150, bubbles: true, pointerId: 21 }),
+    );
+
+    stack.destroy();
+    document.body.removeChild(container);
+    vi.unstubAllGlobals();
+  });
+
+  it("addPane scales existing ratios when pane ratios sum to zero", async () => {
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    container.style.height = "400px";
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      panes: [
+        { id: "a", height: 0.5 },
+        { id: "b", height: 0.5 },
+      ],
+    });
+
+    stack.setPaneRatios({ a: 0, b: 0 });
+    stack.addPane({ id: "c", height: 0.25 });
+    expect(stack.getPanes()).toHaveLength(3);
+
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("syncRatiosFromSizes ignores zero totals after drag end", async () => {
+    const paneResize = await import("./paneResize");
+    const normalizeSpy = vi.spyOn(paneResize, "normalizePaneHeights").mockReturnValue([0, 0]);
+
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    Object.defineProperty(container, "clientHeight", { value: 400, configurable: true });
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      resizable: true,
+      panes: [
+        { id: "a", height: 0.5 },
+        { id: "b", height: 0.5 },
+      ],
+    });
+
+    const divider = container.querySelector(".velo-pane-divider") as HTMLDivElement;
+    divider.setPointerCapture = vi.fn();
+    divider.releasePointerCapture = vi.fn();
+    divider.dispatchEvent(
+      new PointerEvent("pointerdown", { clientY: 150, bubbles: true, pointerId: 22 }),
+    );
+    divider.dispatchEvent(
+      new PointerEvent("pointerup", { clientY: 150, bubbles: true, pointerId: 22 }),
+    );
+
+    expect(normalizeSpy).toHaveBeenCalled();
+    normalizeSpy.mockRestore();
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("flushDragLayout no-ops when drag layout was cleared before RAF runs", async () => {
+    const queued: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      queued.push(cb);
+      return queued.length;
+    });
+    vi.stubGlobal("cancelAnimationFrame", vi.fn());
+
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    Object.defineProperty(container, "clientHeight", { value: 400, configurable: true });
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      resizable: true,
+      panes: [
+        { id: "a", height: 0.5 },
+        { id: "b", height: 0.5 },
+      ],
+    });
+
+    const divider = container.querySelector(".velo-pane-divider") as HTMLDivElement;
+    divider.setPointerCapture = vi.fn();
+    divider.releasePointerCapture = vi.fn();
+    divider.dispatchEvent(
+      new PointerEvent("pointerdown", { clientY: 150, bubbles: true, pointerId: 23 }),
+    );
+    divider.dispatchEvent(
+      new PointerEvent("pointermove", { clientY: 170, bubbles: true, pointerId: 23 }),
+    );
+    expect(queued.length).toBeGreaterThan(0);
+    divider.dispatchEvent(
+      new PointerEvent("pointerup", { clientY: 170, bubbles: true, pointerId: 23 }),
+    );
+    queued.shift()?.(0);
+
+    stack.destroy();
+    document.body.removeChild(container);
+    vi.unstubAllGlobals();
+  });
+
   it("handles a horizontal drag with measured pane sizes and a gap", async () => {
     const createStackedChart = await loadStack();
     const container = document.createElement("div");
@@ -721,6 +1058,107 @@ describe("createStackedChart (DOM)", () => {
 
     document.body.removeChild(container);
     vi.unstubAllGlobals();
+  });
+
+  it("skips stack resize while a pane drag is active", async () => {
+    let observerCb: ResizeObserverCallback | undefined;
+    class TestResizeObserver {
+      constructor(cb: ResizeObserverCallback) {
+        observerCb = cb;
+      }
+      observe = vi.fn();
+      disconnect = vi.fn();
+    }
+    vi.stubGlobal("ResizeObserver", TestResizeObserver);
+
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    Object.defineProperty(container, "clientHeight", { value: 400, configurable: true });
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      resizable: true,
+      panes: [
+        { id: "a", height: 0.5 },
+        { id: "b", height: 0.5 },
+      ],
+    });
+
+    const divider = container.querySelector(".velo-pane-divider") as HTMLDivElement;
+    divider.dispatchEvent(
+      new PointerEvent("pointerdown", { clientY: 150, bubbles: true, pointerId: 11 }),
+    );
+    observerCb?.([], {} as ResizeObserver);
+    divider.dispatchEvent(
+      new PointerEvent("pointerup", { clientY: 150, bubbles: true, pointerId: 11 }),
+    );
+
+    stack.destroy();
+    document.body.removeChild(container);
+    vi.unstubAllGlobals();
+  });
+
+  it("destroy cancels pending drag layout frames", async () => {
+    const queued: FrameRequestCallback[] = [];
+    vi.stubGlobal("requestAnimationFrame", (cb: FrameRequestCallback) => {
+      queued.push(cb);
+      return queued.length;
+    });
+    const cancel = vi.fn();
+    vi.stubGlobal("cancelAnimationFrame", cancel);
+
+    const createStackedChart = await loadStack();
+    const container = document.createElement("div");
+    Object.defineProperty(container, "clientHeight", { value: 400, configurable: true });
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      resizable: true,
+      panes: [
+        { id: "a", height: 0.5 },
+        { id: "b", height: 0.5 },
+      ],
+    });
+
+    const divider = container.querySelector(".velo-pane-divider") as HTMLDivElement;
+    divider.dispatchEvent(
+      new PointerEvent("pointerdown", { clientY: 150, bubbles: true, pointerId: 12 }),
+    );
+    divider.dispatchEvent(
+      new PointerEvent("pointermove", { clientY: 180, bubbles: true, pointerId: 12 }),
+    );
+    stack.destroy();
+    expect(cancel).toHaveBeenCalled();
+
+    document.body.removeChild(container);
+    vi.unstubAllGlobals();
+  });
+
+  it("addIndicator new pane handles indicator config without series list", async () => {
+    const createStackedChart = await loadStack();
+    const { buildIndicatorPaneFromPreset } = await import("../indicator/addIndicator");
+    vi.mocked(buildIndicatorPaneFromPreset).mockResolvedValueOnce({
+      id: "emptyPane",
+      height: 0.2,
+      series: undefined,
+    } as never);
+
+    const container = document.createElement("div");
+    container.style.height = "400px";
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      panes: [{ id: "price", height: 1, series: [{ id: "l", type: "line", data: { x: Float32Array.from([0]), y: Float32Array.from([1]) } }] }],
+    });
+
+    const paneResult = await stack.addIndicator("rsi", { pane: "new", id: "emptyPane" });
+    expect(paneResult.seriesIds).toEqual([]);
+
+    stack.destroy();
+    document.body.removeChild(container);
   });
 
   it("schedules layout on ResizeObserver callbacks", async () => {

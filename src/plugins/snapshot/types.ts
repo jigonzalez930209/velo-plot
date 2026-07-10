@@ -1,5 +1,5 @@
 /**
- * SciPlot - Snapshot Export Plugin Types
+ * VeloPlot - Snapshot Export Plugin Types
  */
 
 export type SnapshotFormat = 'png' | 'jpeg' | 'webp' | 'svg';

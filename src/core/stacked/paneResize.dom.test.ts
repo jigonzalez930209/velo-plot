@@ -2,7 +2,7 @@
  * @vitest-environment happy-dom
  */
 import { describe, it, expect, vi } from "vitest";
-import { attachPaneResize } from "./paneResize";
+import { attachPaneResize, injectDividerStyles } from "./paneResize";
 
 function sizedDiv(width: number, height: number): HTMLDivElement {
   const el = document.createElement("div");
@@ -24,6 +24,14 @@ function sizedDiv(width: number, height: number): HTMLDivElement {
 }
 
 describe("attachPaneResize (DOM)", () => {
+  it("injectDividerStyles returns early when document is temporarily unavailable", () => {
+    const doc = globalThis.document;
+    // @ts-expect-error simulate SSR during style injection
+    delete (globalThis as { document?: Document }).document;
+    expect(() => injectDividerStyles("vertical")).not.toThrow();
+    globalThis.document = doc;
+  });
+
   it("returns no dividers for a single pane", () => {
     const container = sizedDiv(400, 300);
     const pane = sizedDiv(400, 300);
@@ -31,6 +39,65 @@ describe("attachPaneResize (DOM)", () => {
 
     const ctrl = attachPaneResize(container, [pane], ["a"], [1]);
     expect(ctrl.dividers).toHaveLength(0);
+    ctrl.destroy();
+  });
+
+  it("reuses divider style injection across attach calls", () => {
+    const container = sizedDiv(400, 300);
+    const p1 = sizedDiv(400, 150);
+    const p2 = sizedDiv(400, 150);
+    container.append(p1, p2);
+
+    const first = attachPaneResize(container, [p1, p2], ["a", "b"], [0.5, 0.5]);
+    first.destroy();
+
+    const second = attachPaneResize(container, [p1, p2], ["a", "b"], [0.5, 0.5]);
+    expect(document.getElementById("velo-pane-divider-styles")).toBeTruthy();
+    second.destroy();
+  });
+
+  it("falls back to measured sizes when onDragStart returns undefined", () => {
+    const container = sizedDiv(400, 300);
+    const p1 = sizedDiv(400, 150);
+    const p2 = sizedDiv(400, 150);
+    container.append(p1, p2);
+
+    const onDragMove = vi.fn();
+    const ctrl = attachPaneResize(container, [p1, p2], ["a", "b"], [0.5, 0.5], {
+      onDragStart: () => undefined as unknown as number[],
+      onDragMove,
+    });
+    const divider = ctrl.dividers[0];
+    divider.setPointerCapture = vi.fn();
+    divider.releasePointerCapture = vi.fn();
+    divider.dispatchEvent(
+      new PointerEvent("pointerdown", { clientY: 150, bubbles: true, pointerId: 10 }),
+    );
+    expect(onDragMove).toHaveBeenCalledWith([150, 150], 0, 1);
+    ctrl.destroy();
+  });
+
+  it("measures pane sizes when onDragStart is omitted", () => {
+    const container = sizedDiv(400, 300);
+    const p1 = sizedDiv(400, 150);
+    const p2 = sizedDiv(400, 150);
+    container.append(p1, p2);
+
+    const onDragMove = vi.fn();
+    const ctrl = attachPaneResize(container, [p1, p2], ["a", "b"], [0.5, 0.5], { onDragMove });
+    const divider = ctrl.dividers[0];
+    divider.setPointerCapture = vi.fn();
+    divider.releasePointerCapture = vi.fn();
+    divider.dispatchEvent(
+      new PointerEvent("pointerdown", { clientY: 150, bubbles: true, pointerId: 9 }),
+    );
+    expect(onDragMove).toHaveBeenCalledWith([150, 150], 0, 1);
+    divider.dispatchEvent(
+      new PointerEvent("pointermove", { clientY: 160, bubbles: true, pointerId: 9 }),
+    );
+    divider.dispatchEvent(
+      new PointerEvent("pointerup", { clientY: 160, bubbles: true, pointerId: 9 }),
+    );
     ctrl.destroy();
   });
 

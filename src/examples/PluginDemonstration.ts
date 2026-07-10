@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Plugin Demonstration Examples
+ * Velo Plot - Plugin Demonstration Examples
  * 
  * This file contains 3 comprehensive examples of how to use the mới modular plugin architecture.
  */

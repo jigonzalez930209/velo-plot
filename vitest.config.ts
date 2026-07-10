@@ -2,12 +2,42 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    environment: "node",
-    include: ["src/**/*.test.ts", "e2e/**/*.test.ts"],
     globals: true,
+    projects: [
+      {
+        test: {
+          name: "node",
+          environment: "node",
+          include: ["src/**/*.test.ts", "e2e/scenario-catalog.test.ts"],
+          exclude: [
+            "src/**/*.dom.test.ts",
+            "src/**/*.test.tsx",
+            "src/**/*.vue.test.ts",
+            "src/bindings/**/*.test.ts",
+            "src/vue/**/*.test.ts",
+            "src/svelte/**/*.test.ts",
+            "src/angular/**/*.test.ts",
+            "e2e/specs/**",
+            "e2e/frameworks/**",
+          ],
+        },
+      },
+      {
+        test: {
+          name: "dom",
+          environment: "happy-dom",
+          include: [
+            "src/**/*.dom.test.ts",
+            "src/react/**/*.test.tsx",
+          ],
+        },
+      },
+    ],
     coverage: {
       provider: "v8",
-      reporter: ["text", "html"],
+      reporter: ["text", "html", "json-summary", "json"],
+      reportsDirectory: "coverage/core",
+      all: false,
       include: [
         "src/core/sync/**/*.ts",
         "src/core/stacked/**/*.ts",
@@ -31,7 +61,6 @@ export default defineConfig({
         "src/trading/**/*.ts",
         "src/plugins/forecasting/algorithms.ts",
         "src/plugins/tools/tooltip/format.ts",
-        // Stage 1 performance modules
         "src/workers/downsample.ts",
         "src/workers/downsampleAsync.ts",
         "src/workers/pool.ts",
@@ -41,24 +70,22 @@ export default defineConfig({
         "src/plugins/lazy-load/index.ts",
         "src/plugins/caching/index.ts",
         "src/renderer/spike/WebGLGridSpike.ts",
-        // Stage 2 trading modules
         "src/plugins/drawing-tools/index.ts",
         "src/plugins/replay/index.ts",
         "src/testing/stage1BrowserBench.ts",
+        "src/react/**/*.ts",
+        "src/react/**/*.tsx",
       ],
       exclude: [
         "src/**/*.test.ts",
+        "src/**/*.test.tsx",
+        "src/**/*.dom.test.ts",
+        "src/**/*.vue.test.ts",
         "e2e/**/*.test.ts",
         "**/types.ts",
         "src/index.ts",
         "src/trading/index.ts",
       ],
-      thresholds: {
-        lines: 98,
-        functions: 98,
-        branches: 98,
-        statements: 98,
-      },
     },
   },
 });

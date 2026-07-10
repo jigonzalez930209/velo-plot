@@ -132,7 +132,7 @@ chart.addSeries({
 ## React Version
 
 ```tsx
-import { SciPlot } from 'velo-plot/react'
+import { VeloPlot } from 'velo-plot/react'
 
 function BasicChart() {
   const n = 10000
@@ -146,7 +146,7 @@ function BasicChart() {
   }
 
   return (
-    <SciPlot
+    <VeloPlot
       series={[{ id: 'signal', x, y, color: '#00f2ff' }]}
       xAxis={{ label: 'X', auto: true }}
       yAxis={{ label: 'Y', auto: true }}

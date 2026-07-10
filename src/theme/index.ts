@@ -1,5 +1,5 @@
 /**
- * Theme - Visual styling configuration for SciPlot
+ * Theme - Visual styling configuration for VeloPlot
  *
  * Provides customizable themes for the chart including:
  * - Grid styling
@@ -152,9 +152,10 @@ const DEFAULT_GRID_THEME: GridTheme = {
   minorColor: "rgba(255, 255, 255, 0.05)",
   majorWidth: 1,
   minorWidth: 0.5,
-  majorDash: [4, 4],
+  // Solid majors — dashed + minor divisions read as a “grid inside the grid”.
+  majorDash: [],
   minorDash: [2, 4],
-  showMinor: true, // Default to show minor
+  showMinor: false,
   minorDivisions: 5,
 };
 
@@ -202,6 +203,8 @@ export const DARK_THEME: ChartTheme = {
     ...DEFAULT_GRID_THEME,
     majorColor: "rgba(255, 255, 255, 0.12)",
     minorColor: "rgba(255, 255, 255, 0.04)",
+    showMinor: false,
+    majorDash: [],
   },
   xAxis: {
     ...DEFAULT_AXIS_THEME,
@@ -232,6 +235,8 @@ export const MIDNIGHT_THEME: ChartTheme = {
     ...DEFAULT_GRID_THEME,
     majorColor: "rgba(150, 150, 255, 0.2)",
     minorColor: "rgba(150, 150, 255, 0.08)",
+    showMinor: false,
+    majorDash: [],
   },
   xAxis: {
     ...DEFAULT_AXIS_THEME,
@@ -274,6 +279,8 @@ export const LIGHT_THEME: ChartTheme = {
     ...DEFAULT_GRID_THEME,
     majorColor: "rgba(0, 0, 0, 0.1)",
     minorColor: "rgba(0, 0, 0, 0.04)",
+    showMinor: false,
+    majorDash: [],
   },
   xAxis: {
     ...DEFAULT_AXIS_THEME,
@@ -304,6 +311,52 @@ export const LIGHT_THEME: ChartTheme = {
     ...DEFAULT_CURSOR_THEME,
     lineColor: "rgba(0, 0, 0, 0.4)",
     tooltipBackground: "rgba(50, 50, 60, 0.95)",
+  },
+};
+
+export const HIGH_CONTRAST_THEME: ChartTheme = {
+  name: "high-contrast",
+  isDark: true,
+  backgroundColor: "#000000",
+  plotAreaBackground: "#0a0a0a",
+  plotBorderColor: "#ffffff",
+  grid: {
+    ...DEFAULT_GRID_THEME,
+    majorColor: "rgba(255, 255, 255, 0.35)",
+    minorColor: "rgba(255, 255, 255, 0.15)",
+    showMinor: false,
+    majorDash: [],
+  },
+  xAxis: {
+    ...DEFAULT_AXIS_THEME,
+    lineColor: "#ffffff",
+    tickColor: "#ffffff",
+    labelColor: "#ffffff",
+    titleColor: "#ffffff",
+  },
+  yAxis: {
+    ...DEFAULT_AXIS_THEME,
+    lineColor: "#ffffff",
+    tickColor: "#ffffff",
+    labelColor: "#ffffff",
+    titleColor: "#ffffff",
+  },
+  legend: {
+    ...DEFAULT_LEGEND_THEME,
+    backgroundColor: "#000000",
+    borderColor: "#ffffff",
+    textColor: "#ffffff",
+  },
+  toolbar: {
+    ...DEFAULT_TOOLBAR_THEME,
+    backgroundColor: "#000000",
+    borderColor: "#ffffff",
+  },
+  cursor: {
+    ...DEFAULT_CURSOR_THEME,
+    lineColor: "#ffff00",
+    tooltipBackground: "#ffff00",
+    tooltipColor: "#000000",
   },
 };
 
@@ -388,6 +441,9 @@ export function getThemeByName(name: string): ChartTheme {
     case "electrochemistry":
     case "electrochem":
       return ELECTROCHEM_THEME;
+    case "high-contrast":
+    case "highContrast":
+      return HIGH_CONTRAST_THEME;
     default:
       console.warn(`[Theme] Unknown theme "${name}", using dark`);
       return DARK_THEME;

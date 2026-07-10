@@ -21,7 +21,7 @@ export interface CrosshairPluginConfig {
     /** Line width (default: 1) */
     lineWidth?: number;
     /** 
-     * @deprecated Use valueDisplayMode instead
+     * @deprecated Use valueDisplayMode instead. **Removed in v4.0.**
      * Show axis labels (will be converted to valueDisplayMode)
      */
     showAxisLabels?: boolean;

@@ -1,5 +1,5 @@
 /**
- * Sci Plot - Delta Tool Module
+ * Velo Plot - Delta Tool Module
  * 
  * Provides interactive measurement tool for measuring distances,
  * differences, and slopes between two data points on the chart.

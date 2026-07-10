@@ -1,5 +1,5 @@
 /**
- * SciPlot Engine - Clipboard Plugin
+ * VeloPlot Engine - Clipboard Plugin
  * 
  * Provides clipboard integration for copying chart data and images.
  * 
@@ -24,7 +24,7 @@ const manifestClipboard: PluginManifest = {
 };
 
 /**
- * SciPlot Clipboard Plugin
+ * VeloPlot Clipboard Plugin
  * 
  * Adds support for copying data and screenshots to the clipboard.
  */

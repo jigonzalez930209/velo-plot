@@ -1,4 +1,4 @@
-# Sci Plot Plugins Guide
+# Velo Plot Plugins Guide
 
 Plugins are imported from `velo-plot/plugins/[name]`.
 

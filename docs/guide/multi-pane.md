@@ -5,7 +5,7 @@ description: Guide to TradingView-style stacked charts with createStackedChart, 
 
 # Multi-Pane Layouts
 
-Sci Plot supports two approaches for dashboards with multiple related charts:
+Velo Plot supports two approaches for dashboards with multiple related charts:
 
 | Approach | Best for |
 |----------|----------|

@@ -217,6 +217,22 @@ describe("exportStackImage (DOM)", () => {
     expect(result.startsWith("data:image/png")).toBe(true);
   });
 
+  it("uses DPR fallback of 1 when window is unavailable", async () => {
+    const container = layoutEl(0, 0, 80, 60);
+    const pane = layoutEl(0, 0, 80, 60);
+    const chart = mockChart({ getDPR: () => undefined as unknown as number });
+    const win = globalThis.window;
+    // @ts-expect-error test SSR-style export path
+    delete (globalThis as { window?: Window }).window;
+
+    const result = await exportStackImage(container, [pane], [chart], [], "", {
+      resolution: 1,
+    });
+
+    expect(result.startsWith("data:image/png")).toBe(true);
+    (globalThis as { window: Window }).window = win;
+  });
+
   it("throws when canvas context is unavailable", async () => {
     HTMLCanvasElement.prototype.getContext = () => null;
 
