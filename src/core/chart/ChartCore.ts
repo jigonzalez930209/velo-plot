@@ -1549,7 +1549,7 @@ export class ChartImpl implements Chart {
 
   /**
    * Set pan mode (true = pan, false = selection)
-   * @deprecated Use setMode('pan') or setMode('select') instead
+   * @deprecated Use setMode('pan') or setMode('select') instead. **Removed in v4.0.**
    */
   setPanMode(enabled: boolean): void {
     this.interaction.setPanMode(enabled);
@@ -1745,7 +1745,7 @@ export class ChartImpl implements Chart {
     this.resizeSuspended = false;
   }
 
-  /** @deprecated Use CSS transform on pane wrapper during drag; canvas stays untouched. */
+  /** @deprecated Use CSS transform on pane wrapper during drag; canvas stays untouched. **Removed in v4.0.** */
   syncDragLayout(width?: number, height?: number): void {
     if (!this.resizeSuspended) return;
     const parent = this.container.parentElement;
