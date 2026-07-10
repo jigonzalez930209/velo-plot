@@ -1454,7 +1454,11 @@ export class ChartImpl implements Chart {
   updateLayout(options: Partial<import("../layout").LayoutOptions>): void {
     this.layout = mergeLayoutOptions({
       ...this.layout,
-      ...options
+      ...options,
+      margins: {
+        ...this.layout.margins,
+        ...options.margins,
+      },
     });
     this.requestRender();
   }
