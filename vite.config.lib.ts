@@ -38,6 +38,7 @@ export default defineConfig({
         "velo-plot": resolve(__dirname, "src/index.core.ts"),
         "velo-plot.full": resolve(__dirname, "src/index.ts"),
         trading: resolve(__dirname, "src/trading/index.ts"),
+        scientific: resolve(__dirname, "src/scientific/index.ts"),
         react: resolve(__dirname, "src/react/index.ts"),
         vue: resolve(__dirname, "src/vue/index.ts"),
         svelte: resolve(__dirname, "src/svelte/index.ts"),

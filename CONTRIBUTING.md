@@ -64,4 +64,22 @@ Every PR must follow the template. If the description is missing or vague (e.g.,
 - `feature/...`: New features.
 - `fix/...`: Bug fixes.
 
+## Semantic Versioning
+
+This project follows [SemVer](https://semver.org/):
+
+| Change | Version bump | Examples |
+|--------|--------------|----------|
+| Bug fixes, docs, internal refactors with no API change | **Patch** `x.y.Z` | Overlay typo, CI tweak |
+| Backward-compatible features | **Minor** `x.Y.z` | New series type, new optional option |
+| Breaking public API changes | **Major** `X.y.z` | Removed deprecated methods, renamed exports |
+
+Rules for contributors and maintainers:
+
+1. Do **not** remove or rename a public export in a minor/patch release.
+2. Deprecate first with `@deprecated` JSDoc that states the **replacement** and **removal version** (e.g. “Removed in v4.0”).
+3. Document every breaking change under a **Breaking** section in `CHANGELOG.md`.
+4. Release candidates use prerelease tags: `3.0.0-rc.1`, `3.0.0-rc.2`, then `3.0.0` for GA.
+5. npm `latest` points at the current GA major; prereleases use the `next` (or explicit) dist-tag until GA.
+
 Thank you for helping us build the fastest scientific charting engine for the web!

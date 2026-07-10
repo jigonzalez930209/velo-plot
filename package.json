@@ -1,6 +1,6 @@
 {
   "name": "velo-plot",
-  "version": "2.20.0",
+  "version": "3.0.0-rc.1",
   "author": "jigonzalez930209",
   "license": "MIT",
   "repository": {
@@ -37,6 +37,10 @@
     "./trading": {
       "types": "./dist/trading/index.d.ts",
       "import": "./dist/trading.js"
+    },
+    "./scientific": {
+      "types": "./dist/scientific/index.d.ts",
+      "import": "./dist/scientific.js"
     },
     "./react": {
       "types": "./dist/react/index.d.ts",
