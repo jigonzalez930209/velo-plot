@@ -30,6 +30,7 @@ const manifestSync: PluginManifest = {
  *
  * @deprecated Use `ChartGroup` / `createChartGroup` from `velo-plot` (or `velo-plot/full`) instead.
  * This plugin stub does not perform synchronization. Kept for backward-compatible imports only.
+ * **Removed in v4.0.**
  */
 export function PluginSync(config: PluginSyncConfig = {}): ChartPlugin<PluginSyncConfig> {
   void config;
