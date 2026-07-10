@@ -62,7 +62,6 @@ function startServer(port) {
 }
 
 import {
-  effectiveBenchmarkFps,
   evaluateScenario,
 } from "./benchmark-scenario-eval.mjs";
 
