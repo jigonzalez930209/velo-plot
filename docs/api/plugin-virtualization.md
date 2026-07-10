@@ -18,7 +18,8 @@ The Virtualization plugin is essential for maintaining 60 FPS performance when w
 ## Basic Usage
 
 ```typescript
-import { createChart, PluginVirtualization } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
+import { PluginVirtualization } from 'velo-plot/plugins/virtualization';
 
 const chart = createChart({
   container: document.getElementById('chart')!

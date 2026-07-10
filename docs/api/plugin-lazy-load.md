@@ -18,7 +18,8 @@ Efficient lazy loading system for massive datasets with viewport-based chunking 
 ## Basic Usage
 
 ```typescript
-import { createChart, PluginLazyLoad } from 'velo-plot';
+import { createChart } from 'velo-plot';
+import { PluginLazyLoad } from 'velo-plot/plugins/lazy-load';
 
 const chart = createChart({
   container: document.getElementById('chart')!

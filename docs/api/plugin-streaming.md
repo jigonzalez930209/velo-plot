@@ -18,7 +18,8 @@ The Streaming plugin provides a robust foundation for building real-time dashboa
 ## Basic Usage
 
 ```typescript
-import { createChart, PluginStreaming } from 'velo-plot';
+import { createChart } from 'velo-plot/trading';
+import { PluginStreaming } from 'velo-plot/plugins/streaming';
 
 const chart = createChart({ container });
 await chart.use(PluginStreaming());

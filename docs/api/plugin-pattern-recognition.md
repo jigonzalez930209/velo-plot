@@ -27,7 +27,8 @@ normalized trading signal that arms a Stage 2 price alert at the neckline. Use
 ## Basic Usage
 
 ```typescript
-import { createChart, PluginPatternRecognition } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
+import { PluginPatternRecognition } from 'velo-plot/plugins/pattern-recognition';
 
 const chart = createChart({ container });
 

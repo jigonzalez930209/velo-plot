@@ -62,8 +62,10 @@ Plugins receive a rich context providing safe access to chart internals:
 Plugins are loaded using the `chart.use()` method. Note that from version 1.5.0, many features like **Tooltips**, **Analysis**, and **Annotations** must be explicitly loaded as plugins.
 
 ```typescript
-import { createChart } from 'velo-plot';
-import { PluginTools, PluginAnalysis, PluginAnnotations } from 'velo-plot/plugins';
+import { createChart } from 'velo-plot/scientific';
+import { PluginTools } from 'velo-plot/plugins/tools';
+import { PluginAnalysis } from 'velo-plot/plugins/analysis';
+import { PluginAnnotations } from 'velo-plot/plugins/annotations';
 
 const chart = createChart({ container });
 
@@ -96,7 +98,7 @@ Starting from version 1.9.0, most plugins register their public API directly on 
 The recommended way to create a plugin is using the `createPlugin` or `createConfigurablePlugin` helpers.
 
 ```typescript
-import { createConfigurablePlugin } from 'velo-plot/plugins';
+import { createConfigurablePlugin } from 'velo-plot';
 
 interface MyPluginConfig {
   color: string;
@@ -124,6 +126,32 @@ const MyPlugin = createConfigurablePlugin<MyPluginConfig>(
 // Usage
 chart.use(MyPlugin({ color: 'blue' }));
 ```
+
+## Bundle entries and registration
+
+`package.json` sets `"sideEffects": false`. Extended series and trading methods register only when you import a bundle entry:
+
+| Entry | Registers on import |
+|-------|---------------------|
+| `velo-plot` | Core only — plugins via `chart.use()` |
+| `velo-plot/trading` | Extended series + trading chart methods |
+| `velo-plot/scientific` | Extended series + SVG export + WebGPU |
+| `velo-plot/full` | Both trading and scientific |
+
+There is **no** `velo-plot/plugins` barrel. Import each plugin from its subpath:
+
+| Plugin | Import path |
+|--------|-------------|
+| `PluginTools` | `velo-plot/plugins/tools` |
+| `PluginAnalysis` | `velo-plot/plugins/analysis` |
+| `PluginAnnotations` | `velo-plot/plugins/annotations` |
+| `PluginSnapshot` | `velo-plot/plugins/snapshot` |
+| `PluginRegression` | `velo-plot/plugins/regression` |
+| `PluginLaTeX` | `velo-plot/plugins/latex` |
+| `Plugin3D` | `velo-plot/plugins/3d` |
+| `PluginLoading` | `velo-plot/plugins/loading` |
+
+Or import many plugins from `velo-plot/scientific` / `velo-plot/full`. See [Bundle Architecture](/guide/bundle-architecture).
 
 ## Built-in Plugins
 

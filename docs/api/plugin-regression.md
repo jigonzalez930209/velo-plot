@@ -10,8 +10,9 @@ The `PluginRegression` provides advanced scientific regression capabilities beyo
 ## Installation
 
 ```typescript
-import { createChart } from 'velo-plot';
-import { PluginRegression, PluginAnnotations } from 'velo-plot/plugins';
+import { createChart } from 'velo-plot/scientific';
+import { PluginRegression } from 'velo-plot/plugins/regression';
+import { PluginAnnotations } from 'velo-plot/plugins/annotations';
 
 const chart = createChart({ container });
 

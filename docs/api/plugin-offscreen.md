@@ -18,7 +18,8 @@ The Offscreen plugin enables `OffscreenCanvas` support, allowing Velo Plot to pe
 ## Basic Usage
 
 ```typescript
-import { createChart, PluginOffscreen } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
+import { PluginOffscreen } from 'velo-plot/plugins/offscreen';
 
 const chart = createChart({
   container: document.getElementById('chart')!
