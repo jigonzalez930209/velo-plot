@@ -169,4 +169,41 @@ describe("PluginReplay", () => {
       expect.objectContaining({ y: expect.any(Float32Array) }),
     );
   });
+
+  it("uses the default frame interval when frameMs is omitted", () => {
+    const plugin = PluginReplay({ seriesId: "candles" });
+    const { ctx } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as ReplayAPI;
+    api.seek(0);
+    api.play(1);
+    vi.advanceTimersByTime(250);
+    expect(api.getIndex()).toBe(1);
+    api.pause();
+  });
+
+  it("pauses playback when the timer fires after destroy", () => {
+    const plugin = PluginReplay({ seriesId: "candles", frameMs: 100 });
+    const { ctx, updateSeries } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as ReplayAPI;
+    api.seek(0);
+    api.play(1);
+    plugin.onDestroy!();
+    updateSeries.mockClear();
+    vi.advanceTimersByTime(100);
+    expect(updateSeries).not.toHaveBeenCalled();
+    expect(api.isPlaying()).toBe(false);
+  });
+
+  it("clamps play speed to a minimum of 0.1", () => {
+    const plugin = PluginReplay({ seriesId: "candles", frameMs: 100 });
+    const { ctx } = createContext();
+    plugin.onInit!(ctx);
+    const api = plugin.api as ReplayAPI;
+    api.seek(0);
+    api.play(0);
+    expect(api.isPlaying()).toBe(true);
+    api.pause();
+  });
 });

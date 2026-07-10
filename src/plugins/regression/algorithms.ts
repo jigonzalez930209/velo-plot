@@ -152,7 +152,7 @@ export function linearRegression(
     };
   } else {
     // Standard linear regression: y = ax + b
-    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
     let sumWeights = 0;
     
     for (let i = 0; i < n; i++) {
@@ -161,7 +161,6 @@ export function linearRegression(
       sumY += weight * y[i];
       sumXY += weight * x[i] * y[i];
       sumX2 += weight * x[i] * x[i];
-      sumY2 += weight * y[i] * y[i];
       sumWeights += weight;
     }
     
@@ -289,7 +288,7 @@ export function exponentialRegression(
   
   // Transform to linear: ln(y - offset) = ln(amplitude) + rate * x
   // Need to estimate offset first (simplified)
-  let offset = Math.min(...y) - 1;
+  const offset = Math.min(...y) - 1;
   
   const transformedY = y.map(yi => {
     const adjusted = yi - offset;

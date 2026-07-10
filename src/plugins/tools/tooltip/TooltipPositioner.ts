@@ -100,7 +100,7 @@ export class TooltipPositioner {
     const totalHeight = measurement.height + measurement.padding.top + measurement.padding.bottom;
     
     // Determine best position
-    let position = this.determinePosition(
+    const position = this.determinePosition(
       targetX, 
       targetY, 
       totalWidth, 

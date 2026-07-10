@@ -82,5 +82,4 @@ export function PluginLoading(_config: PluginLoadingConfig = {}): ChartPlugin<Pl
     };
 }
 
-export { LoadingIndicator };
 export default PluginLoading;

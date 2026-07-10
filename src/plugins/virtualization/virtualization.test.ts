@@ -354,7 +354,7 @@ describe("PluginVirtualization", () => {
   });
 
   it("updateSeries hook re-virtualizes after external updates", async () => {
-    const { plugin, chart, candlestick } = initPlugin();
+    const { chart, candlestick } = initPlugin();
     await new Promise((r) => setTimeout(r, 0));
     const big = makeOhlc(6000);
     chart.updateSeries("ohlc", big);
@@ -364,7 +364,7 @@ describe("PluginVirtualization", () => {
 
   it("resize event triggers refresh when view changes", async () => {
     const resizeHandlers: Array<() => void> = [];
-    const { plugin } = initPlugin();
+    initPlugin();
     await new Promise((r) => setTimeout(r, 0));
     const ctxEvents = { on: vi.fn((ev: string, cb: () => void) => { if (ev === "resize") resizeHandlers.push(cb); }) };
     // re-init with resize hook

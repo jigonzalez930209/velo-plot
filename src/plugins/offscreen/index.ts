@@ -35,7 +35,7 @@ export function PluginOffscreen(
   const config = { ...DEFAULT_CONFIG, ...userConfig };
   let ctx: PluginContext | null = null;
   let pool: WorkerPool | null = null;
-  let stats: OffscreenStats = {
+  const stats: OffscreenStats = {
     enabled: config.enabled,
     frames: 0,
     lastFrameTime: 0,

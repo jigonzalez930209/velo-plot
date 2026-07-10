@@ -65,13 +65,11 @@ export function crossCorrelation(
     lags[lagIdx] = lag;
     
     let sum = 0;
-    let count = 0;
     
     for (let i = 0; i < n1; i++) {
       const j = i + lag;
       if (j >= 0 && j < n2) {
         sum += (signal1[i] - mean1) * (signal2[j] - mean2);
-        count++;
       }
     }
     

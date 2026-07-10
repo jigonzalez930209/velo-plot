@@ -457,7 +457,8 @@ export class Impulse3DRenderer {
     const baseY = data.baseY ?? 0;
     
     let minX = Infinity, maxX = -Infinity;
-    let minY = baseY, maxY = -Infinity;
+    const minY = baseY;
+    let maxY = -Infinity;
     let minZ = Infinity, maxZ = -Infinity;
     
     for (let i = 0; i < data.x.length; i++) {

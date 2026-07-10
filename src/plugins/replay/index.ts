@@ -47,10 +47,11 @@ export function PluginReplay(config: PluginReplayConfig): ChartPlugin<PluginRepl
   const frameMs = config.frameMs ?? 250;
 
   function applyWindow(end: number): void {
-    if (!ctx || !buffer) return;
-    const n = Math.min(end + 1, buffer.x.length);
+    const c = ctx!;
+    const buf = buffer!;
+    const n = Math.min(end + 1, buf.x.length);
     const slice = (arr?: Float32Array) => (arr ? arr.subarray(0, n) : undefined);
-    ctx.chart.updateSeries(config.seriesId, {
+    c.chart.updateSeries(config.seriesId, {
       x: slice(buffer.x)!,
       y: slice(buffer.y),
       open: slice(buffer.open),

@@ -262,7 +262,7 @@ export class ScientificTooltipTemplate implements TooltipTemplate<DataPointToolt
     ctx.fillText('Y:', currentX, currentY);
     ctx.fillStyle = theme.textColor;
     
-    let yText = formatYValue(data);
+    const yText = formatYValue(data);
     ctx.fillText(yText, currentX + labelWidth, currentY);
     
     if (data.yError) {

@@ -95,7 +95,7 @@ export function PluginDrawingTools(
 ): ChartPlugin<PluginDrawingToolsConfig> {
   let ctx: PluginContext | null = null;
   const autoDeselect = config.autoDeselect !== false;
-  let state: DrawState = {
+  const state: DrawState = {
     mode: "none",
     pending: null,
     start: null,

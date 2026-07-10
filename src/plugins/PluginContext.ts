@@ -32,7 +32,7 @@ import type {
 class PluginStorageImpl implements PluginStorage {
     private data = new Map<string, unknown>();
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+     
     constructor(_pluginName: string) {
         // Plugin name available for future use (e.g., namespaced localStorage)
     }
@@ -392,7 +392,7 @@ export function createPluginContext(
         getSelectedPoints: () => deps.chart.getSelectedPoints(),
     };
 
-    let animFrameIds = new Set<number>();
+    const animFrameIds = new Set<number>();
 
     const context: PluginContext & { _cleanup: () => void; _getStorage: () => PluginStorageImpl } = {
         chart: deps.chart,
