@@ -1,14 +1,14 @@
 # velo-plot Development Roadmap → v3.0.0
 
-> **Current version:** 3.0.0-rc.1  
+> **Current version:** 3.0.0  
 > **Last updated:** 2026-07-10  
-> **Status:** Stage 5 RC open — GA checklist in progress
+> **Status:** Stage 5 GA shipped — Stage 6 (SVG parity) next
 
 This roadmap defines the path from **velo-plot v1.12.0** to a **v3.0.0** release that delivers an exponential leap in quality, performance, and developer experience — for both **scientific visualization** and **financial/trading** use cases.
 
 The previous roadmap ([ROADMAP-LEGACY.md](../ROADMAP-LEGACY.md)) is archived (English historical catalog with reconciled status). It listed many features as "COMPLETED" that were stubs or partial. This document is grounded in a full codebase audit (July 2026).
 
-**RC status:** `3.0.0-rc.1` ships scientific bundle, migration/whats-new docs, semver policy, CI lint, and plugin registry updates. Remaining GA items: public `any` cleanup, size budget CI, known-limitations on all API pages, npm `latest`.
+**GA status:** v3.0.0 ships bundle size CI, ESLint gate, public type cleanup, known-limitations on API pages, ADRs 001–003, and documented security audit. Remaining release ops: npm `latest` tag + GitHub release assets.
 
 ---
 
@@ -124,6 +124,8 @@ All releases require an updated `CHANGELOG.md` entry following [Keep a Changelog
 ## Related documents
 
 - [Plugin status registry](../PLUGIN-STATUS.md) — plugin audit (Stage 0)
+- [Security audit](../SECURITY-AUDIT.md) — v3.0.0 GA dependency review
+- [Architecture decisions (ADRs)](../adr/) — WebGPU, bundles, ChartGroup
 - [CHANGELOG.md](../../CHANGELOG.md) — release history
 - [ROADMAP-LEGACY.md](../ROADMAP-LEGACY.md) — historical v1.6.2 catalog (reference only; reconciled status)
 - [Multi-Pane Guide](../guide/multi-pane.md) — current stacked chart docs
