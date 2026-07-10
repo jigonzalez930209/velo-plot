@@ -18,6 +18,16 @@ export class NativeWebGLRenderer {
   private textures: TextureStore;
 
   private isInitialized = false;
+  private heatmapShaderReady = false;
+
+  /** Optional hook for extended bundles to install the heatmap shader program. */
+  static heatmapProgramInstaller: ((gl: WebGLRenderingContext, bundle: ProgramBundle) => void) | null = null;
+
+  installHeatmapProgram(): void {
+    if (this.heatmapShaderReady) return;
+    NativeWebGLRenderer.heatmapProgramInstaller?.(this.gl, this.programs);
+    this.heatmapShaderReady = true;
+  }
 
   setDPR(dpr: number): void {
     this.dpr = dpr;
