@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createRoot } from "solid-js";
 import { useIndicator } from "./useIndicator";
 import { buildMockChart } from "../bindings/test-utils";

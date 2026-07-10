@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { createRoot } from "solid-js";
 import { useStackedPlot } from "./useStackedPlot";
-import { buildMockChart } from "../bindings/test-utils";
 
 const mockStack = {
   destroy: vi.fn(),
