@@ -4,7 +4,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { GpuRenderer } from "./gpuRenderer";
 import { interleaveBoxPlotData, interleaveWaterfallData } from "../../renderer/native/utils";
-import type { NativeSeriesRenderData } from "../../renderer/native/types";
 
 function mockGpu(canvas: HTMLCanvasElement): GpuRenderer {
   const gpu = new GpuRenderer(canvas, { backend: "webgl" });

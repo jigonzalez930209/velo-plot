@@ -4,6 +4,9 @@
  * Provides tools for measuring rendering performance across backends.
  */
 
+import { WebGPUBackend } from "../backends/webgpu/WebGPUBackend";
+import { WebGLBackend } from "../backends/webgl/WebGLBackend";
+
 export interface BenchmarkResult {
   backend: "webgpu" | "webgl" | "unknown";
   pointCount: number;
@@ -105,9 +108,6 @@ export class GpuBenchmark {
    * Run benchmark with WebGPU backend
    */
   async benchmarkWebGPU(options: BenchmarkOptions = {}): Promise<BenchmarkResult | null> {
-    // Dynamic import to handle environments without WebGPU
-    const { WebGPUBackend } = await import("../backends/webgpu/WebGPUBackend");
-    
     if (!WebGPUBackend.isSupported()) {
       console.warn("[Benchmark] WebGPU not supported");
       return null;
@@ -169,8 +169,6 @@ export class GpuBenchmark {
    * Run benchmark with WebGL backend
    */
   async benchmarkWebGL(options: BenchmarkOptions = {}): Promise<BenchmarkResult | null> {
-    const { WebGLBackend } = await import("../backends/webgl/WebGLBackend");
-    
     if (!WebGLBackend.isSupported()) {
       console.warn("[Benchmark] WebGL not supported");
       return null;
