@@ -16,13 +16,13 @@ import {
   detectIndicatorMarkers,
   type IndicatorData,
   type IndicatorLineColorZones,
-} from 'velo-plot';
+} from 'velo-plot/full';
 ```
 
 ## Quick Example (Stacked Pane)
 
 ```typescript
-import { createStackedChart, buildIndicatorPane, detectIndicatorMarkers } from 'velo-plot';
+import { createStackedChart, buildIndicatorPane, detectIndicatorMarkers } from 'velo-plot/full';
 
 const markers = detectIndicatorMarkers(x, fastLine, 4);
 
@@ -79,7 +79,7 @@ Returns a `StackedPaneConfig` ready for `createStackedChart`.
 ### High-level presets (Stage 2)
 
 ```typescript
-import { createChart, buildIndicatorPaneFromPreset } from 'velo-plot';
+import { createChart, buildIndicatorPaneFromPreset } from 'velo-plot/trading';
 
 // Single chart — overlay or inline layers
 await chart.addIndicator('bollinger', { period: 20, sourceSeriesId: 'candles' });
@@ -223,7 +223,7 @@ fills: [{
 markers: [{ x: 100, y: 42, kind: 'peak' }, { x: 200, y: -30, kind: 'trough' }]
 
 // Auto-detect local extrema
-import { detectIndicatorMarkers } from 'velo-plot';
+import { detectIndicatorMarkers } from 'velo-plot/full';
 const markers = detectIndicatorMarkers(x, y, 3); // window = 3
 ```
 

@@ -3,6 +3,14 @@ title: Image & Vector Export
 description: Export charts as PNG, JPEG, WebP, SVG, and full multi-pane stack images
 ---
 
+::: tip Bundle requirements
+| API | Core | Extended |
+|-----|------|----------|
+| `chart.exportImage()` | ✅ | ✅ |
+| `chart.exportSVG()` | ❌ throws | trading, scientific, or full |
+| `PluginSnapshot` | — | `velo-plot/plugins/snapshot` or `velo-plot/full` |
+| `stack.exportImage()` | — | `velo-plot/trading` or `velo-plot/full` |
+
 # Image & Vector Export
 
 Velo Plot supports **raster** (PNG, JPEG, WebP) and **vector** (SVG) export for single charts, plus **composite stack export** for multi-pane layouts.
@@ -57,7 +65,8 @@ SVG is ideal for publications, LaTeX documents, and lossless scaling.
 Load `PluginSnapshot` for publication-quality raster export and unified SVG download:
 
 ```typescript
-import { createChart, PluginSnapshot } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
+import { PluginSnapshot } from 'velo-plot/plugins/snapshot';
 
 const chart = createChart({ container });
 chart.use(PluginSnapshot());
@@ -112,7 +121,7 @@ await chart.snapshot.downloadSnapshot({
 `createStackedChart` composes **every pane** at its on-screen layout position into one image:
 
 ```typescript
-import { createStackedChart } from 'velo-plot';
+import { createStackedChart } from 'velo-plot/trading';
 
 const stack = createStackedChart({
   container,
@@ -172,7 +181,7 @@ Works for **vertical** and **horizontal** (`direction: 'horizontal'`) stacks.
 ```tsx
 import { useRef } from 'react';
 import { VeloPlot } from 'velo-plot/react';
-import { PluginSnapshot } from 'velo-plot';
+import { PluginSnapshot } from 'velo-plot/plugins/snapshot';
 
 function ExportableChart() {
   const ref = useRef(null);

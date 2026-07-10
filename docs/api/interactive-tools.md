@@ -13,7 +13,7 @@ To use the interactive tools, you must load the `PluginTools`.
 
 ```typescript
 import { createChart } from 'velo-plot';
-import { PluginTools } from 'velo-plot/plugins';
+import { PluginTools } from 'velo-plot/plugins/tools';
 
 const chart = createChart({ container });
 

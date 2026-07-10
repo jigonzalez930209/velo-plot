@@ -1,3 +1,7 @@
+::: warning Bundle requirement
+Requires `velo-plot/scientific` or `velo-plot/trading` (or `velo-plot/full`). Core entry throws for heatmap series.
+:::
+
 # Heatmaps API
 
 Heatmaps visualize 3D data (X, Y, and Z intensity) as a 2D colored grid. They are extremely efficient for large matrices.
@@ -7,6 +11,10 @@ Heatmaps visualize 3D data (X, Y, and Z intensity) as a 2D colored grid. They ar
 Use the `addHeatmap` method to add a heatmap series.
 
 ```typescript
+import { createChart } from 'velo-plot/scientific'
+
+const chart = createChart({ container: document.getElementById('chart')! })
+
 chart.addHeatmap({
   id: 'surface-data',
   data: {

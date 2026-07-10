@@ -1,0 +1,118 @@
+{
+  "_default": [
+    "**Bundle entry** — pick `velo-plot`, `velo-plot/trading`, `velo-plot/scientific`, or `velo-plot/full`. See [Bundle Architecture](/guide/bundle-architecture).",
+    "**WebGPU renderer** (`renderer: 'webgpu'`) requires an extended bundle entry and is experimental — use WebGL (default) for production.",
+    "**SVG export** (`exportSVG()`) is unavailable on core-only imports and partial elsewhere; see [Stage 6 SVG parity](/roadmap/06-svg-vector-parity).",
+    "See [Plugin status registry](/PLUGIN-STATUS) for plugin maturity (`complete`, `partial`, `experimental`)."
+  ],
+  "api/index.md": [],
+  "api/core-bundle.md": [
+    "Extended series (`candlestick`, `bar`, `heatmap`, …) throw at runtime — import `velo-plot/trading`, `/scientific`, or `/full`.",
+    "Trading chart methods (`addIndicator`, alerts, …) throw — import `velo-plot/trading` or `/full`.",
+    "`exportSVG()` throws — use `exportImage()` or an extended entry.",
+    "Measured core gzip ~51 KB (CI budget 52 KB)."
+  ],
+  "api/scientific-bundle.md": [
+    "Trading-only APIs (`addIndicator`, alerts, drawings) are not included — use `velo-plot/trading` or `/full` for those.",
+    "Import side-effects register extended series — always import from `velo-plot/scientific`, not deep paths."
+  ],
+  "api/chart.md": [
+    "Series types and `renderer: 'webgpu'` depend on bundle entry — see [Bundle Architecture](/guide/bundle-architecture).",
+    "Polar, gauge, and sankey series render on the Canvas 2D path when WebGPU is selected — they fall back to WebGL/Canvas automatically.",
+    "Default `loading` is off in v3 core — pass `loading: true` for the init overlay."
+  ],
+  "api/stacked-chart.md": [
+    "**SVG stack export** is not yet available — use PNG/JPEG/WebP via `exportImage()`.",
+    "**Legend DOM** is not included in stack export.",
+    "**Horizontal layout** sync defaults to Y-axis; override with `sync: { axis: 'x' }` if needed.",
+    "**Max 5 panes** per stack (`STACKED_MAX_PANES`).",
+    "Requires `velo-plot/trading` or `/full` for stacked + indicator APIs."
+  ],
+  "api/chart-sync.md": [
+    "`PluginSync` is deprecated — use `ChartGroup` / `createChartGroup` instead.",
+    "**Selection sync** propagates by series id and point indices — series ids must match across charts."
+  ],
+  "api/trading-bundle.md": [
+    "Tree-shaken `velo-plot/trading` excludes 3D and heavy scientific plugins; import `velo-plot/scientific` or `velo-plot/full` when needed.",
+    "Registration runs on entry import — do not deep-import internal modules without the trading entry.",
+    "Measured minified gzip ~72 KB (CI budget 150 KB) — see [bundle-size-report.json](https://github.com/jigonzalez930209/velo-plot/blob/main/bundle-size-report.json)."
+  ],
+  "api/plugin-sync.md": [
+    "`PluginSync` is a deprecated stub — use `ChartGroup`. **Removed in v4.0.**"
+  ],
+  "api/plugin-gpu.md": [
+    "`PluginGpu` and chart `renderer: 'webgpu'` require an extended bundle entry and are **experimental**; WebGL2 remains the default production path."
+  ],
+  "api/analysis.md": [
+    "FFT and filter utilities operate on in-memory arrays — very large signals should be windowed.",
+    "Use `velo-plot/scientific` or `velo-plot/plugins/analysis` — not included in core-only import."
+  ],
+  "api/plugin-forecasting.md": [
+    "Unknown `method` strings throw — only documented methods (`sma`, `ema`, `wma`, `linear`, `expSmoothing`, `holt`, `holtWinters`, `arima`) are supported."
+  ],
+  "api/plugin-pattern-recognition.md": [
+    "Built-in patterns are supported; **`custom` pattern** registration returns errors (accepted v3 gap)."
+  ],
+  "api/plugin-ml-integration.md": [
+    "Native simple NN/regression only — not a full ML framework integration (accepted v3 gap)."
+  ],
+  "api/plugin-offscreen.md": [
+    "Requires **OffscreenCanvas** support in the host browser (accepted v3 gap)."
+  ],
+  "api/image-export.md": [
+    "Stacked chart export is raster-only today; per-series SVG homolog is tracked in Stage 6.",
+    "Per-chart `exportSVG()` is unavailable on core-only imports; partial elsewhere — see [Stage 6 SVG parity](/roadmap/06-svg-vector-parity)."
+  ],
+  "api/export.md": [
+    "Vector export coverage varies by series type and bundle entry — see [Image & Vector Export](/api/image-export) and Stage 6 roadmap."
+  ],
+  "api/candlestick.md": [
+    "Requires `velo-plot/trading`, `/scientific`, or `/full` — not available on core-only import.",
+    "Very large datasets (>100k bars) should use `PluginVirtualization` for stable frame times."
+  ],
+  "api/indicators.md": [
+    "Heavy indicators can be offloaded to a Web Worker via `indicators-async` APIs when configured.",
+    "`chart.addIndicator()` requires `velo-plot/trading` or `/full`."
+  ],
+  "api/indicators-async.md": [
+    "Worker path requires a bundler that resolves worker entry points; falls back to main thread when unavailable."
+  ],
+  "api/plugin-virtualization.md": [
+    "`precision: 'full'` disables LOD decimation — use only when exact pixel fidelity is required."
+  ],
+  "api/plugin-latex.md": [
+    "LaTeX labels require the LaTeX plugin and may impact render time on dense annotations."
+  ],
+  "api/plugin-analysis.md": [
+    "FFT and filter utilities operate on in-memory arrays — very large signals should be windowed."
+  ],
+  "api/plugin-regression.md": [
+    "Realtime fitting debounces updates; rapid series changes may skip intermediate fits."
+  ],
+  "api/plugin-drawing-tools.md": [
+    "Drawings are stored in chart state — persist via serialization APIs if charts are recreated.",
+    "Requires `velo-plot/trading` or `/full`."
+  ],
+  "api/plugin-replay.md": [
+    "Replay steps bar-by-bar; streaming datafeeds should pause live updates during replay."
+  ],
+  "api/trading-alerts.md": [
+    "Alerts fire on rendered price updates — not a server-side order or notification system.",
+    "Requires `velo-plot/trading` or `/full`."
+  ],
+  "api/datafeed.md": [
+    "`createMockDatafeed` is for demos; production apps should implement `DatafeedAdapter` with their backend."
+  ],
+  "api/react-velo-plot.md": [
+    "React bindings wrap imperative chart APIs — prefer declarative props but call `chart.use()` for plugins not exposed as props.",
+    "Underlying bundle entry (`trading` / `scientific` / `full`) affects shipped JS size."
+  ],
+  "api/react-hook.md": [
+    "Hooks mirror chart lifecycle — changing `container` after mount requires remounting the hook consumer."
+  ],
+  "api/plugins.md": [
+    "Plugins marked **experimental** or **partial** in [PLUGIN-STATUS](/PLUGIN-STATUS) may change in minor releases until v4."
+  ],
+  "guide/bundle-architecture.md": [],
+  "guide/migration-v3.md": []
+}

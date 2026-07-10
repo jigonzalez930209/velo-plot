@@ -17,7 +17,7 @@ import {
   macdAsync,
   bollingerBandsAsync,
   destroyIndicatorPool,
-} from 'velo-plot';
+} from 'velo-plot/scientific';
 
 const closes = new Float32Array(100_000);
 // ... fill closes ...
@@ -47,7 +47,7 @@ destroyIndicatorPool();
 Workers are created lazily on first use and reused across calls. Use `destroyIndicatorPool()` when unloading the chart or navigating away to free threads.
 
 ```typescript
-import { getIndicatorPoolSize } from 'velo-plot';
+import { getIndicatorPoolSize } from 'velo-plot/scientific';
 
 console.log(getIndicatorPoolSize()); // active worker count
 ```
