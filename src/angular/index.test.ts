@@ -12,4 +12,9 @@ describe("angular index", () => {
     expect(angular.useIndicatorAngular).toBeTypeOf("function");
     expect(angular.useChartSyncAngular).toBeTypeOf("function");
   });
+
+  it("keeps SciPlot aliases for backward compatibility", () => {
+    expect(angular.SciPlotComponent).toBe(angular.VeloPlotComponent);
+    expect(angular.useSciPlotAngular).toBe(angular.useVeloPlotAngular);
+  });
 });
