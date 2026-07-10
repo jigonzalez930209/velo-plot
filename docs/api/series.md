@@ -17,7 +17,7 @@ chart.addHeatmap(options: HeatmapOptions): void
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `id` | `string` | **required** | Unique identifier |
-| `type` | `'line' \| 'scatter' \| 'both' \| 'bar' \| 'heatmap' \| 'candlestick' \| 'area' \| 'band' \| 'step' \| 'step+scatter'` | `'line'` | Visualization type |
+| `type` | `'line' \| 'scatter' \| 'line+scatter' \| 'bar' \| 'heatmap' \| 'candlestick' \| 'area' \| 'band' \| 'step' \| 'step+scatter'` | `'line'` | Visualization type — extended types require bundle entry |
 | `data` | `SeriesData` | **required** | X and Y data arrays (and OHLC for candlesticks) |
 | `style` | `SeriesStyle` | `{}` | Visual styling |
 | `visible` | `boolean` | `true` | Initial visibility |
@@ -219,7 +219,7 @@ function onNewData(newPoints) {
 For very large datasets, use the built-in downsampling:
 
 ```typescript
-import { downsampleLTTB } from 'velo-plot'
+import { downsampleLTTB } from 'velo-plot/scientific'
 
 // Reduce 10M points to 10k for display
 const { x: sampledX, y: sampledY } = downsampleLTTB(

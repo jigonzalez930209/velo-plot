@@ -12,7 +12,7 @@ Low-level React hook for imperative chart control.
 ```tsx
 import { useVeloPlot } from 'velo-plot/react'
 // or
-import { useVeloPlot } from 'velo-plot'
+import { useVeloPlot } from 'velo-plot/react'
 ```
 
 ## Signature

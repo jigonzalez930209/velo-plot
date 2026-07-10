@@ -13,7 +13,7 @@ The tooltip system is provided by the `PluginTools` module. You must load this p
 
 ```typescript
 import { createChart } from 'velo-plot';
-import { PluginTools } from 'velo-plot/plugins';
+import { PluginTools } from 'velo-plot/plugins/tools';
 
 const chart = createChart({
   container: document.getElementById('chart')

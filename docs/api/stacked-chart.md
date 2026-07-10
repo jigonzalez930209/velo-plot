@@ -16,13 +16,13 @@ import {
   createStackedChart,
   STACKED_MAX_PANES,
   STACKED_DEFAULT_MIN_PANE_RATIO,
-} from 'velo-plot';
+} from 'velo-plot/trading';
 ```
 
 ## Quick Example
 
 ```typescript
-import { createStackedChart } from 'velo-plot';
+import { createStackedChart } from 'velo-plot/trading';
 
 const stack = createStackedChart({
   container: document.getElementById('market') as HTMLDivElement,
@@ -270,7 +270,7 @@ When `resizable: true`, drag horizontal dividers between panes. Resize runs at 6
 Use [`buildIndicatorPane`](/api/indicator-panes) for histogram + multi-color lines + fills + markers in one pane:
 
 ```typescript
-import { createStackedChart, buildIndicatorPane } from 'velo-plot';
+import { createStackedChart, buildIndicatorPane } from 'velo-plot/full';
 
 const wavePane = buildIndicatorPane({
   id: 'wave',

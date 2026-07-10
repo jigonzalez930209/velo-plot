@@ -3,6 +3,10 @@ title: Polar Charts
 description: Visualize data in polar coordinates (r, θ) for circular patterns and cyclic phenomena
 ---
 
+::: warning Bundle requirement
+Requires `velo-plot/scientific` (or `velo-plot/full`). Core entry throws for polar series.
+:::
+
 # Polar Charts
 
 Polar charts display data in polar coordinates, where each point is defined by a radial distance (r) and an angular position (θ). This visualization is ideal for circular patterns, directional data, and cyclic phenomena.
@@ -19,7 +23,7 @@ Polar charts display data in polar coordinates, where each point is defined by a
 ## Basic Usage
 
 ```typescript
-import { createChart } from 'velo-plot';
+import { createChart } from 'velo-plot/scientific';
 
 const chart = createChart({
   container: document.getElementById('chart'),
@@ -279,7 +283,7 @@ y = r × sin(θ)
 You can access the conversion utilities directly:
 
 ```typescript
-import { polarToCartesian } from 'velo-plot';
+import { polarToCartesian } from 'velo-plot/scientific';
 
 const cartesian = polarToCartesian(
   new Float32Array([1, 2, 3]),
@@ -294,7 +298,7 @@ const cartesian = polarToCartesian(
 Polar charts use symmetric bounds centered at the origin:
 
 ```typescript
-import { calculatePolarBounds } from 'velo-plot';
+import { calculatePolarBounds } from 'velo-plot/scientific';
 
 const bounds = calculatePolarBounds(polarData);
 // Returns: { xMin, xMax, yMin, yMax, maxRadius }

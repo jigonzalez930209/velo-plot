@@ -12,7 +12,7 @@ React component for declarative chart creation.
 ```tsx
 import { VeloPlot } from 'velo-plot/react'
 // or
-import { VeloPlot } from 'velo-plot'
+import { VeloPlot } from 'velo-plot/react'
 ```
 
 ## Props
