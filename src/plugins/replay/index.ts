@@ -52,12 +52,12 @@ export function PluginReplay(config: PluginReplayConfig): ChartPlugin<PluginRepl
     const n = Math.min(end + 1, buf.x.length);
     const slice = (arr?: Float32Array) => (arr ? arr.subarray(0, n) : undefined);
     c.chart.updateSeries(config.seriesId, {
-      x: slice(buffer.x)!,
-      y: slice(buffer.y),
-      open: slice(buffer.open),
-      high: slice(buffer.high),
-      low: slice(buffer.low),
-      close: slice(buffer.close),
+      x: slice(buf.x)!,
+      y: slice(buf.y),
+      open: slice(buf.open),
+      high: slice(buf.high),
+      low: slice(buf.low),
+      close: slice(buf.close),
     });
   }
 
