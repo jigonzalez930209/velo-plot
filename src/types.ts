@@ -279,9 +279,9 @@ export interface SeriesUpdateData {
   /** New value for Gauge charts */
   value?: number;
   /** New nodes for Sankey diagrams */
-  nodes?: any[];
+  nodes?: SankeyNode[] | string[];
   /** New links for Sankey diagrams */
-  links?: any[];
+  links?: SankeyLink[];
   /** If true, append to existing data; if false, replace */
   append?: boolean;
 }
@@ -680,7 +680,7 @@ export interface ChartOptions {
   /** Responsive design configuration */
   responsive?: import("./core/responsive").ResponsiveConfig | boolean;
   /** Initial plugins to load */
-  plugins?: any[];
+  plugins?: import("./plugins/types").ChartPlugin[];
   /** Loading indicator configuration */
   loading?: boolean | import("./plugins/loading").PluginLoadingConfig;
 

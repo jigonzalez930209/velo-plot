@@ -1,17 +1,10 @@
 /**
  * Velo Plot - High-Performance Scientific Charting
- *
- * A WebGL-based charting engine designed for scientific data visualization
- * and high-performance rendering of large datasets.
- *
- * Features:
- * - 10⁵–10⁶ points at 60 FPS
- * - Zoom/pan via GPU uniforms (no buffer recreation)
- * - Scientific precision with Float32/Float64 arrays
- * - Data analysis utilities (peak detection, cycle detection, etc.)
- *
- * @packageDocumentation
  */
+import "./scientific/registerScientific";
+import { registerTradingBundle } from "./trading/registerTrading";
+
+registerTradingBundle();
 
 // ============================================
 // Core exports

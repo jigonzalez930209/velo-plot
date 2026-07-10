@@ -2,7 +2,6 @@
  * Velo Plot - Core Bundle
  * 
  * Minimal bundle containing only the essential features for 2D charts.
- * Achieve ~60KB gzipped by excluding optional plugins.
  */
 
 // ============================================
@@ -41,10 +40,16 @@ export type { Scale } from "./scales";
 export {
     NativeWebGLRenderer,
     parseColor,
+} from "./renderer/NativeWebGLRenderer";
+export {
     createRenderer,
     createNativeRenderer,
-} from "./renderer";
-export type { IWebGLRenderer, SeriesRenderData, RenderOptions } from "./renderer";
+} from "./renderer/RendererInterface";
+export type {
+    IWebGLRenderer,
+    SeriesRenderData,
+    RenderOptions,
+} from "./renderer/RendererInterface";
 
 // ============================================
 // Core Themes
@@ -59,27 +64,16 @@ export {
 export type { ChartTheme, GridTheme, AxisTheme } from "./theme";
 
 // ============================================
-// Basic Animation
-// ============================================
-export {
-    AnimationEngine,
-    easings,
-    DEFAULT_ANIMATION_CONFIG,
-    getSharedAnimationEngine,
-} from "./core/animation";
-
-// ============================================
 // Plugin System (Lightweight)
 // ============================================
+export { createPluginContext } from "./plugins/PluginContext";
+export { PluginManagerImpl } from "./plugins/PluginManager";
 export {
-    createPluginContext,
-    PluginManagerImpl,
     getPluginRegistry,
     registerPlugin,
     definePlugin,
-    createPlugin,
-    createConfigurablePlugin,
-} from "./plugins";
+} from "./plugins/PluginRegistry";
+export { createPlugin, createConfigurablePlugin } from "./plugins/createPlugin";
 
 export type {
     PluginManifest,
@@ -87,4 +81,4 @@ export type {
     ChartPlugin,
     PluginFactory,
     PluginManager,
-} from "./plugins";
+} from "./plugins/types";
