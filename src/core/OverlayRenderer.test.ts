@@ -126,14 +126,28 @@ describe("OverlayRenderer", () => {
     expect(ctx.stroke).toHaveBeenCalled();
   });
 
-  it("business-day filter yields no ticks for an empty mapping", () => {
+  it("drawGrid keeps even X divisions when business-day mapping is empty", () => {
     const { xScale, yScale } = makeScales();
     renderer.setBusinessDayMapping({
       timeByIndex: new Float64Array(0),
     } as unknown as Parameters<typeof renderer.setBusinessDayMapping>[0]);
     renderer.drawGrid(plotArea, xScale, yScale, { tickCount: 4 }, { tickCount: 4 });
-    // maxIdx < 0 → filter returns [], so no vertical grid strokes crash
+    // Grid X uses the viewport domain (not filtered to loaded bars), so strokes still run.
     expect(ctx.stroke).toHaveBeenCalled();
+  });
+
+  it("drawGrid still draws verticals past loaded business-day bars", () => {
+    const { xScale, yScale } = makeScales();
+    // Domain extends beyond the 5 loaded business-day indices.
+    xScale.setDomain(-2, 10);
+    renderer.setBusinessDayMapping({
+      timeByIndex: Float64Array.from([0, 1, 2, 3, 4]),
+    } as unknown as Parameters<typeof renderer.setBusinessDayMapping>[0]);
+    ctx.beginPath.mockClear();
+    ctx.moveTo.mockClear();
+    renderer.drawGrid(plotArea, xScale, yScale, { tickCount: 6 }, { tickCount: 4 });
+    // Vertical grid lines exist even for x outside [0,4]
+    expect(ctx.moveTo.mock.calls.length).toBeGreaterThan(0);
   });
 
   it("drawGrid returns early when grid is hidden", () => {
