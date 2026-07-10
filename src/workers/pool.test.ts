@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { WorkerPool, nextTaskId } from "./pool";
 
 describe("WorkerPool", () => {
@@ -227,6 +227,57 @@ describe("WorkerPool", () => {
     globalThis.Worker = originalWorker;
   });
 
+  it("falls back to sync when postMessage throws", async () => {
+    class ThrowingPostWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(_task: { id: string; value: number }) {
+        throw new Error("post failed");
+      }
+      terminate() {}
+    }
+
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error mock
+    globalThis.Worker = ThrowingPostWorker;
+
+    const pool = new WorkerPool<{ id: string; value: number }, { v: number }>(
+      () => new ThrowingPostWorker() as unknown as Worker,
+      {
+        poolSize: 1,
+        syncFallback: true,
+        syncHandler: (t) => ({ v: t.value + 1 }),
+      },
+    );
+
+    const result = await pool.run({ id: "post-fail", value: 4 });
+    expect(result.v).toBe(5);
+    pool.destroy();
+    globalThis.Worker = originalWorker;
+  });
+
+  it("rejects on timeout when sync fallback is disabled", async () => {
+    class SilentWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(_task: { id: string }) {}
+      terminate() {}
+    }
+
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error mock
+    globalThis.Worker = SilentWorker;
+
+    const pool = new WorkerPool<{ id: string }, unknown>(
+      () => new SilentWorker() as unknown as Worker,
+      { poolSize: 1, syncFallback: false, timeoutMs: 20 },
+    );
+
+    await expect(pool.run({ id: "silent-no-sync" })).rejects.toThrow("timed out");
+    pool.destroy();
+    globalThis.Worker = originalWorker;
+  });
+
   it("ignores worker messages without task id", async () => {
     class NoIdWorker {
       onmessage: ((ev: MessageEvent) => void) | null = null;
@@ -256,6 +307,143 @@ describe("WorkerPool", () => {
     await expect(Promise.race([pending, new Promise((r) => setTimeout(() => r("timeout"), 50))])).resolves.toBe(
       "timeout",
     );
+    pool.destroy();
+    globalThis.Worker = originalWorker;
+  });
+
+  it("ignores worker messages for unknown pending task ids", async () => {
+    class UnknownIdWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(_task: { id: string }) {
+        queueMicrotask(() => {
+          this.onmessage?.({ data: { id: "orphan", type: "ok" } } as MessageEvent);
+        });
+      }
+      terminate() {}
+    }
+
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error mock
+    globalThis.Worker = UnknownIdWorker;
+
+    const pool = new WorkerPool<{ id: string; value: number }, number>(
+      () => new UnknownIdWorker() as unknown as Worker,
+      {
+        poolSize: 1,
+        syncFallback: true,
+        syncHandler: (t) => t.value,
+      },
+    );
+
+    const pending = pool.run({ id: "x1", value: 9 });
+    await expect(Promise.race([pending, new Promise((r) => setTimeout(() => r("timeout"), 50))])).resolves.toBe(
+      "timeout",
+    );
+    pool.destroy();
+    globalThis.Worker = originalWorker;
+  });
+
+  it("rejects worker error results without sync fallback", async () => {
+    class GenericErrorWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(task: { id: string }) {
+        queueMicrotask(() => {
+          this.onmessage?.({ data: { id: task.id, type: "error" } } as MessageEvent);
+        });
+      }
+      terminate() {}
+    }
+
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error mock
+    globalThis.Worker = GenericErrorWorker;
+
+    const pool = new WorkerPool<{ id: string }, unknown>(
+      () => new GenericErrorWorker() as unknown as Worker,
+      { poolSize: 1, syncFallback: false },
+    );
+
+    await expect(pool.run({ id: "err-generic" })).rejects.toThrow("Worker task failed");
+    pool.destroy();
+    globalThis.Worker = originalWorker;
+  });
+
+  it("rejects when postMessage throws without sync fallback", async () => {
+    class ThrowingPostWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(_task: { id: string }) {
+        throw new Error("post failed");
+      }
+      terminate() {}
+    }
+
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error mock
+    globalThis.Worker = ThrowingPostWorker;
+
+    const pool = new WorkerPool<{ id: string; value: number }, number>(
+      () => new ThrowingPostWorker() as unknown as Worker,
+      { poolSize: 1, syncFallback: false },
+    );
+
+    await expect(pool.run({ id: "post-fail-hard", value: 1 })).rejects.toThrow("post failed");
+    pool.destroy();
+    globalThis.Worker = originalWorker;
+  });
+
+  it("ignores timeout callbacks after the task already settled", async () => {
+    vi.useFakeTimers();
+    class FastWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(task: { id: string; value: number }) {
+        queueMicrotask(() => {
+          this.onmessage?.({ data: { id: task.id, ok: task.value } } as MessageEvent);
+        });
+      }
+      terminate() {}
+    }
+
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error mock
+    globalThis.Worker = FastWorker;
+
+    const pool = new WorkerPool<{ id: string; value: number }, { ok: number }>(
+      () => new FastWorker() as unknown as Worker,
+      { poolSize: 1, syncFallback: false, timeoutMs: 500 },
+    );
+
+    await pool.run({ id: "fast", value: 9 });
+    expect(pool.pendingCount()).toBe(0);
+    vi.advanceTimersByTime(500);
+    pool.destroy();
+    globalThis.Worker = originalWorker;
+    vi.useRealTimers();
+  });
+
+  it("wraps non-error postMessage throws when sync fallback is disabled", async () => {
+    class ThrowingPostWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(_task: { id: string }) {
+        throw "post failed";
+      }
+      terminate() {}
+    }
+
+    const originalWorker = globalThis.Worker;
+    // @ts-expect-error mock
+    globalThis.Worker = ThrowingPostWorker;
+
+    const pool = new WorkerPool<{ id: string; value: number }, number>(
+      () => new ThrowingPostWorker() as unknown as Worker,
+      { poolSize: 1, syncFallback: false },
+    );
+
+    await expect(pool.run({ id: "post-fail-string", value: 1 })).rejects.toThrow("post failed");
     pool.destroy();
     globalThis.Worker = originalWorker;
   });

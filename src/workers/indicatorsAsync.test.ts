@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { rsi, sma, ema } from "../plugins/analysis/indicators";
 import {
   rsiAsync,
@@ -140,6 +140,44 @@ describe("indicatorsAsync", () => {
       expect(result.values.length).toBe(6_000);
       expect(getIndicatorPoolSize()).toBe(2);
     } finally {
+      destroyIndicatorPool();
+      globalThis.Worker = original;
+    }
+  });
+
+  it("sets preferSync after a slow worker response", async () => {
+    class SlowWorker {
+      onmessage: ((ev: MessageEvent) => void) | null = null;
+      onerror: ((ev: Event) => void) | null = null;
+      postMessage(task: { id: string; indicator: string; data: Float32Array; period?: number }) {
+        setTimeout(() => {
+          this.onmessage?.({
+            data: {
+              id: task.id,
+              type: "indicator-result",
+              indicator: task.indicator,
+              values: rsi(task.data, task.period ?? 14),
+              duration: 0,
+            },
+          } as MessageEvent);
+        }, 220);
+      }
+      terminate() {}
+    }
+
+    const original = globalThis.Worker;
+    // @ts-expect-error test override
+    globalThis.Worker = SlowWorker;
+    destroyIndicatorPool();
+    vi.useFakeTimers();
+    try {
+      const large = Float32Array.from({ length: 6_000 }, (_, i) => i);
+      const pending = rsiAsync(large, 14);
+      await vi.advanceTimersByTimeAsync(250);
+      await pending;
+      expect(isIndicatorPreferSync()).toBe(true);
+    } finally {
+      vi.useRealTimers();
       destroyIndicatorPool();
       globalThis.Worker = original;
     }
