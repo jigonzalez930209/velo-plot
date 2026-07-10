@@ -2,6 +2,7 @@
  * velo-plot/trading — focused trading dashboard bundle (Stage 2).
  * Tree-shakes scientific/3D plugins; includes stacked charts, indicators, drawings, replay.
  */
+import "./registerTrading";
 
 // Core chart + stacked layout
 export { createChart } from "../core/Chart";
