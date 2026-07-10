@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { PluginRadar, createChart } from '@src/index'
 
 const props = defineProps<{
   height?: string
@@ -26,7 +27,6 @@ onMounted(async () => {
   }
 
   try {
-    const { createChart, PluginRadar } = await import('@src/index')
     
     if (!chartContainer.value) {
         console.error('RadarDemo: Container still not available after timeout');

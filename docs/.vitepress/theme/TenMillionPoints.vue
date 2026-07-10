@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useData } from 'vitepress'
+import { createChart } from '@src/index'
 
 const { isDark } = useData()
 const chartContainer = ref<HTMLElement | null>(null)
@@ -23,7 +24,6 @@ const POINT_COUNT = POINTS_PER_SERIES * TOTAL_SERIES
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
   
-  const { createChart } = await import('@src/index')
   
   chart = createChart({
     container: chartContainer.value,

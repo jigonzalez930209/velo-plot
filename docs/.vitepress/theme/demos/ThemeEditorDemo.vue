@@ -60,6 +60,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, reactive } from 'vue'
+import { createChart } from '@src/index'
 
 const chartContainer = ref<HTMLDivElement | null>(null)
 let chart: any = null
@@ -161,7 +162,6 @@ function generateWave(points: number, freq: number, phase: number) {
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
   
-  const { createChart } = await import('@src/index')
   
   chart = createChart({
     container: chartContainer.value,

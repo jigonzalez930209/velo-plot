@@ -1,6 +1,7 @@
 import { defineConfig } from "vitepress";
 import { fileURLToPath } from "url";
 import path from "path";
+import { knownLimitationsPlugin } from "./known-limitations-plugin";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -12,6 +13,11 @@ export default defineConfig({
   description:
     "Open-source high-performance WebGL2 scientific charting engine for real-time visualization of millions of data points at 60 FPS. Supports 2D and 3D charts with zero-copy architecture.",
   ignoreDeadLinks: true,
+  markdown: {
+    config(md) {
+      md.use(knownLimitationsPlugin());
+    },
+  },
   head: [
     ['link', { rel: 'icon', href: `${base}favicon.ico` }],
     ['meta', { name: 'theme-color', content: '#00f2ff' }],
@@ -25,6 +31,22 @@ export default defineConfig({
     server: {
       fs: {
         allow: [".."],
+      },
+    },
+    build: {
+      chunkSizeWarningLimit: 1600,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes("/src/")) return undefined;
+            if (id.includes("/src/plugins/3d/")) return "velo-3d";
+            // Co-locate loading plugin with core/loading to avoid TDZ circular chunk
+            if (id.includes("/src/plugins/loading") || id.includes("/src/core/loading")) return "velo-core";
+            if (id.includes("/src/plugins/")) return "velo-plugins";
+            if (id.includes("/src/gpu/")) return "velo-gpu";
+            return "velo-core";
+          },
+        },
       },
     },
   },
@@ -63,6 +85,7 @@ export default defineConfig({
             { text: "Series & Data", link: "/guide/series" },
             { text: "Integration Guide", link: "/guide/react" },
             { text: "What's new in v3", link: "/guide/whats-new-v3" },
+            { text: "Bundle Architecture", link: "/guide/bundle-architecture" },
             { text: "Migration v1 → v2", link: "/guide/migration-v2" },
             { text: "Migration v2 → v3", link: "/guide/migration-v3" },
           ],
@@ -99,6 +122,15 @@ export default defineConfig({
         },
       ],
       "/api/": [
+        {
+          text: "Bundle Entries (v3)",
+          items: [
+            { text: "Bundle Architecture", link: "/guide/bundle-architecture" },
+            { text: "Core (`velo-plot`)", link: "/api/core-bundle" },
+            { text: "Trading (`/trading`)", link: "/api/trading-bundle" },
+            { text: "Scientific (`/scientific`)", link: "/api/scientific-bundle" },
+          ],
+        },
         {
           text: "Initialization",
           items: [

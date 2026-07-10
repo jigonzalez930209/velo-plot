@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import BaseChart3D from './BaseChart3D.vue'
+import { Waterfall3DRenderer } from '@src/plugins/3d'
 
 async function onInit({ canvas, backgroundColor, onReady }: any) {
-  const { Waterfall3DRenderer } = await import('@src/plugins/3d')
   
   const slicesCount = 50
   const freqBins = 100

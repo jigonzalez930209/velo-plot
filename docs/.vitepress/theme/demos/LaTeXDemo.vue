@@ -45,6 +45,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { useData } from 'vitepress';
+import { PluginLaTeX, createChart } from '@src/index'
 
 const props = defineProps<{
   height?: string;
@@ -97,7 +98,6 @@ function applyPreset(p: any) {
 async function initChart() {
   if (!chartContainer.value) return;
 
-  const { createChart, PluginLaTeX } = await import('@src/index');
 
   chart = createChart({
     container: chartContainer.value,

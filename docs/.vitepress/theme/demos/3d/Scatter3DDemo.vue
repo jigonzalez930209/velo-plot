@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import BaseChart3D from './BaseChart3D.vue'
+import { Bubble3DRenderer } from '@src/plugins/3d'
 
 async function onInit({ canvas, backgroundColor, onReady }: any) {
-  const { Bubble3DRenderer } = await import('@src/plugins/3d')
   
   const clusters = [
     { center: [-3, 0, 0], color: [0.9, 0.3, 0.3] },

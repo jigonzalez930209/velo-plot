@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import BaseChart3D from './BaseChart3D.vue'
+import { Line3DRenderer } from '@src/plugins/3d'
 
 async function onInit({ canvas, backgroundColor, onReady }: any) {
-  const { Line3DRenderer } = await import('@src/plugins/3d')
   
   const spirals = 5
   const pointsPerSpiral = 800

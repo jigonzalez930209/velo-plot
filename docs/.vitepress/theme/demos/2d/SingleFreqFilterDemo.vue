@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import * as VeloPlot from '@src/index'
 
 const props = defineProps<{
   height?: string
@@ -13,7 +14,6 @@ const isInitialized = ref(false)
 const initError = ref<string | null>(null)
 
 let chart: any = null
-let VeloPlot: any = null
 
 const N = 2048
 const SAMPLE_RATE = 1000
@@ -38,7 +38,6 @@ onMounted(async () => {
   }
   
   try {
-    VeloPlot = await import('@src/index')
     const { createChart, PluginTools, PluginAnalysis, PluginAnnotations } = VeloPlot;
     
     chart = createChart({

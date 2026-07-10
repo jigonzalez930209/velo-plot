@@ -24,6 +24,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import * as module from '@src/index'
 
 const chartContainer = ref<HTMLDivElement | null>(null)
 const chartSecondary = ref<HTMLDivElement | null>(null)
@@ -261,7 +262,6 @@ onMounted(async () => {
   
   stockData = generateStockData(200)
   
-  const module = await import('@src/index')
   createChartFn = module.createChart
   indicatorFns = {
     sma: module.sma,

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { PluginAnnotations, PluginSnapshot, PluginTools, createChart } from '@src/index'
 
 const chartContainer = ref<HTMLDivElement | null>(null);
 let chart: any = null;
@@ -26,7 +27,6 @@ let lastPreviewObjectUrl: string | null = null;
 async function initChart() {
   if (typeof window === 'undefined' || !chartContainer.value) return;
   
-  const { createChart, PluginSnapshot, PluginTools, PluginAnnotations } = await import('@src/index');
   
   console.log('Plugins imported:', { PluginSnapshot: !!PluginSnapshot, PluginTools: !!PluginTools });
   

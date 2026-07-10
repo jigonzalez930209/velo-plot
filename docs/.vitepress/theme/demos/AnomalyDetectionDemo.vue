@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { PluginAnomalyDetection, createChart } from '@src/index'
 
 const chartContainer = ref<HTMLDivElement | null>(null);
 let chart: any = null;
@@ -302,7 +303,6 @@ onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return;
   
   try {
-    const { createChart } = await import('@src/index');
     
     chart = createChart({
       container: chartContainer.value,
@@ -314,7 +314,6 @@ onMounted(async () => {
     // NOTE: Plugin temporarily disabled for demo
     // Will be enabled once plugin system is fully integrated
     /*
-    const { PluginAnomalyDetection } = await import('@src/index');
     
     chart.use(PluginAnomalyDetection({
       method: selectedMethod.value,

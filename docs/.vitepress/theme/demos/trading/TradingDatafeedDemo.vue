@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { barsToOhlc, createChart, createMockDatafeed } from '@src/trading'
 
 const MS_DAY = 86_400_000
 /** Bars visible in fixed-window (scroll) mode */
@@ -25,7 +26,6 @@ async function load() {
   if (!containerRef.value) return
   chart?.destroy?.()
   stopLive()
-  const { createChart, createMockDatafeed, barsToOhlc } = await import('@src/trading')
   // Daily bars keep timestamps far enough apart to render precisely on a
   // continuous time axis (intraday bars would collapse under float precision).
   const feed = createMockDatafeed({ seed: 42, barMs: MS_DAY })

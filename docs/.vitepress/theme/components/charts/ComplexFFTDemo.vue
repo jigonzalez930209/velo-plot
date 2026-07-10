@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { createChart } from '@src/index'
+import { analyzeComplexSpectrum, arraysToComplex, fftFromComplexInput, getPositiveFrequencies, ifftComplex } from '@src/plugins/analysis'
 
 const props = defineProps<{
   height?: string
@@ -30,7 +32,6 @@ onMounted(async () => {
   if (!chartContainer.value) return
   
   try {
-    const { createChart } = await import('@src/index')
     
     chart = createChart({
       container: chartContainer.value,
@@ -93,7 +94,6 @@ async function updateChart() {
     seriesList.forEach((s: any) => chart.removeSeries(s.getId()))
     chart.clearAnnotations?.()
 
-    const { analyzeComplexSpectrum, fftFromComplexInput, ifftComplex, arraysToComplex, getPositiveFrequencies } = await import('@src/plugins/analysis')
     
     const signal = generateSignal()
     

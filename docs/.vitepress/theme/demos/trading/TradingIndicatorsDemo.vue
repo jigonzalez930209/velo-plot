@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { generateBusinessDayOhlcv } from './tradingData'
+import { createStackedChart } from '@src/trading'
 
 const presets = ['bollinger', 'ema', 'sma', 'rsi', 'macd', 'stochastic'] as const
 type Preset = (typeof presets)[number]
@@ -25,7 +26,6 @@ async function build(preset: Preset) {
   status.value = ''
 
   const data = generateBusinessDayOhlcv(100)
-  const { createStackedChart } = await import('@src/trading')
   if (token !== buildToken) return
 
   const isOverlay = OVERLAY.has(preset)

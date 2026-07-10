@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { PluginAnnotations, PluginPatternRecognition, createChart } from '@src/index'
 
 const props = defineProps<{ height?: string }>()
 
@@ -71,7 +72,6 @@ onMounted(async () => {
     attempts++
   }
   try {
-    const { createChart, PluginPatternRecognition, PluginAnnotations } = await import('@src/index')
 
     chart = createChart({
       container: chartContainer.value!,

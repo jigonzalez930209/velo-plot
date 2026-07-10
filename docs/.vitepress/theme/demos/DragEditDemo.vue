@@ -58,6 +58,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useData } from 'vitepress';
+import { PluginDragEdit, createChart } from '@src/index'
 
 const props = defineProps<{
   height?: string;
@@ -125,7 +126,6 @@ onMounted(async () => {
   }
 
   try {
-    const { createChart, PluginDragEdit } = await import('@src/index');
 
     chart = createChart({
       container: chartContainer.value,

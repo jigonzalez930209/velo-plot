@@ -40,6 +40,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { createChart, linkCharts } from '@src/index'
 
 const chart1Container = ref<HTMLDivElement | null>(null)
 const chart2Container = ref<HTMLDivElement | null>(null)
@@ -91,7 +92,6 @@ onMounted(async () => {
   if (typeof window === 'undefined') return
   if (!chart1Container.value || !chart2Container.value) return
   
-  const { createChart, linkCharts } = await import('@src/index')
   
   chart1 = createChart({
     container: chart1Container.value,

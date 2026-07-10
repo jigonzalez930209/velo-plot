@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { generateBusinessDayOhlcv, findLowestBarIndex } from './tradingData'
+import { PluginAnnotations, PluginDrawingTools, PluginKeyboard, PluginReplay, createStackedChart } from '@src/trading'
 
 const { isDark } = useData()
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -12,13 +13,6 @@ let stack: any = null
 async function build() {
   if (!containerRef.value) return
   stack?.destroy?.()
-  const {
-    createStackedChart,
-    PluginAnnotations,
-    PluginDrawingTools,
-    PluginReplay,
-    PluginKeyboard,
-  } = await import('@src/trading')
   const data = generateBusinessDayOhlcv(80, { seed: 42 })
   stack = createStackedChart({
     container: containerRef.value,

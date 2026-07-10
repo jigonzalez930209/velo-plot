@@ -73,6 +73,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useData } from 'vitepress';
+import { renderTernaryPlot } from '@src/renderer/ternary'
 
 const props = defineProps<{
   height?: string;
@@ -207,7 +208,6 @@ onMounted(async () => {
   if (typeof window === 'undefined') return;
 
   try {
-    const { renderTernaryPlot } = await import('@src/renderer/ternary');
     renderFunc = renderTernaryPlot;
 
     // Setup canvas

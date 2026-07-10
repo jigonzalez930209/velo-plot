@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { PluginMLIntegration, PluginTools, createChart } from '@src/index'
 
 const props = defineProps<{
   height?: string
@@ -28,7 +29,6 @@ onMounted(async () => {
   }
 
   try {
-    const { createChart, PluginMLIntegration, PluginTools } = await import('@src/index')
     
     chart = createChart({
       container: chartContainer.value!,

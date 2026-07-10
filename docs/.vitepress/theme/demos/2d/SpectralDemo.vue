@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { createChart } from '@src/index'
+import { PluginAnnotations, PluginTools } from '@src/plugins'
 
 const props = defineProps<{
   height?: string
@@ -34,8 +36,6 @@ onMounted(async () => {
   }
   
   try {
-    const { createChart } = await import('@src/index')
-    const { PluginAnnotations, PluginTools } = await import('@src/plugins')
     console.log('SpectralDemo: createChart imported')
     
     chart = createChart({

@@ -60,7 +60,7 @@
     
     <div class="code-preview">
       <pre><code>// Set locale for number/date formatting
-import { setGlobalLocale } from 'velo-plot';
+import { setGlobalLocale } from 'velo-plot/plugins/i18n';
 setGlobalLocale('{{ currentLocale }}');
 
 // Formats:
@@ -72,6 +72,7 @@ setGlobalLocale('{{ currentLocale }}');
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { createChart } from '@src/index'
 
 const chartContainer = ref<HTMLDivElement | null>(null)
 let chart: any = null
@@ -145,7 +146,6 @@ function generateData() {
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
   
-  const { createChart } = await import('@src/index')
   
   chart = createChart({
     container: chartContainer.value,

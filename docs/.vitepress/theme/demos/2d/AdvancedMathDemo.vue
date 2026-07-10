@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed, reactive } from 'vue'
 import { useData } from 'vitepress'
+import { createChart } from '@src/index'
+import { PluginAnalysis, PluginTools } from '@src/plugins'
+import { derivative, detectPeaks, downsampleLTTB, integrate, savitzkyGolay, subtractBaseline } from '@src/plugins/analysis'
 
 const props = defineProps<{
   height?: string
@@ -33,8 +36,6 @@ const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
 
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
-  const { createChart } = await import('@src/index')
-  const { PluginAnalysis, PluginTools } = await import('@src/plugins')
   
   chart = createChart({
     container: chartContainer.value,
@@ -119,7 +120,6 @@ async function applyTransformPipeline() {
   
   // 1. Downsampling first (if active)
   if (transforms.downsampled) {
-    const { downsampleLTTB } = await import('@src/plugins/analysis')
     const result = downsampleLTTB(currentX, currentY, 300)
     currentX = result.x
     currentY = result.y
@@ -127,13 +127,11 @@ async function applyTransformPipeline() {
   
   // 2. Smoothing
   if (transforms.smoothing) {
-    const { savitzkyGolay } = await import('@src/plugins/analysis')
     currentY = savitzkyGolay(currentY, 15, 3)
   }
   
   // 3. Baseline correction
   if (transforms.baseline) {
-    const { subtractBaseline } = await import('@src/plugins/analysis')
     currentY = subtractBaseline(
       Array.from(currentX), 
       Array.from(currentY), 
@@ -154,7 +152,6 @@ async function applyTransformPipeline() {
   // 4. Show derivative as overlay
   if (transforms.derivative) {
     try { chart.removeSeries('derivative') } catch {}
-    const { derivative } = await import('@src/plugins/analysis')
     const dy = derivative(currentX, currentY, 1)
     
     // Scale to fit
@@ -180,7 +177,6 @@ async function applyTransformPipeline() {
   // 5. Detect peaks
   if (transforms.peaks) {
     try { chart.removeSeries('peaks') } catch {}
-    const { detectPeaks } = await import('@src/plugins/analysis')
     const peaks = detectPeaks(currentX, currentY, { 
       minProminence: 0.2, 
       type: 'max' 
@@ -229,7 +225,6 @@ async function calculateArea() {
     return
   }
 
-  const { integrate } = await import('@src/plugins/analysis')
   const series = chart.getSeries('main')
   const data = series?.getData()
   if (!data) return

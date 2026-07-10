@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { generateBusinessDayOhlcv } from './tradingData'
+import { PluginReplay, createChart } from '@src/trading'
 
 const { isDark } = useData()
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -14,7 +15,6 @@ let replay: any = null
 async function build() {
   if (!containerRef.value) return
   chart?.destroy?.()
-  const { createChart, PluginReplay } = await import('@src/trading')
   const data = generateBusinessDayOhlcv(80)
   chart = createChart({
     container: containerRef.value,

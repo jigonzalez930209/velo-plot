@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import * as indexModule from '@src/index'
 
 const props = defineProps<{
   height?: string
@@ -27,7 +28,6 @@ let signalData: { x: Float32Array; y1: Float32Array; y2: Float32Array } | null =
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
 
-  const indexModule = await import('@src/index')
   chartModules = { createChart: indexModule.createChart }
 
   generateSignalData()

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { PluginAnnotations, createChart, generateContours } from '@src/index'
 
 const props = defineProps<{ height?: string }>()
 
@@ -55,7 +56,6 @@ onMounted(async () => {
     attempts++
   }
   try {
-    const { createChart, PluginAnnotations } = await import('@src/index')
     chart = createChart({
       container: chartContainer.value!,
       theme: chartTheme.value,
@@ -72,7 +72,6 @@ onMounted(async () => {
 
 async function draw() {
   if (!chart || !isInitialized.value) return
-  const { generateContours } = await import('@src/index')
 
   // Clear previous isolines/labels.
   for (const id of lineIds.splice(0)) chart.removeSeries?.(id)

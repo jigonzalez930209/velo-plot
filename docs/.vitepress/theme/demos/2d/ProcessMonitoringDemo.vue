@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { createChart } from '@src/index'
+import { PluginDataTransform } from '@src/plugins'
 
 const props = defineProps<{
   height?: string
@@ -46,8 +48,6 @@ onMounted(async () => {
   }
 
   try {
-    const { createChart } = await import('@src/index')
-    const { PluginDataTransform } = await import('@src/plugins')
     
     // 1. Signal Processing Chart
     signalChart = createChart({

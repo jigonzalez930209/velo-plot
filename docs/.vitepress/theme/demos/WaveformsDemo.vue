@@ -57,6 +57,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import * as module from '@src/index'
 
 const chartContainer = ref<HTMLDivElement | null>(null)
 let chart: any = null
@@ -193,7 +194,6 @@ async function updateChart() {
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
   
-  const module = await import('@src/index')
   
   generators = {
     generateSineWave: module.generateSineWave,

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import BaseChart3D from './BaseChart3D.vue'
+import { VectorField3DRenderer } from '@src/plugins/3d'
 
 async function onInit({ canvas, backgroundColor, onReady }: any) {
-  const { VectorField3DRenderer } = await import('@src/plugins/3d')
   
   const size = 15, total = size * size * size
   const positions = new Float32Array(total * 3), directions = new Float32Array(total * 3), colors = new Float32Array(total * 3)

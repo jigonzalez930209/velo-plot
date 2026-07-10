@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import BaseChart3D from './BaseChart3D.vue'
+import { Bubble3DRenderer } from '@src/plugins/3d'
 
 async function onInit({ canvas, backgroundColor, onReady }: any) {
-  const { Bubble3DRenderer } = await import('@src/plugins/3d')
   
   const rows = 40, cols = 40, count = rows * cols
   const positions = new Float32Array(count * 3), colors = new Float32Array(count * 3), scales = new Float32Array(count)

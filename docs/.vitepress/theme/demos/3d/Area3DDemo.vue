@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import BaseChart3D from './BaseChart3D.vue'
+import { Area3DRenderer } from '@src/plugins/3d'
 
 async function onInit({ canvas, backgroundColor, onReady }: any) {
-  const { Area3DRenderer } = await import('@src/plugins/3d')
   
   const curves = 5, pointsPerCurve = 100, areas: any[] = []
   for (let c = 0; c < curves; c++) {

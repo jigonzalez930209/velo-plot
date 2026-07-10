@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { createChart } from '@src/index'
+import { PluginContextMenu } from '@src/plugins/context-menu'
+import { PluginDataExport } from '@src/plugins/data-export'
+import { PluginTools } from '@src/plugins/tools'
 
 const chartContainer = ref<HTMLDivElement | null>(null);
 let chart: any = null;
@@ -31,10 +35,6 @@ function logEvent(msg: string) {
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return;
   
-  const { createChart } = await import('@src/index');
-  const { PluginTools } = await import('@src/plugins/tools');
-  const { PluginDataExport } = await import('@src/plugins/data-export');
-  const { PluginContextMenu } = await import('@src/plugins/context-menu');
   
   chart = createChart({
     container: chartContainer.value,

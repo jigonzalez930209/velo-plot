@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { createChart } from '@src/index'
+import { analyzeSpectrum } from '@src/plugins/analysis'
 
 const props = defineProps<{
   height?: string
@@ -26,7 +28,6 @@ onMounted(async () => {
   if (!chartContainer.value) return
   
   try {
-    const { createChart } = await import('@src/index')
     
     chart = createChart({
       container: chartContainer.value,
@@ -135,7 +136,6 @@ async function updateChart() {
       })
 
     } else {
-      const { analyzeSpectrum } = await import('@src/plugins/analysis')
 
       FREQUENCIES.forEach((freq, idx) => {
         const y = generateTriangleWave(freq, t)

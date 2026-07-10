@@ -43,6 +43,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useData } from 'vitepress';
+import { PluginVirtualization, createChart } from '@src/index'
 
 const props = defineProps<{
   height?: string;
@@ -87,7 +88,6 @@ onMounted(async () => {
   if (typeof window === 'undefined') return;
 
   try {
-    const { createChart, PluginVirtualization } = await import('@src/index');
 
     chart = createChart({
       container: chartContainer.value!,

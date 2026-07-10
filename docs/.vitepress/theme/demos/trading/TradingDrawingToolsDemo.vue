@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { generateBusinessDayOhlcv } from './tradingData'
+import { PluginAnnotations, PluginDrawingTools, PluginKeyboard, createChart } from '@src/trading'
 
 const modes = ['trendline', 'horizontal', 'rectangle', 'fibonacci', 'measure'] as const
 type Mode = (typeof modes)[number]
@@ -17,7 +18,6 @@ let chart: any = null
 async function build() {
   if (!containerRef.value) return
   chart?.destroy?.()
-  const { createChart, PluginAnnotations, PluginDrawingTools, PluginKeyboard } = await import('@src/trading')
   const data = generateBusinessDayOhlcv(60, { seed: 7 })
   chart = createChart({
     container: containerRef.value,

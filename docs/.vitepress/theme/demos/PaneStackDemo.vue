@@ -59,6 +59,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useData } from 'vitepress'
+import { buildIndicatorPane, detectIndicatorMarkers } from '@src/core/indicator'
+import { createStackedChart } from '@src/core/stacked'
 
 type PresetId =
   | 'tradingview'
@@ -473,8 +475,6 @@ async function initStack() {
   if (!containerRef.value) return
 
   try {
-    const { createStackedChart } = await import('@src/core/stacked')
-    const { buildIndicatorPane, detectIndicatorMarkers } = await import('@src/core/indicator')
 
     stack?.destroy()
     const preset = activePreset.value

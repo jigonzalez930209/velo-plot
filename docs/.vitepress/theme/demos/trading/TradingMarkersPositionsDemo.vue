@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { generateBusinessDayOhlcv, findLowestBarIndex, findHighestBarIndex } from './tradingData'
+import { PluginAnnotations, createChart } from '@src/trading'
 
 const { isDark } = useData()
 const containerRef = ref<HTMLDivElement | null>(null)
@@ -11,7 +12,6 @@ let chart: any = null
 async function build() {
   if (!containerRef.value) return
   chart?.destroy?.()
-  const { createChart, PluginAnnotations } = await import('@src/trading')
   const data = generateBusinessDayOhlcv(55, { seed: 42 })
   chart = createChart({
     container: containerRef.value,

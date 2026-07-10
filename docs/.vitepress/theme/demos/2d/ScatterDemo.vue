@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
+import { createChart } from '@src/index'
+import { PluginTools } from '@src/plugins'
 
 const props = defineProps<{
   height?: string
@@ -17,8 +19,6 @@ const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
 
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
-  const { createChart } = await import('@src/index')
-  const { PluginTools } = await import('@src/plugins')
   
   chart = createChart({
     container: chartContainer.value,

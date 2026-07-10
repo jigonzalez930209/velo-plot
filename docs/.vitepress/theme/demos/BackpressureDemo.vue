@@ -75,6 +75,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import * as module from '@src/index'
 
 const chartContainer = ref<HTMLDivElement | null>(null)
 let chart: any = null
@@ -249,7 +250,6 @@ function stopStream() {
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
   
-  const module = await import('@src/index')
   CircularBufferClass = module.CircularBuffer
   
   chart = module.createChart({
