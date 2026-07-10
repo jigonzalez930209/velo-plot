@@ -1,8 +1,17 @@
 # Plugin Status Registry
 
-> Last updated: 2026-07-05 (Stage 0 foundation audit)
+> Last updated: 2026-07-10 (v3.0.0-rc.1 / Stage 5)
 
-Status key: **complete** = production-ready and tested | **partial** = usable with gaps | **stub** = documented but non-functional | **experimental** = opt-in, may change
+Status key:
+
+| Status | Meaning |
+|--------|---------|
+| **complete** | Production-ready and tested |
+| **partial** | Usable; documented gaps accepted for v3 |
+| **experimental** | Opt-in; API may change; may be a stub or paused backend |
+| **stub** | *(legacy)* Prefer **experimental** + deprecation note |
+
+v3 release criterion: every plugin is **complete**, **partial** (with known gaps), or **experimental**. No undocumented stubs.
 
 | Plugin / Module | Status | Notes |
 |-----------------|--------|-------|
@@ -15,16 +24,18 @@ Status key: **complete** = production-ready and tested | **partial** = usable wi
 | PluginContextMenu | complete | |
 | PluginRegression | complete | 8 fitting methods |
 | PluginAnomalyDetection | complete | |
-| PluginPatternRecognition | partial | Built-in patterns OK; `custom` pattern returns errors |
-| PluginForecasting | complete | `sma`, `ema`, `wma`, `linear`, `expSmoothing`, `holt`, `holtWinters` |
-| PluginMLIntegration | partial | Simple native NN/regression only |
+| PluginPatternRecognition | partial | Built-in patterns OK; `custom` pattern returns errors (accepted gap for v3) |
+| PluginForecasting | complete | `sma`, `ema`, `wma`, `linear`, `expSmoothing`, `holt`, `holtWinters`, `arima`; unknown method strings throw |
+| PluginMLIntegration | partial | Simple native NN/regression only (accepted gap for v3) |
 | PluginVirtualization | complete | Viewport-aware LOD, worker offload, `precision: 'full'` |
-| PluginOffscreen | partial | Requires OffscreenCanvas support |
+| PluginOffscreen | partial | Requires OffscreenCanvas support (accepted gap for v3) |
 | PluginLazyLoad | complete | Chunks, distance unload, `setDataWindow` |
 | PluginCaching | complete | Auto-invalidate on data update |
-| PluginSync | **stub** | Deprecated — use `ChartGroup` |
-| PluginGpu / WebGPU | **paused** | Opt-in `renderer: 'webgpu'` — deferred past Stage 1; WebGL2 default |
-| ChartGroup sync | complete | X/Y pan/zoom/cursor; selection sync (v1.13+) |
-| createStackedChart | complete | Vertical + horizontal layout, stack export (v1.13+) |
+| PluginSync | **experimental** | Deprecated stub — use `ChartGroup`. **Removed in v4.0** |
+| PluginGpu / WebGPU | **experimental** | Opt-in `renderer: 'webgpu'`; WebGL2 remains default |
+| PluginDrawingTools | complete | Trendline, fib, undo/redo |
+| PluginReplay | complete | Bar-by-bar playback |
+| ChartGroup sync | complete | X/Y pan/zoom/cursor; selection sync |
+| createStackedChart | complete | Vertical + horizontal layout, stack export |
 
-See [Stage 0 roadmap](./roadmap/00-foundation-audit.md) for remediation tasks.
+See [Stage 5 roadmap](./roadmap/05-v3-stable-platform.md) and [Migration v3](./guide/migration-v3.md).
