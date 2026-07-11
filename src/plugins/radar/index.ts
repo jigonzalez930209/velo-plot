@@ -188,7 +188,19 @@ export function PluginRadar(
     setMaxValue(value: number) {
       config.maxValue = value;
       ctx?.requestRender();
-    }
+    },
+    getSVGExportData() {
+      if (config.categories.length === 0) return null;
+      return {
+        categories: [...config.categories],
+        maxValue: config.maxValue,
+        gridLevels: config.gridLevels,
+        showLabels: config.showLabels,
+        labelStyle: config.labelStyle,
+        gridStyle: config.gridStyle,
+        series: Array.from(radarSeries.values()),
+      };
+    },
   };
 
   return {
@@ -202,6 +214,7 @@ export function PluginRadar(
     },
 
     onRenderOverlay(pCtx: PluginContext, _event: AfterRenderEvent) {
+      if (pCtx.chart.getActiveRenderer() === "svg") return;
       drawRadar(pCtx);
     },
 

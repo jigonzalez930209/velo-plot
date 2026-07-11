@@ -36,10 +36,22 @@ export interface PluginRadarConfig {
   };
 }
 
+export interface RadarSVGExportData {
+  categories: string[];
+  maxValue: number;
+  gridLevels: number;
+  showLabels: boolean;
+  labelStyle?: PluginRadarConfig["labelStyle"];
+  gridStyle?: PluginRadarConfig["gridStyle"];
+  series: RadarSeriesData[];
+}
+
 export interface RadarAPI {
   addSeries(data: RadarSeriesData): string;
   removeSeries(id: string): boolean;
   updateSeries(id: string, points: RadarPoint[]): boolean;
   setCategories(categories: string[]): void;
   setMaxValue(value: number): void;
+  /** Snapshot for SVG live renderer / export pipeline */
+  getSVGExportData(): RadarSVGExportData | null;
 }

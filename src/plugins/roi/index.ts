@@ -1,4 +1,6 @@
 import type { PluginContext, InteractionEvent, PluginManifest } from "../types";
+import type { SVGExportPluginContext } from "../../core/chart/exporter/svg/plugins/types";
+import { exportRoiRegions } from "../../core/chart/exporter/svg/plugins/roi";
 
 export interface RoiPoint {
   x: number;
@@ -415,6 +417,10 @@ export const PluginROI = (config: PluginROIConfig = {}) => {
 
       regions.forEach((region) => drawRegion(region, ctx2d));
       if (activeRegion) drawRegion(activeRegion, ctx2d);
+    },
+    onExportSVG(svgCtx: SVGExportPluginContext) {
+      if (!svgCtx.builder || svgCtx.exportContext?.options.includeOverlays === false) return;
+      exportRoiRegions(svgCtx, regions);
     },
     api: {
       setTool(tool: RoiTool) {
