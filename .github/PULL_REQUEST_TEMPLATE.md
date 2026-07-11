@@ -34,3 +34,7 @@
 - [ ] I have made corresponding changes to the documentation.
 - [ ] My changes generate no new warnings.
 - [ ] New and existing unit tests pass locally with my changes.
+
+## SVG parity (Stage 6)
+- [ ] If this PR touches series, overlays, plugins, or export code: `pnpm test:svg-parity` passes.
+- [ ] If adding a new `SeriesType` or export feature: `svg-parity.json` updated.
