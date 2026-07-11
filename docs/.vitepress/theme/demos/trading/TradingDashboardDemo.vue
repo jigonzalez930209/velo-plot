@@ -3,23 +3,24 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { generateBusinessDayOhlcv, findLowestBarIndex } from './tradingData'
 import { PluginAnnotations, PluginDrawingTools, PluginKeyboard, PluginReplay, createStackedChart } from '@src/trading'
+import { useDemoRenderer, applyRendererToStackPanes } from '../svg/demoChartOptions'
+
+const props = defineProps<{
+  renderer?: 'svg' | 'webgl'
+}>()
 
 const { isDark } = useData()
 const containerRef = ref<HTMLDivElement | null>(null)
 const magnet = ref(true)
 const chartTheme = computed(() => (isDark.value ? 'midnight' : 'light'))
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 let stack: any = null
 
 async function build() {
   if (!containerRef.value) return
   stack?.destroy?.()
   const data = generateBusinessDayOhlcv(80, { seed: 42 })
-  stack = createStackedChart({
-    container: containerRef.value,
-    theme: chartTheme.value,
-    animations: false,
-    resizable: true,
-    panes: [
+  const panes = applyRendererToStackPanes([
       {
         id: 'price',
         height: 0.45,
@@ -40,7 +41,13 @@ async function build() {
           style: { color: 'rgba(56, 189, 248, 0.65)' },
         }],
       },
-    ],
+    ], activeRenderer.value)
+  stack = createStackedChart({
+    container: containerRef.value,
+    theme: chartTheme.value,
+    animations: false,
+    resizable: true,
+    panes,
     xAxis: {
       type: 'time',
       timeScale: { calendar: 'business-day', session: '24x7' },

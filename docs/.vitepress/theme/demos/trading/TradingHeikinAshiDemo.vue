@@ -3,11 +3,14 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { generateBusinessDayOhlcv } from './tradingData'
 import { createChart } from '@src/trading'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const { isDark } = useData()
 const containerRef = ref<HTMLDivElement | null>(null)
 const showHa = ref(true)
 const chartTheme = computed(() => (isDark.value ? 'midnight' : 'light'))
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 let chart: any = null
 
 async function build() {
@@ -19,6 +22,8 @@ async function build() {
     theme: chartTheme.value,
     animations: false,
     xAxis: { type: 'time', timeScale: { calendar: 'business-day' } },
+
+    renderer: activeRenderer.value,
   })
   chart.addSeries({
     id: 'series',

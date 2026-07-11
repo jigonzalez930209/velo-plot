@@ -3,6 +3,11 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { generateBusinessDayOhlcv } from './tradingData'
 import { createStackedChart } from '@src/trading'
+import { useDemoRenderer, applyRendererToStackPanes } from '../svg/demoChartOptions'
+
+const props = defineProps<{
+  renderer?: 'svg' | 'webgl'
+}>()
 
 const presets = ['bollinger', 'ema', 'sma', 'rsi', 'macd', 'stochastic'] as const
 type Preset = (typeof presets)[number]
@@ -14,6 +19,7 @@ const containerRef = ref<HTMLDivElement | null>(null)
 const active = ref<Preset>('rsi')
 const status = ref('')
 const chartTheme = computed(() => (isDark.value ? 'midnight' : 'light'))
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 let stack: any = null
 let buildToken = 0
 
@@ -29,21 +35,20 @@ async function build(preset: Preset) {
   if (token !== buildToken) return
 
   const isOverlay = OVERLAY.has(preset)
+  const panes = applyRendererToStackPanes([
+      {
+        id: 'price',
+        height: isOverlay ? 1 : 0.72,
+        series: [{ id: 'ohlc', type: 'candlestick', data }],
+      },
+    ], activeRenderer.value)
   stack = createStackedChart({
     container: containerRef.value,
     theme: chartTheme.value,
     animations: false,
     resizable: true,
     xAxis: { type: 'time', timeScale: { calendar: 'business-day' } },
-    // Overlay presets: one pane fills the host. Oscillators: price starts tall;
-    // addIndicator(pane:'new') will rebalance when the second pane mounts.
-    panes: [
-      {
-        id: 'price',
-        height: isOverlay ? 1 : 0.72,
-        series: [{ id: 'ohlc', type: 'candlestick', data }],
-      },
-    ],
+    panes,
   })
 
   try {
