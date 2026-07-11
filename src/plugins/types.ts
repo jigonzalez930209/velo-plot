@@ -446,6 +446,11 @@ export interface ChartPlugin<TConfig = unknown> {
     onRenderOverlay?(ctx: PluginContext, event: AfterRenderEvent): void;
 
     /**
+     * Called during SVG export to contribute vector overlay elements.
+     */
+    onExportSVG?(ctx: import("../core/chart/exporter/svg/plugins/types").SVGExportPluginContext): void;
+
+    /**
      * Called after all rendering is complete
      */
     onAfterRender?(ctx: PluginContext, event: AfterRenderEvent): void;

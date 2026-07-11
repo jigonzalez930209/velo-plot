@@ -76,7 +76,12 @@ export function PluginSnapshot(
     
     try {
         if (opt.format === 'svg') {
-          const svg = chart.exportSVG();
+          const svg = chart.exportSVG({
+            includeOverlays: opt.includeOverlays,
+            includeAnnotations: opt.includeOverlays,
+            includeLegend: true,
+            watermarkText: opt.watermarkText || undefined,
+          });
           if (opt.download) {
             const blob = new Blob([svg], { type: 'image/svg+xml' });
             const url = URL.createObjectURL(blob);
