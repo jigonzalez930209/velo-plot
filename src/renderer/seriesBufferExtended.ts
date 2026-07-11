@@ -75,10 +75,17 @@ function updateBarBuffer(ctx: any, s: Series): void {
 }
 
 function updateHeatmapBuffer(ctx: any, s: Series): void {
-  ctx.renderer?.installHeatmapProgram?.();
   const hData = s.getHeatmapData();
   const hStyle = s.getHeatmapStyle();
   if (!hData || hData.xValues.length < 2) return;
+  // GPU-only setup: the SVG renderer draws heatmaps directly from
+  // getHeatmapData(), so guard WebGL-specific calls so non-WebGL renderers
+  // don't throw (e.g. renderer: 'svg').
+  if (typeof ctx.renderer?.createColormapTexture !== "function") {
+    s.resetLastAppendCount();
+    return;
+  }
+  ctx.renderer.installHeatmapProgram?.();
   ctx.renderer.createBuffer(
     s.getId(),
     interleaveHeatmapData(hData.xValues, hData.yValues, hData.zValues),
