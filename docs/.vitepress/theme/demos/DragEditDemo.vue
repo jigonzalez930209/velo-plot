@@ -56,13 +56,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted , computed } from 'vue';
 import { useData } from 'vitepress';
 import { PluginDragEdit, createChart } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string;
+  renderer?: 'svg' | 'webgl'
 }>();
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const { isDark } = useData();
 const chartContainer = ref<HTMLDivElement | null>(null);
@@ -130,7 +133,8 @@ onMounted(async () => {
     chart = createChart({
       container: chartContainer.value,
       theme: isDark.value ? 'dark' : 'light',
-    });
+    renderer: activeRenderer.value,
+  });
 
     // Disable pan mode to allow drag editing
     chart.setMode('select');

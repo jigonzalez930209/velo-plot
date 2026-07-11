@@ -25,6 +25,7 @@ import {
   brightenColor,
 } from "../../renderer/NativeWebGLRenderer";
 import type { ChartSeriesRenderer } from "../../renderer/ChartSeriesRenderer";
+import { SVGChartRenderer } from "../../renderer/SVGChartRenderer";
 import type { Scale } from "../../scales";
 import {
   getThemeByName,
@@ -112,6 +113,7 @@ export class ChartImpl implements Chart {
   private container: HTMLDivElement;
   private webglCanvas: HTMLCanvasElement;
   private overlayCanvas: HTMLCanvasElement;
+  private svgRoot: SVGSVGElement | null;
   private overlayCtx: CanvasRenderingContext2D;
   public series: Map<string, Series> = new Map();
   public events = new EventEmitter<ChartEventMap>();
@@ -134,7 +136,7 @@ export class ChartImpl implements Chart {
   private backgroundColor: [number, number, number, number];
   private plotAreaBackground: [number, number, number, number];
   private renderer!: ChartSeriesRenderer;
-  private activeRendererType: "webgl" | "webgpu" = "webgl";
+  private activeRendererType: "webgl" | "webgpu" | "svg" = "webgl";
   private overlay: OverlayRenderer;
   private interaction: InteractionManager;
   private xScale: Scale;
@@ -270,6 +272,7 @@ export class ChartImpl implements Chart {
     this.primaryYAxisId = setup.primaryYAxisId;
     this.webglCanvas = setup.webglCanvas;
     this.overlayCanvas = setup.overlayCanvas;
+    this.svgRoot = setup.svgRoot;
     this.overlayCtx = setup.overlayCtx;
     this.layout = setup.layout;
 
@@ -337,8 +340,13 @@ export class ChartImpl implements Chart {
       options.plugins.forEach(p => this.use(p));
     }
 
-    this.renderer = new NativeWebGLRenderer(this.webglCanvas);
-    this.activeRendererType = "webgl";
+    if (options.renderer === "svg") {
+      this.renderer = new SVGChartRenderer();
+      this.activeRendererType = "svg";
+    } else {
+      this.renderer = new NativeWebGLRenderer(this.webglCanvas);
+      this.activeRendererType = "webgl";
+    }
     this.renderer.setDPR(this.dpr);
 
     ChartImpl.afterConstruct?.(this, options);
@@ -448,6 +456,9 @@ export class ChartImpl implements Chart {
       getBusinessDayMapping: () => this.timeScaleMapping,
       getAlerts: () => this.featureHooks?.getAlerts?.() ?? [],
       get yScale() { return this.yScales.get(this.primaryYAxisId) || this.yScales.values().next().value as Scale; },
+      svgRoot: this.svgRoot,
+      buildSVGFrame: () => this.buildSVGFrame(),
+      getActiveRenderer: () => this.activeRendererType,
     });
 
     this.interaction = new InteractionManager(
@@ -742,6 +753,11 @@ export class ChartImpl implements Chart {
   }
 
   private initLegend(options: ChartOptions): void {
+    // Live SVG renders legend in the vector layer; DOM legend would duplicate it.
+    if (this.activeRendererType === "svg") {
+      return;
+    }
+
     // Get legend options from layout config
     const legendConfig = options.layout?.legend;
 
@@ -896,7 +912,7 @@ export class ChartImpl implements Chart {
     this.featureHooks = hooks;
   }
 
-  exportSVG(): string {
+  exportSVG(_options?: import("./exporter/SVGExporter").SVGExportOptions): string {
     throw new Error(
       "[VeloPlot] exportSVG() is not available in the core bundle. " +
         "Use exportImage() or import from 'velo-plot/trading', 'velo-plot/scientific', or 'velo-plot/full'.",
@@ -1360,9 +1376,29 @@ export class ChartImpl implements Chart {
     return this.dpr;
   }
 
-  /** Runtime chart renderer backend in use. */
-  getActiveRenderer(): "webgl" | "webgpu" {
+  getActiveRenderer(): "webgl" | "webgpu" | "svg" {
     return this.activeRendererType;
+  }
+
+  /** Series id hovered from the legend — affects draw order in canvas and live SVG. */
+  getHoveredSeriesId(): string | null {
+    return this.hoveredSeriesId;
+  }
+
+  /** @internal Vector frame for `renderer: 'svg'` — patched on extended bundles. */
+  buildSVGFrame(): string {
+    try {
+      return this.exportSVG({
+        includeOverlays: true,
+        includeLegend: this.showLegend,
+        includeAnnotations: true,
+        // Live SVG: cursor/tooltips render on the transparent overlay canvas.
+        includeCursor: false,
+        includeSelection: Boolean(this.selectionRect),
+      });
+    } catch {
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="4" y="14">SVG unavailable</text></svg>';
+    }
   }
 
   /**

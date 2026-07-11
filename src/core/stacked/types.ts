@@ -4,6 +4,7 @@ import type { SyncAxis, SyncOptions } from "../sync";
 import type { ChartOptions as RootChartOptions, Range, SeriesOptions } from "../../types";
 import type { LayoutOptions } from "../layout";
 import type { AddIndicatorResult } from "../indicator/addIndicator";
+import type { SVGExportOptions } from "../chart/exporter/SVGExporter";
 
 /** Stack layout direction */
 export type StackDirection = "vertical" | "horizontal";
@@ -104,12 +105,21 @@ export interface StackedChart {
     preset: import("../indicator/addIndicator").IndicatorPresetName,
     options?: import("../indicator/addIndicator").AddIndicatorOptions,
   ): Promise<AddIndicatorResult & { paneId?: string; chart?: Chart }>;
-  /** Export the entire stack as one PNG/JPEG/WebP image (WYSIWYG layout) */
+  /** Export the entire stack as one PNG/JPEG/WebP/SVG (WYSIWYG layout) */
   exportImage(options?: StackSnapshotOptions): Promise<string>;
+  /** Export the entire stack as vector SVG */
+  exportSVG(options?: StackSVGExportOptions): string;
   /** Alias for exportImage */
   snapshot(options?: StackSnapshotOptions): Promise<string>;
   destroy(): void;
 }
+
+/** Stack SVG export options */
+export type StackSVGExportOptions = SVGExportOptions & {
+  includeDividers?: boolean;
+  includeBackground?: boolean;
+  backgroundColor?: string;
+};
 
 export const STACKED_MAX_PANES = 5;
 /** Default minimum pane height as a fraction of available stack height (1/6). */
@@ -118,11 +128,10 @@ export const STACKED_COMPACT_MARGIN = { top: 4, bottom: 8, left: 4 };
 export const STACKED_FULL_X_MARGIN = { bottom: 55 };
 export const STACKED_FULL_Y_MARGIN = { left: 55 };
 
-/** Options for full-stack image export */
-export type StackSnapshotFormat = "png" | "jpeg" | "webp";
+export type StackSnapshotFormat = "png" | "jpeg" | "webp" | "svg";
 export type StackSnapshotResolution = "standard" | "2k" | "4k" | "8k" | number;
 
-export interface StackSnapshotOptions {
+export interface StackSnapshotOptions extends Partial<StackSVGExportOptions> {
   format?: StackSnapshotFormat;
   quality?: number;
   resolution?: StackSnapshotResolution;

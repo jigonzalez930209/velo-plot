@@ -136,10 +136,12 @@ Step charts display data as "stair-step" patterns - ideal for discrete data.
 
 | Method | Description |
 |--------|-------------|
+| [`createChart({ renderer: 'svg' })`](/api/image-export#live-svg-renderer) | Live vector chart (extended bundle) |
 | [`chart.exportImage(type?)`](/api/image-export#single-chart--built-in-raster) | PNG/JPEG data URL (built-in) |
 | [`chart.exportSVG()`](/api/image-export#single-chart--svg-vector) | SVG string (vector paths + ticks) |
 | [`chart.snapshot.takeSnapshot()`](/api/image-export#single-chart--snapshot-plugin-high-res) | PNG/JPEG/WebP/SVG via `PluginSnapshot` |
-| [`stack.exportImage()`](/api/image-export#multi-pane-stack-export) | Full multi-pane composite (PNG/JPEG/WebP) |
+| [`stack.exportImage()`](/api/image-export#multi-pane-stack-export) | Full multi-pane composite (PNG/JPEG/WebP/SVG) |
+| [`stack.exportSVG()`](/api/image-export#multi-pane-stack-export) | Full stack vector document |
 
 [View Image & Vector Export guide →](/api/image-export)
 

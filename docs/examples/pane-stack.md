@@ -192,7 +192,7 @@ await stack.snapshot({
 });
 ```
 
-Supported stack formats: **PNG**, **JPEG**, **WebP**. Full-stack SVG is not yet available — export individual panes with `stack.getPane('price')?.exportSVG()`.
+Supported stack formats: **PNG**, **JPEG**, **WebP**, and **SVG**. Use `stack.exportSVG()` or `stack.snapshot({ format: 'svg' })` for a single vector document with all panes.
 
 See [Image & Vector Export](/api/image-export#multi-pane-stack-export) for all options.
 

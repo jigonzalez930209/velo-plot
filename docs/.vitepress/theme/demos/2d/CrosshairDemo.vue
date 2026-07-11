@@ -2,9 +2,11 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import * as indexModule from '@src/index'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
@@ -15,6 +17,7 @@ let chart: any = null
 let chartModules: { createChart: any } | null = null
 
 const chartTheme = computed(() => (isDark.value ? 'midnight' : 'light'))
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 // Interactive controls
 const valueDisplayMode = ref<'disabled' | 'corner' | 'floating'>('corner')
@@ -68,6 +71,8 @@ async function createChartWithConfig() {
     yAxis: { label: 'Amplitude', auto: true },
     theme: chartTheme.value,
     showControls: true,
+
+    renderer: activeRenderer.value,
   })
 
   chart.on('render', (e: any) => {

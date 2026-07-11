@@ -90,6 +90,16 @@ TradingView-style stack with sync presets, drag resize, and composite indicators
 
 ---
 
+### SVG Vector Charts
+
+Live `renderer: 'svg'` and `exportSVG()` for every 2D series type — line, bar, heatmap, candlestick, gauge, and more.
+
+<SVGChartsGallery height="340px" />
+
+[View all SVG series types →](/examples/svg/series-types)
+
+---
+
 ### Trading Dashboard (v2.0)
 
 Multi-pane trading layout with indicators, drawings, alerts, replay, and business-day time scale.
@@ -162,6 +172,7 @@ Interactive tools for selecting and analyzing specific data regions.
 | [Peak Analysis](/examples/analysis) | Integration/Baseline | Area calculation |
 | [Bar Charts](/examples/bar-charts) | Categorical data | Automatic width |
 | [Multi-Pane Stack](/examples/pane-stack) | Price / Volume / RSI + sync presets | `createStackedChart` |
+| [SVG Charts](/examples/svg/) | Live vector renderer + export per series type | `renderer: 'svg'` |
 | [Chart Sync](/examples/chart-sync) | Linked charts (X/Y/XY) | `ChartGroup` |
 | [Heatmaps](/examples/heatmap) | 2D intensity maps | Color scales |
 | [Tooltips](/examples/tooltips) | Tooltip system | Themes & Animations |

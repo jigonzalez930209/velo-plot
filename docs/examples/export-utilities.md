@@ -32,10 +32,11 @@ const svgSync = chart.exportSVG();
 
 ## Multi-Pane Stack Export
 
-Export an entire stacked layout (price + volume + RSI, or horizontal side-by-side panes) as one composite image:
+Export an entire stacked layout (price + volume + RSI, or horizontal side-by-side panes) as one composite image — **PNG, JPEG, WebP, or SVG**:
 
 ```typescript
 const png = await stack.exportImage({ format: 'png', resolution: '4k' });
+const svg = stack.exportSVG({ includeDividers: true });
 
 await stack.snapshot({
   format: 'jpeg',
@@ -45,9 +46,9 @@ await stack.snapshot({
 });
 ```
 
-Try it on the [Multi-Pane Stack example](/examples/pane-stack) — use the **Export PNG / JPEG / WebP** buttons in the toolbar.
+Try it on the [Multi-Pane Stack example](/examples/pane-stack) — use the **Export PNG / JPEG / WebP / SVG** buttons in the toolbar.
 
-Formats: **PNG**, **JPEG**, **WebP** (stack SVG is not yet supported).
+Per-pane live vector: `chart: { renderer: 'svg' }` in each pane config. See [SVG Charts](/examples/svg/).
 
 ---
 

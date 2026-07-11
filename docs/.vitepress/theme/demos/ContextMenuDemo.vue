@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted , computed } from 'vue';
 import { createChart } from '@src/index'
 import { PluginContextMenu } from '@src/plugins/context-menu'
 import { PluginDataExport } from '@src/plugins/data-export'
 import { PluginTools } from '@src/plugins/tools'
+import { useDemoRenderer } from './svg/demoChartOptions'
+
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const chartContainer = ref<HTMLDivElement | null>(null);
 let chart: any = null;
@@ -45,7 +49,9 @@ onMounted(async () => {
     showLegend: true,
     showControls: true,
     plugins: [
-      PluginTools({ useEnhancedTooltips: true }),
+      PluginTools({ useEnhancedTooltips: true ,
+    renderer: activeRenderer.value,
+  }),
       PluginDataExport({ defaultFormat: 'csv' }),
       PluginContextMenu({
         useDefaults: true,

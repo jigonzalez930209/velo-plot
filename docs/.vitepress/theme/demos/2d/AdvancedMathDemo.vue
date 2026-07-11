@@ -4,9 +4,11 @@ import { useData } from 'vitepress'
 import { createChart } from '@src/index'
 import { PluginAnalysis, PluginTools } from '@src/plugins'
 import { derivative, detectPeaks, downsampleLTTB, integrate, savitzkyGolay, subtractBaseline } from '@src/plugins/analysis'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
@@ -33,6 +35,7 @@ const results = reactive({
 })
 
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
@@ -41,7 +44,9 @@ onMounted(async () => {
     container: chartContainer.value,
     theme: chartTheme.value,
     showControls: true,
-    animations: { enabled: true, zoom: { duration: 200 } }
+    animations: { enabled: true, zoom: { duration: 200 } },
+  
+    renderer: activeRenderer.value,
   })
 
   // Explicitly enable required plugins

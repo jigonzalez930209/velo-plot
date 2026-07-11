@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useData } from 'vitepress'
 import { PluginROI, PluginTools, createChart } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
 
 const { isDark } = useData()
 const chartContainer = ref<HTMLElement | null>(null)
@@ -17,6 +18,8 @@ function toggleMasking() {
 }
 
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
@@ -24,7 +27,9 @@ onMounted(async () => {
   chart = createChart({
     container: chartContainer.value,
     theme: chartTheme.value,
-    showControls: true
+    showControls: true,
+  
+    renderer: activeRenderer.value,
   })
 
   await chart.use(PluginTools({ useEnhancedTooltips: true }))

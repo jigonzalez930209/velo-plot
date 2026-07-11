@@ -646,9 +646,10 @@ export interface ChartOptions {
    * `'webgpu'` uses the GPU abstraction layer (WebGPU when available, otherwise
    * falls back to WebGL2 with a console warning). Use `chart.getActiveRenderer()`
    * to inspect the runtime backend. Boxplot/waterfall series render on WebGL only.
+   * `'svg'` renders the chart as live vector SVG (same createChart API; 3D excluded).
    * @see docs/adr/001-webgpu-renderer-strategy.md
    */
-  renderer?: "webgl" | "webgpu";
+  renderer?: "webgl" | "webgpu" | "svg";
   /** X-axis configuration */
   xAxis?: AxisOptions;
   /** Y-axis configuration (single or array) */

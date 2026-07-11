@@ -31,6 +31,9 @@ jobs:
       - name: Run Tests
         run: pnpm test
 
+      - name: SVG parity gate
+        run: pnpm test:svg-parity
+
       - name: Run Framework Binding Tests
         run: pnpm test:bindings
 

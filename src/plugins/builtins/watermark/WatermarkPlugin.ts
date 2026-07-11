@@ -3,6 +3,7 @@ import type {
     PluginManifest,
 } from "../../types";
 import { definePlugin } from "../../PluginRegistry";
+import { exportWatermark } from "../../../core/chart/exporter/svg/plugins/watermark";
 
 export interface WatermarkPluginConfig {
     /** Watermark text */
@@ -75,6 +76,14 @@ export const WatermarkPlugin = definePlugin<WatermarkPluginConfig>(
                 ctx2d.rotate((rotation * Math.PI) / 180);
                 ctx2d.fillText(text, 0, 0);
                 ctx2d.restore();
+            },
+            onExportSVG(svgCtx) {
+                if (!svgCtx.builder || svgCtx.exportContext?.options.includeOverlays === false) return;
+                exportWatermark(svgCtx, text, {
+                    opacity: 0.15,
+                    rotation,
+                    color,
+                });
             },
         };
     }

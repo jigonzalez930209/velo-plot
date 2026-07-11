@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { barsToOhlc, createChart, createMockDatafeed } from '@src/trading'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const MS_DAY = 86_400_000
 /** Bars visible in fixed-window (scroll) mode */
@@ -16,6 +17,8 @@ const symbol = ref('—')
 const live = ref(false)
 const liveMode = ref<LiveMode>('window')
 const chartTheme = computed(() => (isDark.value ? 'midnight' : 'light'))
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 let chart: any = null
 let timer: ReturnType<typeof setInterval> | null = null
 let lastTime = 0
@@ -47,6 +50,8 @@ async function load() {
     animations: false,
     autoScroll: liveMode.value === 'window',
     xAxis: { type: 'time', timeScale: { calendar: 'continuous' }, auto: liveMode.value === 'expand' },
+
+    renderer: activeRenderer.value,
   })
   chart.addSeries({
     id: 'ohlc',

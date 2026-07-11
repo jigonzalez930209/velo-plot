@@ -28,6 +28,7 @@ export interface SetupResult {
   webglCanvas: HTMLCanvasElement;
   overlayCanvas: HTMLCanvasElement;
   overlayCtx: CanvasRenderingContext2D;
+  svgRoot: SVGSVGElement | null;
   layout: LayoutOptions;
 }
 
@@ -56,7 +57,9 @@ export function initializeChart(
   const paColor = parseColor(theme.plotAreaBackground);
   const plotAreaColor: [number, number, number, number] = [paColor[0], paColor[1], paColor[2], paColor[3]];
 
-  const showLegend = options.showLegend ?? theme.legend.visible;
+  const useSvgRenderer = options.renderer === "svg";
+  const showLegend =
+    options.showLegend ?? (useSvgRenderer ? false : theme.legend.visible);
   const showControls = options.toolbar?.show ?? options.showControls ?? false;
   const autoScroll = options.autoScroll ?? false;
   const showStatistics = options.showStatistics ?? false;
@@ -99,6 +102,8 @@ export function initializeChart(
   const webglCanvas = createCanvas("webgl");
   const overlayCanvas = createCanvas("overlay");
 
+  const svgRoot = useSvgRenderer ? createSvgRoot() : null;
+
   while (container.firstChild) {
     container.removeChild(container.firstChild);
   }
@@ -108,6 +113,15 @@ export function initializeChart(
 
   const ctx = overlayCanvas.getContext("2d");
   if (!ctx) throw new Error("Failed to get 2D context");
+
+  if (useSvgRenderer && svgRoot) {
+    container.insertBefore(svgRoot, webglCanvas);
+    webglCanvas.style.display = "none";
+    overlayCanvas.style.display = "block";
+    overlayCanvas.style.pointerEvents = "none";
+    svgRoot.style.zIndex = "1";
+    overlayCanvas.style.zIndex = "2";
+  }
 
   return {
     theme,
@@ -126,8 +140,21 @@ export function initializeChart(
     webglCanvas,
     overlayCanvas,
     overlayCtx: ctx,
+    svgRoot,
     layout,
   };
+}
+
+function createSvgRoot(): SVGSVGElement {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("class", "velo-plot-svg-layer");
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  svg.style.position = "absolute";
+  svg.style.inset = "0";
+  svg.style.width = "100%";
+  svg.style.height = "100%";
+  svg.style.pointerEvents = "none";
+  return svg;
 }
 
 /**

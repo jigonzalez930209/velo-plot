@@ -2,9 +2,11 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { PluginRadar, createChart } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
@@ -15,6 +17,7 @@ let chart: any = null
 let radarApi: any = null
 
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 onMounted(async () => {
   if (typeof window === 'undefined') return
@@ -37,7 +40,9 @@ onMounted(async () => {
       container: chartContainer.value,
       theme: chartTheme.value,
       showControls: false,
-      loading: false // Disable loading since Radar doesn't use standard series
+      showLegend: false,
+      loading: false, // Disable loading since Radar doesn't use standard series
+      renderer: activeRenderer.value,
     })
 
     const radarPlugin = PluginRadar({

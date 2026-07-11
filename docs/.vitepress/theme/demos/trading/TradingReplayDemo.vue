@@ -3,12 +3,15 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { generateBusinessDayOhlcv } from './tradingData'
 import { PluginReplay, createChart } from '@src/trading'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const { isDark } = useData()
 const containerRef = ref<HTMLDivElement | null>(null)
 const index = ref(0)
 const total = ref(0)
 const chartTheme = computed(() => (isDark.value ? 'midnight' : 'light'))
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 let chart: any = null
 let replay: any = null
 
@@ -21,6 +24,8 @@ async function build() {
     theme: chartTheme.value,
     animations: false,
     xAxis: { type: 'time', timeScale: { calendar: 'business-day' } },
+
+    renderer: activeRenderer.value,
   })
   chart.addSeries({ id: 'ohlc', type: 'candlestick', data })
   await chart.use(PluginReplay({ seriesId: 'ohlc', frameMs: 100 }))

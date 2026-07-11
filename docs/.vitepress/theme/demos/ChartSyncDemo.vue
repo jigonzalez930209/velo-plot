@@ -39,8 +39,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted , computed } from 'vue'
 import { createChart, linkCharts } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
+
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const chart1Container = ref<HTMLDivElement | null>(null)
 const chart2Container = ref<HTMLDivElement | null>(null)
@@ -99,7 +103,9 @@ onMounted(async () => {
     yAxis: { label: 'Temperature (°C)' },
     theme: 'midnight',
     showControls: false,
+    showLegend: false,
     animation: { enabled: false },
+    renderer: activeRenderer.value,
   })
   
   if (chart1.setAnimationConfig) {
@@ -122,7 +128,9 @@ onMounted(async () => {
     yAxis: { label: 'Humidity (%)' },
     theme: 'midnight',
     showControls: false,
+    showLegend: false,
     animation: { enabled: false },
+    renderer: activeRenderer.value,
   })
   
   if (chart2.setAnimationConfig) {

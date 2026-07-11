@@ -33,8 +33,8 @@ import {
 | Category | Included |
 |----------|----------|
 | **Series** | `bar`, `heatmap`, `polar`, `boxplot`, `waterfall`, `gauge`, `sankey` (+ all core types) |
-| **Export** | `chart.exportSVG()` (sync, patched) |
-| **Renderer** | `renderer: 'webgpu'` opt-in |
+| **Export** | `chart.exportSVG()`, `stack.exportSVG()` (sync, patched) |
+| **Renderer** | `renderer: 'webgpu'` opt-in, `renderer: 'svg'` live vector |
 | **Stacked** | `createStackedChart` |
 | **Analysis** | `PluginAnalysis`, FFT, peaks, integration — standalone utils via `velo-plot/plugins/analysis` or re-exported from scientific |
 | **Math / fit** | `PluginRegression`, `PluginForecasting` |

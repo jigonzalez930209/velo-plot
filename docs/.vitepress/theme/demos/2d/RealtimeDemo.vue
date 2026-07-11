@@ -3,9 +3,11 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { createChart } from '@src/index'
 import { PluginTools } from '@src/plugins'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
@@ -29,6 +31,7 @@ let animationId: number | null = null
 let tRef = 0
 
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
@@ -39,7 +42,9 @@ onMounted(async () => {
     yAxis: { label: 'Value', auto: true },
     theme: chartTheme.value,
     showControls: true,
-    loading: false
+    loading: false,
+  
+    renderer: activeRenderer.value,
   })
 
   await chart.use(PluginTools({ useEnhancedTooltips: true }))

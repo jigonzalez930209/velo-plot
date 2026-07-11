@@ -41,6 +41,7 @@ const props = defineProps<{
   height?: string
   points?: number
   crosshairConfig?: CrosshairConfig
+  renderer?: 'svg' | 'webgl'
 }>()
 
 // Charts are now visible by default. The core ChartInitQueue handles sequential loading.
@@ -93,6 +94,7 @@ const demoComponent = computed(() => {
       :height="height" 
       :points="points"
       :crosshairConfig="crosshairConfig"
+      :renderer="renderer"
     />
     <div v-else class="chart-placeholder" :style="{ height: height || '400px' }">
       <div class="loading-indicator">

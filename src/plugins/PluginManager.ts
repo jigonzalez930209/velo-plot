@@ -51,6 +51,7 @@ export class PluginManagerImpl implements PluginManager {
     private hooksAfterRender: PluginInstance[] = [];
     private hooksRenderWebGL: PluginInstance[] = [];
     private hooksRenderOverlay: PluginInstance[] = [];
+    private hooksExportSVG: PluginInstance[] = [];
     private hooksInteraction: PluginInstance[] = [];
     private hooksViewChange: PluginInstance[] = [];
     private hooksDataUpdate: PluginInstance[] = [];
@@ -304,6 +305,22 @@ export class PluginManagerImpl implements PluginManager {
             } catch (e) {
                 console.error(
                     `[VeloPlot] Error in plugin "${instance.plugin.manifest.name}" renderOverlay:`,
+                    e
+                );
+            }
+        }
+    }
+
+    /**
+     * Notify SVG export hooks
+     */
+    notifyExportSVG(ctx: import("../core/chart/exporter/svg/plugins/types").SVGExportPluginContext): void {
+        for (const instance of this.hooksExportSVG) {
+            try {
+                instance.plugin.onExportSVG!(ctx);
+            } catch (e) {
+                console.error(
+                    `[VeloPlot] Error in plugin "${instance.plugin.manifest.name}" onExportSVG:`,
                     e
                 );
             }
@@ -583,6 +600,7 @@ export class PluginManagerImpl implements PluginManager {
         this.hooksAfterRender = instances.filter((i) => i.plugin.onAfterRender);
         this.hooksRenderWebGL = instances.filter((i) => i.plugin.onRenderWebGL);
         this.hooksRenderOverlay = instances.filter((i) => i.plugin.onRenderOverlay);
+        this.hooksExportSVG = instances.filter((i) => i.plugin.onExportSVG);
         this.hooksInteraction = instances.filter((i) => i.plugin.onInteraction);
         this.hooksViewChange = instances.filter((i) => i.plugin.onViewChange);
         this.hooksDataUpdate = instances.filter((i) => i.plugin.onDataUpdate);
@@ -600,6 +618,7 @@ export class PluginManagerImpl implements PluginManager {
         this.hooksAfterRender = [];
         this.hooksRenderWebGL = [];
         this.hooksRenderOverlay = [];
+        this.hooksExportSVG = [];
         this.hooksInteraction = [];
         this.hooksViewChange = [];
         this.hooksDataUpdate = [];

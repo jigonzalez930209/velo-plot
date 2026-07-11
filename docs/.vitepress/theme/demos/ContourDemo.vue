@@ -2,8 +2,12 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { PluginAnnotations, createChart, generateContours } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
 
-const props = defineProps<{ height?: string }>()
+const props = defineProps<{
+  height?: string
+  renderer?: 'svg' | 'webgl'
+}>()
 
 const { isDark } = useData()
 const chartContainer = ref<HTMLElement | null>(null)
@@ -16,6 +20,7 @@ const lineIds: string[] = []
 const labelIds: string[] = []
 
 const chartTheme = computed(() => (isDark.value ? 'midnight' : 'light'))
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const GRID = 60
 const RANGE = 3
@@ -61,7 +66,8 @@ onMounted(async () => {
       theme: chartTheme.value,
       showControls: true,
       showLegend: false,
-    })
+    renderer: activeRenderer.value,
+  })
     await chart.use(PluginAnnotations())
     isInitialized.value = true
     await draw()

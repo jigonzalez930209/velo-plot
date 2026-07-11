@@ -43,13 +43,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch , computed } from 'vue';
 import { useData } from 'vitepress';
 import { PluginLaTeX, createChart } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string;
+  renderer?: 'svg' | 'webgl'
 }>();
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const { isDark } = useData();
 const chartContainer = ref<HTMLDivElement | null>(null);
@@ -112,6 +115,7 @@ async function initChart() {
     },
     xAxis: { label: xAxisLabel.value, auto: true },
     yAxis: { label: yAxisLabel.value, auto: true },
+    renderer: activeRenderer.value,
   });
 
   await chart.use(PluginLaTeX());

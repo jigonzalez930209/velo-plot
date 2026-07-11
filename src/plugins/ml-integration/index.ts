@@ -18,6 +18,7 @@ import type {
   PluginContext,
   AfterRenderEvent
 } from '../types';
+import { exportForecastOverlay } from '../../core/chart/exporter/svg/plugins/regression';
 
 const manifestML: PluginManifest = {
   name: "velo-plot-ml-integration",
@@ -194,6 +195,25 @@ export function PluginMLIntegration(
 
     onRenderOverlay(pCtx: PluginContext, _event: AfterRenderEvent) {
       drawMLVisualizations(pCtx);
+    },
+
+    onExportSVG(svgCtx) {
+      if (!svgCtx.builder || svgCtx.exportContext?.options.includeOverlays === false) return;
+      activeVisualizations.forEach((viz) => {
+        const { result, config } = viz;
+        const { output, xValues, confidence } = result;
+        if (!xValues?.length) return;
+        const n = Math.min(xValues.length, output.length);
+        const points = Array.from({ length: n }, (_, i) => ({ x: xValues[i], y: output[i] }));
+        const ci =
+          config.showConfidenceInterval && confidence?.length === n
+            ? {
+                upper: points.map((p, i) => ({ x: p.x, y: p.y + confidence[i] })),
+                lower: points.map((p, i) => ({ x: p.x, y: p.y - confidence[i] })),
+              }
+            : undefined;
+        exportForecastOverlay(svgCtx, points, ci, config.lineStyle?.color ?? "#3b82f6");
+      });
     },
 
     api

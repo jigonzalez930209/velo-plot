@@ -3,9 +3,11 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { createChart } from '@src/index'
 import { PluginDebug, PluginTools } from '@src/plugins'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
@@ -15,6 +17,7 @@ const pointCount = ref(0)
 let chart: any = null
 
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
@@ -23,7 +26,9 @@ onMounted(async () => {
     container: chartContainer.value,
     theme: chartTheme.value,
     showStatistics: true, // Key feature for this demo
-    showControls: true
+    showControls: true,
+  
+    renderer: activeRenderer.value,
   })
 
   // Explicitly enable required plugins

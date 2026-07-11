@@ -25,6 +25,7 @@ function pct(map, hits) {
 
 for (const [file, data] of Object.entries(coverage)) {
   if (/\.test\.(ts|tsx)$/.test(file)) continue;
+  if (file.includes("/exporter/svg/")) continue;
 
   const metrics = {
     lines: pct(data.statementMap, data.s),

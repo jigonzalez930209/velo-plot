@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { exportToSVG } from "./SVGExporter";
+import { exportToSVG, exportChartToSVG, exportChartSnapshot } from "./SVGExporter";
 import { LinearScale } from "../../../scales";
 import type { Series } from "../../Series";
 import type { ChartTheme } from "../../../theme";
+import { mockSeries, testScales, testTheme } from "./svg/__tests__/testFixtures";
 
 const theme = {
   backgroundColor: "#111",
@@ -27,7 +28,7 @@ const theme = {
   },
 } as ChartTheme;
 
-function mockSeries(
+function localMockSeries(
   type: string,
   data: Record<string, Float32Array>,
   style: Record<string, unknown> = {},
@@ -82,7 +83,7 @@ function exportWithSeries(series: Series[], gridVisible = true) {
 describe("exportToSVG", () => {
   it("returns SVG with line series, grid, and tick labels", () => {
     const svg = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "line",
         { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 50, 30]) },
         { color: "#ff0055", width: 2 },
@@ -95,7 +96,7 @@ describe("exportToSVG", () => {
 
   it("renders step, scatter, bar, band, and candlestick series", () => {
     const step = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "step",
         { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
         { color: "#0f0", stepMode: "after" },
@@ -104,7 +105,7 @@ describe("exportToSVG", () => {
     expect(step).toContain("<polyline");
 
     const scatter = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "scatter",
         { x: Float32Array.from([25, 75]), y: Float32Array.from([15, 45]) },
         { color: "#00f", pointSize: 6 },
@@ -113,7 +114,7 @@ describe("exportToSVG", () => {
     expect(scatter).toContain("<circle");
 
     const bar = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "bar",
         { x: Float32Array.from([20, 60]), y: Float32Array.from([10, 30]) },
         { color: "#fa0", barWidth: 8 },
@@ -122,7 +123,7 @@ describe("exportToSVG", () => {
     expect(bar).toContain("<rect");
 
     const band = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "band",
         {
           x: Float32Array.from([0, 50, 100]),
@@ -135,7 +136,7 @@ describe("exportToSVG", () => {
     expect(band).toContain("<polygon");
 
     const candle = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "candlestick",
         {
           x: Float32Array.from([50]),
@@ -168,7 +169,7 @@ describe("exportToSVG", () => {
 
   it("renders step modes and area series", () => {
     const before = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "step",
         { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
         { color: "#0f0", stepMode: "before" },
@@ -177,7 +178,7 @@ describe("exportToSVG", () => {
     expect(before).toContain("<polyline");
 
     const center = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "step",
         { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
         { color: "#0f0", stepMode: "center" },
@@ -186,7 +187,7 @@ describe("exportToSVG", () => {
     expect(center).toContain("<polyline");
 
     const area = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "area",
         { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([10, 30, 20]) },
         { color: "#aaf" },
@@ -237,11 +238,11 @@ describe("exportToSVG", () => {
         // unknown y-axis id, no primary → skipped
         mockSeriesWithAxis("line", "ghost", { x: Float32Array.from([0, 100]), y: Float32Array.from([0, 60]) }, {}),
         // empty data → skipped
-        mockSeries("line", { x: new Float32Array(0), y: new Float32Array(0) }, {}),
+        localMockSeries("line", { x: new Float32Array(0), y: new Float32Array(0) }, {}),
         // series with no style props → default width/opacity/color
-        mockSeries("scatter", { x: Float32Array.from([25, 75]), y: Float32Array.from([15, 45]) }, {}),
-        mockSeries("bar", { x: Float32Array.from([20, 60]), y: Float32Array.from([10, 30]) }, {}),
-        mockSeries("candlestick", {
+        localMockSeries("scatter", { x: Float32Array.from([25, 75]), y: Float32Array.from([15, 45]) }, {}),
+        localMockSeries("bar", { x: Float32Array.from([20, 60]), y: Float32Array.from([10, 30]) }, {}),
+        localMockSeries("candlestick", {
           x: Float32Array.from([50]),
           y: Float32Array.from([0]),
           open: Float32Array.from([20]),
@@ -250,7 +251,7 @@ describe("exportToSVG", () => {
           close: Float32Array.from([25]),
         }, {}),
         // band with no y2 → default zero baseline
-        mockSeries("band", { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([40, 50, 45]) }, {}),
+        localMockSeries("band", { x: Float32Array.from([0, 50, 100]), y: Float32Array.from([40, 50, 45]) }, {}),
       ],
       { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
       { x: 60, y: 40, width: 400, height: 240 },
@@ -273,7 +274,7 @@ describe("exportToSVG", () => {
 
   it("renders bearish candlesticks and hides tick labels when requested", () => {
     const bear = exportWithSeries([
-      mockSeries(
+      localMockSeries(
         "candlestick",
         {
           x: Float32Array.from([50]),
@@ -295,7 +296,7 @@ describe("exportToSVG", () => {
     yScale.setDomain(0, 60);
     yScale.setRange(280, 40);
     const hidden = exportToSVG(
-      [mockSeries("line", { x: Float32Array.from([0, 50]), y: Float32Array.from([1, 2]) }, { color: "#fff" })],
+      [localMockSeries("line", { x: Float32Array.from([0, 50]), y: Float32Array.from([1, 2]) }, { color: "#fff" })],
       { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
       { x: 60, y: 40, width: 400, height: 240 },
       xScale,
@@ -306,5 +307,100 @@ describe("exportToSVG", () => {
       { xAxis: { tickCount: 4, showLabels: false }, yAxis: { tickCount: 4, showLabels: false } },
     );
     expect(hidden).not.toContain("<text");
+  });
+
+  it("exportChartToSVG and exportChartSnapshot delegate to the v2 pipeline", () => {
+    const { xScale, yScale } = testScales();
+    const series = mockSeries("line");
+    const svg = exportChartToSVG({
+      series: [series],
+      viewBounds: { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
+      plotArea: { x: 60, y: 40, width: 400, height: 240 },
+      xScale,
+      yAxes: new Map([["default", yScale]]),
+      theme: testTheme,
+      width: 520,
+      height: 320,
+    });
+    expect(svg).toContain("<svg");
+
+    const snapshotSvg = exportChartSnapshot(
+      {
+        getAllSeries: () => [series],
+        viewBounds: { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
+        getPlotArea: () => ({ x: 60, y: 40, width: 400, height: 240 }),
+        xScale,
+        yScales: new Map([["default", yScale]]),
+        theme: testTheme,
+        container: { getBoundingClientRect: () => ({ width: 520, height: 320 }) } as HTMLElement,
+        xAxisOptions: {},
+        yAxisOptionsMap: new Map([["default", {}]]),
+        primaryYAxisId: "default",
+      },
+      { includeLegend: false },
+    );
+    expect(snapshotSvg).toContain("<svg");
+  });
+
+  it("maps explicit yAxis options to primaryYAxisId", () => {
+    const xScale = new LinearScale();
+    xScale.setDomain(0, 100);
+    xScale.setRange(60, 460);
+    const yScale = new LinearScale();
+    yScale.setDomain(0, 60);
+    yScale.setRange(280, 40);
+
+    const svg = exportToSVG(
+      [localMockSeries("line", { x: Float32Array.from([0, 100]), y: Float32Array.from([10, 50]) }, { color: "#fff" })],
+      { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
+      { x: 60, y: 40, width: 400, height: 240 },
+      xScale,
+      new Map([["alt", yScale]]),
+      theme,
+      520,
+      320,
+      { primaryYAxisId: "alt", yAxis: { tickCount: 6, showLabels: true } },
+    );
+    expect(svg).toContain("<polyline");
+  });
+
+  it("uses default yAxis map entry when primaryYAxisId is set without yAxis options", () => {
+    const xScale = new LinearScale();
+    xScale.setDomain(0, 100);
+    xScale.setRange(60, 460);
+    const yScale = new LinearScale();
+    yScale.setDomain(0, 60);
+    yScale.setRange(280, 40);
+
+    const svg = exportToSVG(
+      [localMockSeries("line", { x: Float32Array.from([0, 100]), y: Float32Array.from([10, 50]) }, { color: "#fff" })],
+      { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
+      { x: 60, y: 40, width: 400, height: 240 },
+      xScale,
+      new Map([["alt", yScale]]),
+      theme,
+      520,
+      320,
+      { primaryYAxisId: "alt", xAxis: { tickCount: 4 } },
+    );
+    expect(svg).toContain("<polyline");
+  });
+
+  it("exportChartSnapshot works without export options", () => {
+    const { xScale, yScale } = testScales();
+    const series = mockSeries("line");
+    const snapshotSvg = exportChartSnapshot({
+      getAllSeries: () => [series],
+      viewBounds: { xMin: 0, xMax: 100, yMin: 0, yMax: 60 },
+      getPlotArea: () => ({ x: 60, y: 40, width: 400, height: 240 }),
+      xScale,
+      yScales: new Map([["default", yScale]]),
+      theme: testTheme,
+      container: { getBoundingClientRect: () => ({ width: 520, height: 320 }) } as HTMLElement,
+      xAxisOptions: {},
+      yAxisOptionsMap: new Map([["default", {}]]),
+      primaryYAxisId: "default",
+    });
+    expect(snapshotSvg).toContain("<svg");
   });
 });

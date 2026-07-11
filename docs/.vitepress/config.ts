@@ -247,6 +247,13 @@ export default defineConfig({
       ],
       "/examples/": [
         {
+          text: "SVG Vector Charts",
+          items: [
+            { text: "Full SVG Mirror", link: "/examples/svg/" },
+            { text: "Series Types (hash)", link: "/examples/svg/#series-line" },
+          ],
+        },
+        {
           text: "Fundamental Charts",
           items: [
             { text: "Basic Chart", link: "/examples/basic" },
@@ -362,6 +369,20 @@ export default defineConfig({
             { text: "Lazy Loading", link: "/examples/lazy-load" },
             { text: "ROI Tools", link: "/examples/roi-tools" },
             { text: "Offscreen Rendering", link: "/examples/offscreen" },
+          ],
+        },
+      ],
+      "/examples/svg/": [
+        {
+          text: "SVG Mirror (2D)",
+          items: [
+            { text: "Full Library Mirror", link: "/examples/svg/" },
+            { text: "Series Types", link: "/examples/svg/#series-line" },
+            { text: "Trading", link: "/examples/svg/#trading-dashboard" },
+            { text: "Scientific", link: "/examples/svg/#heatmap" },
+            { text: "Analysis", link: "/examples/svg/#analysis-advanced" },
+            { text: "Interaction", link: "/examples/svg/#tooltips" },
+            { text: "Developer Experience", link: "/examples/svg/#indicators" },
           ],
         },
       ],

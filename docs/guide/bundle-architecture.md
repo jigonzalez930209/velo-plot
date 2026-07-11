@@ -77,7 +77,7 @@ Importing this entry **automatically registers** extended series handlers and pa
 | `createStackedChart`, `ChartGroup` |
 | Series: `candlestick`, `bar`, `heatmap`, `heikin-ashi` (→ candlestick), business-day X mapping |
 | `chart.addIndicator()`, `addAlert()`, `addPositionLine()`, `setDrawingMode()` |
-| `exportSVG()`, `renderer: 'webgpu'` |
+| `exportSVG()`, `renderer: 'webgpu'`, `renderer: 'svg'` |
 | Plugins: `PluginDrawingTools`, `PluginReplay`, `PluginKeyboard`, `PluginStreaming` |
 | Datafeed: `createMockDatafeed`, `barsToOhlc`, OHLCV generators |
 
@@ -99,7 +99,7 @@ See [Trading Bundle](/api/trading-bundle).
 |---------------|
 | Extended series: `bar`, `heatmap`, `polar`, `boxplot`, `waterfall`, `gauge`, `sankey` |
 | `createChartGroup` (chart sync) |
-| `exportSVG()`, heatmap shader compilation, WebGPU opt-in |
+| `exportSVG()`, `renderer: 'svg'`, heatmap shader compilation, WebGPU opt-in |
 | `PluginAnalysis`, `PluginForecasting`, `PluginLaTeX`, `Plugin3D`, … |
 | Stacked charts (re-exported) |
 
@@ -242,7 +242,7 @@ Use this table when auditing docs or choosing an entry:
 | Analysis utils, `PluginAnalysis`, polar, 3D | `velo-plot/scientific` |
 | `createChartGroup` | `velo-plot/scientific` or `velo-plot/full` |
 | `linkCharts`, `createMasterSlave` | `velo-plot/full` |
-| `exportSVG`, `renderer: 'webgpu'` | trading, scientific, or full |
+| `exportSVG`, `renderer: 'webgpu'`, `renderer: 'svg'` | trading, scientific, or full |
 | `sma`, `ema`, `rsi`, … | `velo-plot/plugins/analysis` or `velo-plot/full` |
 | Individual plugins | `velo-plot/plugins/<name>` (no `velo-plot/plugins` barrel) |
 | `VeloPlot`, `useVeloPlot` | `velo-plot/react` |
@@ -261,7 +261,7 @@ Core entry (`velo-plot`) throws for this feature.
 
 | Option | Core default | Notes |
 |--------|--------------|-------|
-| `renderer` | `'webgl'` | `'webgpu'` ignored on core; needs extended entry |
+| `renderer` | `'webgl'` | `'webgpu'` / `'svg'` need extended entry; `'webgpu'` ignored on core |
 | `loading` | `false` (implicit) | Pass `loading: true` to show overlay |
 | `animations` | enabled | Zoom/pan animation flags default off |
 | `showLegend` | `true` | Derived from theme (`theme.legend.visible`) unless overridden |

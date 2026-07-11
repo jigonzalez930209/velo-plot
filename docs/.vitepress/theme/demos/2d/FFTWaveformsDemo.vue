@@ -4,14 +4,17 @@ import { useData } from 'vitepress'
 import { createChart } from '@src/index'
 import { PluginTools } from '@src/plugins'
 import { analyzeSpectrum } from '@src/plugins/analysis'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
 const chartContainer = ref<HTMLElement | null>(null)
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 let chart: any = null
 
 const mode = ref<'time' | 'fft'>('time')
@@ -31,8 +34,10 @@ onMounted(async () => {
       container: chartContainer.value,
       theme: chartTheme.value,
       showControls: true,
-      showStatistics: false
-    })
+      showStatistics: false,
+    
+    renderer: activeRenderer.value,
+  })
 
     await chart.use(PluginTools({ useEnhancedTooltips: true }))
 

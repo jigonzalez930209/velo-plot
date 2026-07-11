@@ -3,6 +3,7 @@ import { stackedScenarios } from "./stacked.mjs";
 import { stage2Scenarios } from "./stage2.mjs";
 import { pluginScenarios, utilityScenarios } from "./plugins.mjs";
 import { frameworkScenarios } from "./frameworks.mjs";
+import { svgExportScenarios } from "./svg-export.mjs";
 
 /** All E2E scenario runners keyed by id */
 export const SCENARIOS = {
@@ -12,6 +13,7 @@ export const SCENARIOS = {
   ...pluginScenarios,
   ...utilityScenarios,
   ...frameworkScenarios,
+  ...svgExportScenarios,
 };
 
 export function listScenarios() {

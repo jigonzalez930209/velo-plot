@@ -55,7 +55,9 @@ The full library (`velo-plot/full`) exports the same trading APIs plus scientifi
 1. `registerExtendedSeries()` — candlestick buffers, frame paths, WebGPU, SVG
 2. Trading series preprocessors — heikin-ashi, business-day X, indicator expansion
 3. `ChartImpl` prototype patch — `addIndicator`, alerts, position lines, drawing mode
-4. `patchExportSVG()` — sync vector export
+4. `patchExportSVG()` — sync vector export + `renderer: 'svg'` live mode
+
+[SVG examples for every series type →](/examples/svg/)
 
 ## Chart methods
 

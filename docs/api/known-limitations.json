@@ -2,14 +2,14 @@
   "_default": [
     "**Bundle entry** — pick `velo-plot`, `velo-plot/trading`, `velo-plot/scientific`, or `velo-plot/full`. See [Bundle Architecture](/guide/bundle-architecture).",
     "**WebGPU renderer** (`renderer: 'webgpu'`) requires an extended bundle entry and is experimental — use WebGL (default) for production.",
-    "**SVG export** (`exportSVG()`) is unavailable on core-only imports and partial elsewhere; see [Stage 6 SVG parity](/roadmap/06-svg-vector-parity).",
+    "**SVG** — `exportSVG()` and `renderer: 'svg'` require an extended bundle. LaTeX labels and contour overlays are partial; 3D is not supported in SVG. See [SVG examples](/examples/svg/).",
     "See [Plugin status registry](/PLUGIN-STATUS) for plugin maturity (`complete`, `partial`, `experimental`)."
   ],
   "api/index.md": [],
   "api/core-bundle.md": [
     "Extended series (`candlestick`, `bar`, `heatmap`, …) throw at runtime — import `velo-plot/trading`, `/scientific`, or `/full`.",
     "Trading chart methods (`addIndicator`, alerts, …) throw — import `velo-plot/trading` or `/full`.",
-    "`exportSVG()` throws — use `exportImage()` or an extended entry.",
+    "`exportSVG()` and `renderer: 'svg'` require extended entry — core throws for `exportSVG()`.",
     "Measured core gzip ~51 KB (CI budget 52 KB)."
   ],
   "api/scientific-bundle.md": [
@@ -22,7 +22,7 @@
     "Default `loading` is off in v3 core — pass `loading: true` for the init overlay."
   ],
   "api/stacked-chart.md": [
-    "**SVG stack export** is not yet available — use PNG/JPEG/WebP via `exportImage()`.",
+    "**SVG stack export** — `stack.exportSVG()` is available on extended bundles. Legend DOM is not embedded in stack raster/SVG export.",
     "**Legend DOM** is not included in stack export.",
     "**Horizontal layout** sync defaults to Y-axis; override with `sync: { axis: 'x' }` if needed.",
     "**Max 5 panes** per stack (`STACKED_MAX_PANES`).",
@@ -60,11 +60,11 @@
     "Requires **OffscreenCanvas** support in the host browser (accepted v3 gap)."
   ],
   "api/image-export.md": [
-    "Stacked chart export is raster-only today; per-series SVG homolog is tracked in Stage 6.",
-    "Per-chart `exportSVG()` is unavailable on core-only imports; partial elsewhere — see [Stage 6 SVG parity](/roadmap/06-svg-vector-parity)."
+    "`stack.exportSVG()` and `renderer: 'svg'` require extended bundle. LaTeX/contour partial in SVG; 3D not supported.",
+    "Per-chart `exportSVG()` throws on core-only — see [SVG examples](/examples/svg/)."
   ],
   "api/export.md": [
-    "Vector export coverage varies by series type and bundle entry — see [Image & Vector Export](/api/image-export) and Stage 6 roadmap."
+    "Vector export — see [Image & Vector Export](/api/image-export) and [SVG examples](/examples/svg/)."
   ],
   "api/candlestick.md": [
     "Requires `velo-plot/trading`, `/scientific`, or `/full` — not available on core-only import.",

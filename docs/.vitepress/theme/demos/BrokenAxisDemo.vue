@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted , computed } from 'vue';
 import { createChart, PluginBrokenAxis } from '@src/index';
+import { useDemoRenderer } from './svg/demoChartOptions'
+
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const chartContainer = ref<HTMLDivElement | null>(null);
 let chart: any = null;
@@ -12,6 +16,7 @@ const initChart = async () => {
   chart = createChart({
     container: chartContainer.value,
     theme: 'dark',
+    renderer: activeRenderer.value,
   });
 
   // Create a more dramatic dataset to show "grouping"

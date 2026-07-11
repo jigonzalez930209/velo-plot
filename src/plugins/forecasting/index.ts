@@ -12,6 +12,7 @@ import type {
   ForecastingVisualizationConfig 
 } from './types';
 import { calculateForecast } from './algorithms';
+import { exportForecastOverlay } from '../../core/chart/exporter/svg/plugins/regression';
 import type { 
   PluginManifest, 
   ChartPlugin, 
@@ -162,6 +163,25 @@ export function PluginForecasting(
     },
     onRenderOverlay(pCtx: PluginContext, _event: AfterRenderEvent) {
       drawForecasts(pCtx);
+    },
+    onExportSVG(svgCtx) {
+      if (!svgCtx.builder || svgCtx.exportContext?.options.includeOverlays === false) return;
+      activeForecasts.forEach(({ result, config: vizConfig }) => {
+        const { xValues, yValues, lowerBound, upperBound } = result;
+        const n = xValues.length;
+        const points: Array<{ x: number; y: number }> = [];
+        for (let i = 0; i < n; i++) {
+          points.push({ x: xValues[i], y: yValues[i] });
+        }
+        const ci =
+          vizConfig.showConfidenceInterval && lowerBound && upperBound
+            ? {
+                upper: Array.from({ length: n }, (_, i) => ({ x: xValues[i], y: upperBound[i] })),
+                lower: Array.from({ length: n }, (_, i) => ({ x: xValues[i], y: lowerBound[i] })),
+              }
+            : undefined;
+        exportForecastOverlay(svgCtx, points, ci, vizConfig.lineStyle?.color ?? "#3b82f6");
+      });
     },
     api
   };

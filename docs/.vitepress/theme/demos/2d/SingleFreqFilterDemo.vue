@@ -2,14 +2,17 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import * as VeloPlot from '@src/index'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
 const chartContainer = ref<HTMLElement | null>(null)
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 const isInitialized = ref(false)
 const initError = ref<string | null>(null)
 
@@ -45,8 +48,10 @@ onMounted(async () => {
       theme: chartTheme.value,
       showControls: true,
       xAxis: { label: 'Time (s)', unit: 's' },
-      yAxis: { label: 'Amplitude', unit: 'V' }
-    })
+      yAxis: { label: 'Amplitude', unit: 'V' },
+    
+    renderer: activeRenderer.value,
+  })
 
     await chart.use(PluginTools({ useEnhancedTooltips: true }))
     await chart.use(PluginAnalysis())

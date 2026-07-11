@@ -71,7 +71,7 @@ export interface Chart {
   /** Get current device pixel ratio used for rendering */
   getDPR(): number;
   /** Actual renderer backend in use */
-  getActiveRenderer(): "webgl" | "webgpu";
+  getActiveRenderer(): "webgl" | "webgpu" | "svg";
   /** Set device pixel ratio and trigger re-render */
   setDPR(dpr: number): void;
   /**
@@ -91,7 +91,7 @@ export interface Chart {
   destroy(): void;
   exportImage(type?: "png" | "jpeg"): string;
   /** Vector export of series, axes, grid, and tick labels */
-  exportSVG(): string;
+  exportSVG(options?: import("./exporter/SVGExporter").SVGExportOptions): string;
   autoScale(animate?: boolean): void;
   setTheme(theme: string | object): void;
   /** Access to data analysis utilities */
