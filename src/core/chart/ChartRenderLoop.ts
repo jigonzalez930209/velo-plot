@@ -12,7 +12,8 @@ import type { Bounds, AxisOptions, CursorOptions, PlotArea, ChartEventMap } from
 import type { EventEmitter } from "../EventEmitter";
 import type { SelectionManager } from "../selection";
 import type { PluginManagerImpl } from "../../plugins";
-import { prepareSeriesData, renderOverlay } from "./ChartRenderer";
+import { prepareSeriesData, renderOverlay, syncScalesForRender } from "./ChartRenderer";
+import { mountSVGString } from "./mountSVGString";
 
 export interface RenderLoopContext {
   webglCanvas: HTMLCanvasElement;
@@ -48,6 +49,11 @@ export interface RenderLoopContext {
   getBusinessDayMapping?: () => import("../time/TimeScale").BusinessDayMapping | null;
   getAlerts?: () => Array<{ price: number; direction?: string }>;
   get yScale(): Scale;
+  /** Live SVG renderer root (when `renderer: 'svg'`). */
+  svgRoot?: SVGSVGElement | null;
+  /** Produce full SVG document string for vector renderer mode. */
+  buildSVGFrame?: () => string;
+  getActiveRenderer?: () => "webgl" | "webgpu" | "svg";
 }
 
 export class ChartRenderLoop {
@@ -147,6 +153,22 @@ export class ChartRenderLoop {
     if (this.ctx.webglCanvas.width === 0 || this.ctx.webglCanvas.height === 0) return;
     if (!this.ctx.renderer) return;
 
+    const now = performance.now();
+    const beforeEvent = {
+      timestamp: now,
+      deltaTime: now - this.lastRenderTime,
+      frameNumber: ++this.frameCount,
+      first: !this.initStarted,
+      forced: full
+    };
+    this.lastRenderTime = now;
+
+    if (!this.ctx.pluginManager.notifyBeforeRender(beforeEvent)) {
+      return; // Plugin requested to skip render
+    }
+
+    const isSvgRenderer = this.ctx.getActiveRenderer?.() === "svg";
+
     const renderCtx = {
       webglCanvas: this.ctx.webglCanvas,
       overlayCanvas: this.ctx.overlayCanvas,
@@ -176,20 +198,37 @@ export class ChartRenderLoop {
       hoveredSeriesId: this.ctx.getHoveredSeriesId(),
       layout: this.ctx.getLayout(),
       latexAPI: this.ctx.getLatex(),
+      getActiveRenderer: this.ctx.getActiveRenderer,
+      vectorOverlayOnly: isSvgRenderer,
     };
 
-    const now = performance.now();
-    const beforeEvent = {
-      timestamp: now,
-      deltaTime: now - this.lastRenderTime,
-      frameNumber: ++this.frameCount,
-      first: !this.initStarted,
-      forced: full
-    };
-    this.lastRenderTime = now;
+    if (isSvgRenderer && this.ctx.svgRoot && this.ctx.buildSVGFrame) {
+      if (full) {
+        syncScalesForRender(
+          plotArea,
+          this.ctx.viewBounds,
+          this.ctx.xScale,
+          this.ctx.yScales,
+          this.ctx.yAxisOptionsMap,
+          this.ctx.xAxisOptions,
+          this.ctx.primaryYAxisId,
+          this.ctx.getLayout(),
+        );
+        const svg = this.ctx.buildSVGFrame();
+        mountSVGString(this.ctx.svgRoot, svg);
+      }
 
-    if (!this.ctx.pluginManager.notifyBeforeRender(beforeEvent)) {
-      return; // Plugin requested to skip render
+      // Always clear overlay before interactive UI (tooltips, cursor, plugins).
+      this.ctx.overlay.clear();
+      renderOverlay(renderCtx, plotArea, this.ctx.yScale);
+      const afterEvent = { ...beforeEvent, renderTime: performance.now() - start };
+      this.ctx.pluginManager.notifyRenderOverlay(afterEvent);
+      this.ctx.pluginManager.notifyAfterRender(afterEvent);
+      this.ctx.events.emit("render", {
+        fps: 1000 / (afterEvent.renderTime || 1),
+        frameTime: afterEvent.renderTime,
+      });
+      return;
     }
 
     if (full) {

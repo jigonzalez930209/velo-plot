@@ -1,5 +1,6 @@
 import { ChartImpl } from "./ChartCore";
-import { exportToSVG } from "./exporter/SVGExporter";
+import { exportChartSnapshot, type SVGExportOptions } from "./exporter/SVGExporter";
+import { registerSVGRenderer } from "../../renderer/registerSVG";
 
 let patched = false;
 
@@ -8,23 +9,9 @@ export function patchExportSVG(): void {
   if (patched) return;
   patched = true;
 
-  ChartImpl.prototype.exportSVG = function (): string {
-    const chart = this as any;
-    const rect = chart.container.getBoundingClientRect();
-    return exportToSVG(
-      chart.getAllSeries(),
-      chart.viewBounds,
-      chart.getPlotArea(),
-      chart.xScale,
-      chart.yScales,
-      chart.theme,
-      rect.width || chart.container.clientWidth,
-      rect.height || chart.container.clientHeight,
-      {
-        xAxis: chart.xAxisOptions,
-        yAxis: chart.yAxisOptionsMap.get(chart.primaryYAxisId),
-        primaryYAxisId: chart.primaryYAxisId,
-      },
-    );
+  registerSVGRenderer();
+
+  ChartImpl.prototype.exportSVG = function (options?: SVGExportOptions): string {
+    return exportChartSnapshot(this as unknown as Parameters<typeof exportChartSnapshot>[0], options);
   };
 }

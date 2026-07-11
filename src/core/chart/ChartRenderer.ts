@@ -17,6 +17,28 @@ import type { EventEmitter } from "../EventEmitter";
 import type { SelectionManager } from "../selection";
 import { drawRegisteredOverlaySeries } from "./overlaySeriesRegistry";
 
+/** Match series/render ids related to a hovered legend entry (incl. candlestick splits). */
+export function matchesHoveredSeriesId(id: string, hoveredSeriesId: string): boolean {
+  return id === hoveredSeriesId || id.startsWith(`${hoveredSeriesId}_`);
+}
+
+/** Move hovered series (and related ids) to the end so they paint on top. */
+export function reorderForHoveredSeries<T>(
+  items: T[],
+  hoveredSeriesId: string | null,
+  getId: (item: T) => string,
+): T[] {
+  if (!hoveredSeriesId) return items;
+  const hovered: T[] = [];
+  const rest: T[] = [];
+  for (const item of items) {
+    if (matchesHoveredSeriesId(getId(item), hoveredSeriesId)) hovered.push(item);
+    else rest.push(item);
+  }
+  if (hovered.length === 0) return items;
+  return [...rest, ...hovered];
+}
+
 export interface RenderContext {
   webglCanvas: HTMLCanvasElement;
   overlayCanvas: HTMLCanvasElement;
@@ -46,6 +68,9 @@ export interface RenderContext {
   latexAPI?: any;
   getBusinessDayMapping?: () => import("../time/TimeScale").BusinessDayMapping | null;
   getAlerts?: () => Array<{ price: number; direction?: string }>;
+  getActiveRenderer?: () => "webgl" | "webgpu" | "svg";
+  /** When true, overlay draws only interactive UI (cursor, tooltips, plugins). */
+  vectorOverlayOnly?: boolean;
 }
 
 function setAxisRangeForRender(
@@ -74,6 +99,31 @@ function setAxisRangeForRender(
   scale.setRange(invertAxis ? top : bottom, invertAxis ? bottom : top);
 }
 
+/** Map view bounds to pixel ranges — required before SVG export / vector frame build. */
+export function syncScalesForRender(
+  plotArea: PlotArea,
+  viewBounds: Bounds,
+  xScale: Scale,
+  yScales: Map<string, Scale>,
+  yAxisOptionsMap: Map<string, AxisOptions>,
+  xAxisOptions: AxisOptions,
+  primaryYAxisId: string,
+  layout: import("../layout").LayoutOptions,
+): void {
+  const padding = layout.plotPadding;
+
+  setAxisRangeForRender(xScale, plotArea, xAxisOptions, "x", padding);
+  xScale.setDomain(viewBounds.xMin, viewBounds.xMax);
+
+  yScales.forEach((scale, id) => {
+    const axisOptions = yAxisOptionsMap.get(id);
+    setAxisRangeForRender(scale, plotArea, axisOptions, "y", padding);
+    if (id === primaryYAxisId) {
+      scale.setDomain(viewBounds.yMin, viewBounds.yMax);
+    }
+  });
+}
+
 /**
  * Prepare series data for WebGL rendering
  */
@@ -83,24 +133,16 @@ export function prepareSeriesData(
 ): SeriesRenderData[] {
   const seriesData: SeriesRenderData[] = [];
 
-  const padding = ctx.layout.plotPadding;
-
-  setAxisRangeForRender(
-    ctx.xScale,
+  syncScalesForRender(
     plotArea,
+    ctx.viewBounds,
+    ctx.xScale,
+    ctx.yScales,
+    ctx.yAxisOptionsMap,
     ctx.xAxisOptions,
-    'x',
-    padding
+    ctx.primaryYAxisId,
+    ctx.layout,
   );
-  ctx.xScale.setDomain(ctx.viewBounds.xMin, ctx.viewBounds.xMax);
-
-  ctx.yScales.forEach((scale, id) => {
-    const axisOptions = ctx.yAxisOptionsMap.get(id);
-    setAxisRangeForRender(scale, plotArea, axisOptions, 'y', padding);
-    if (id === ctx.primaryYAxisId) {
-      scale.setDomain(ctx.viewBounds.yMin, ctx.viewBounds.yMax);
-    }
-  });
 
   ctx.series.forEach((s) => {
     if (s.needsBufferUpdate) {
@@ -349,25 +391,8 @@ export function prepareSeriesData(
     }
   });
 
-  // Bring-to-front: If a series is hovered, move it to the end of the array
-  // so it renders last (on top of all other series)
-  if (ctx.hoveredSeriesId) {
-    const hoveredIndex = seriesData.findIndex(sd => sd.id === ctx.hoveredSeriesId || sd.id.startsWith(ctx.hoveredSeriesId + '_'));
-    if (hoveredIndex !== -1) {
-      // Find all render data items related to the hovered series (including bullish/bearish for candlesticks)
-      const hoveredItems: SeriesRenderData[] = [];
-      for (let i = seriesData.length - 1; i >= 0; i--) {
-        const item = seriesData[i];
-        if (item.id === ctx.hoveredSeriesId || item.id.startsWith(ctx.hoveredSeriesId + '_')) {
-          hoveredItems.unshift(seriesData.splice(i, 1)[0]);
-        }
-      }
-      // Add hovered items at the end to render on top
-      seriesData.push(...hoveredItems);
-    }
-  }
-
-  return seriesData;
+  // Bring-to-front: hovered legend item renders last (on top).
+  return reorderForHoveredSeries(seriesData, ctx.hoveredSeriesId, (sd) => sd.id);
 }
 
 /**
@@ -378,6 +403,13 @@ export function renderOverlay(
   plotArea: PlotArea,
   primaryYScale: Scale
 ): void {
+  const vectorOverlayOnly =
+    ctx.vectorOverlayOnly === true || ctx.getActiveRenderer?.() === "svg";
+
+  // Clear first so plugin overlay hooks (tooltips) never paint on stale pixels.
+  ctx.overlay.clear();
+  ctx.overlay.setLatexAPI(ctx.latexAPI);
+
   const rect = ctx.container.getBoundingClientRect();
   if (rect.width === 0 || rect.height === 0) {
     console.warn(
@@ -386,11 +418,8 @@ export function renderOverlay(
     return;
   }
 
-  ctx.overlay.clear();
-  ctx.overlay.setLatexAPI(ctx.latexAPI);
-
   // Draw Title if configured
-  if (ctx.layout.title?.visible && ctx.layout.title.text) {
+  if (!vectorOverlayOnly && ctx.layout.title?.visible && ctx.layout.title.text) {
     ctx.overlay.drawChartTitle(plotArea, ctx.layout.title);
   }
 
@@ -429,88 +458,90 @@ export function renderOverlay(
 
   const isSpecialChart = hasPolarSeries || hasGaugeSeries || hasSankeySeries;
 
-  ctx.overlay.setBusinessDayMapping(ctx.getBusinessDayMapping?.() ?? null);
+  if (!vectorOverlayOnly) {
+    ctx.overlay.setBusinessDayMapping(ctx.getBusinessDayMapping?.() ?? null);
 
-  // Draw appropriate grid
-  if (hasPolarSeries && maxRadius > 0) {
-    ctx.overlay.drawPolarGrid(
-      plotArea,
-      ctx.xScale,
-      primaryYScale,
-      polarRadialDivisions,
-      polarAngularDivisions,
-      polarAngleMode
-    );
-  } else if (!hasGaugeSeries && !hasSankeySeries) {
-    const primaryYOpts = ctx.yAxisOptionsMap.get(ctx.primaryYAxisId);
-    ctx.overlay.drawGrid(
-      plotArea,
-      ctx.xScale,
-      primaryYScale,
-      ctx.xAxisOptions,
-      primaryYOpts,
-    );
-  }
-
-  drawRegisteredOverlaySeries(ctx.overlayCtx, ctx.series.values(), plotArea);
-
-  // Only draw cartesian axes if not special
-  if (!isSpecialChart) {
-    ctx.overlay.drawXAxis(plotArea, ctx.xScale, ctx.xAxisOptions, ctx.layout.xAxisLayout);
-  }
-
-  // Group axes by position
-  const leftAxes: string[] = [];
-  const rightAxes: string[] = [];
-
-  ctx.yAxisOptionsMap.forEach((opts, id) => {
-    if (opts.position === "right") rightAxes.push(id);
-    else leftAxes.push(id);
-  });
-
-  // Only draw Y axes if not special
-  if (!isSpecialChart) {
-    // Draw Left Axes (stacked outwards)
-    leftAxes.forEach((id, index) => {
-      const scale = ctx.yScales.get(id);
-      const opts = ctx.yAxisOptionsMap.get(id);
-      if (scale && opts) {
-        const offset = index * 65;
-        ctx.overlay.drawYAxis(plotArea, scale, opts, "left", offset, ctx.layout.yAxisLayout);
-      }
-    });
-
-    // Draw Right Axes (stacked outwards)
-    rightAxes.forEach((id, index) => {
-      const scale = ctx.yScales.get(id);
-      const opts = ctx.yAxisOptionsMap.get(id);
-      if (scale && opts) {
-        const offset = index * 65;
-        ctx.overlay.drawYAxis(plotArea, scale, opts, "right", offset, ctx.layout.yAxisLayout);
-      }
-    });
-  }
-
-  ctx.overlay.drawPlotBorder(plotArea);
-
-  // Draw Error Bars for all series with error data
-  ctx.series.forEach((s) => {
-    if (s.isVisible() && s.hasErrorData()) {
-      const axisId = s.getYAxisId() || ctx.primaryYAxisId;
-      const scale = ctx.yScales.get(axisId);
-      const yScale = scale || primaryYScale;
-
-      ctx.overlay.drawErrorBars(plotArea, s, ctx.xScale, yScale);
+    // Draw appropriate grid
+    if (hasPolarSeries && maxRadius > 0) {
+      ctx.overlay.drawPolarGrid(
+        plotArea,
+        ctx.xScale,
+        primaryYScale,
+        polarRadialDivisions,
+        polarAngularDivisions,
+        polarAngleMode
+      );
+    } else if (!hasGaugeSeries && !hasSankeySeries) {
+      const primaryYOpts = ctx.yAxisOptionsMap.get(ctx.primaryYAxisId);
+      ctx.overlay.drawGrid(
+        plotArea,
+        ctx.xScale,
+        primaryYScale,
+        ctx.xAxisOptions,
+        primaryYOpts,
+      );
     }
-  });
 
-  // Trade markers on candlesticks
-  ctx.series.forEach((s) => {
-    if (!s.isVisible() || s.getType() !== "candlestick") return;
-    const axisId = s.getYAxisId() || ctx.primaryYAxisId;
-    const scale = ctx.yScales.get(axisId) || primaryYScale;
-    ctx.overlay.drawCandlestickMarkers(plotArea, s, ctx.xScale, scale);
-  });
+    drawRegisteredOverlaySeries(ctx.overlayCtx, ctx.series.values(), plotArea);
+
+    // Only draw cartesian axes if not special
+    if (!isSpecialChart) {
+      ctx.overlay.drawXAxis(plotArea, ctx.xScale, ctx.xAxisOptions, ctx.layout.xAxisLayout);
+    }
+
+    // Group axes by position
+    const leftAxes: string[] = [];
+    const rightAxes: string[] = [];
+
+    ctx.yAxisOptionsMap.forEach((opts, id) => {
+      if (opts.position === "right") rightAxes.push(id);
+      else leftAxes.push(id);
+    });
+
+    // Only draw Y axes if not special
+    if (!isSpecialChart) {
+      // Draw Left Axes (stacked outwards)
+      leftAxes.forEach((id, index) => {
+        const scale = ctx.yScales.get(id);
+        const opts = ctx.yAxisOptionsMap.get(id);
+        if (scale && opts) {
+          const offset = index * 65;
+          ctx.overlay.drawYAxis(plotArea, scale, opts, "left", offset, ctx.layout.yAxisLayout);
+        }
+      });
+
+      // Draw Right Axes (stacked outwards)
+      rightAxes.forEach((id, index) => {
+        const scale = ctx.yScales.get(id);
+        const opts = ctx.yAxisOptionsMap.get(id);
+        if (scale && opts) {
+          const offset = index * 65;
+          ctx.overlay.drawYAxis(plotArea, scale, opts, "right", offset, ctx.layout.yAxisLayout);
+        }
+      });
+    }
+
+    ctx.overlay.drawPlotBorder(plotArea);
+
+    // Draw Error Bars for all series with error data
+    ctx.series.forEach((s) => {
+      if (s.isVisible() && s.hasErrorData()) {
+        const axisId = s.getYAxisId() || ctx.primaryYAxisId;
+        const scale = ctx.yScales.get(axisId);
+        const yScale = scale || primaryYScale;
+
+        ctx.overlay.drawErrorBars(plotArea, s, ctx.xScale, yScale);
+      }
+    });
+
+    // Trade markers on candlesticks
+    ctx.series.forEach((s) => {
+      if (!s.isVisible() || s.getType() !== "candlestick") return;
+      const axisId = s.getYAxisId() || ctx.primaryYAxisId;
+      const scale = ctx.yScales.get(axisId) || primaryYScale;
+      ctx.overlay.drawCandlestickMarkers(plotArea, s, ctx.xScale, scale);
+    });
+  }
 
   const alerts = ctx.getAlerts?.() ?? [];
   if (alerts.length) {
