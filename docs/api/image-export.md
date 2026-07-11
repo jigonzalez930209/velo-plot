@@ -8,8 +8,10 @@ description: Export charts as PNG, JPEG, WebP, SVG, and full multi-pane stack im
 |-----|------|----------|
 | `chart.exportImage()` | ✅ | ✅ |
 | `chart.exportSVG()` | ❌ throws | trading, scientific, or full |
+| `createChart({ renderer: 'svg' })` | ❌ | trading, scientific, or full |
 | `PluginSnapshot` | — | `velo-plot/plugins/snapshot` or `velo-plot/full` |
 | `stack.exportImage()` | — | `velo-plot/trading` or `velo-plot/full` |
+| `stack.exportSVG()` | — | trading, scientific, or full |
 
 # Image & Vector Export
 
@@ -19,10 +21,12 @@ Velo Plot supports **raster** (PNG, JPEG, WebP) and **vector** (SVG) export for 
 
 | API | Formats | Scope |
 |-----|---------|-------|
+| `createChart({ renderer: 'svg' })` | Live SVG | Interactive vector chart (same API as WebGL) |
 | `chart.exportImage(type?)` | `png`, `jpeg` | Single chart, screen DPR |
-| `chart.exportSVG()` | SVG string | Single chart, vector paths + tick labels |
+| `chart.exportSVG()` | SVG string | Single chart, full vector (series, axes, grid, legend, plugins) |
 | `chart.snapshot.takeSnapshot()` | `png`, `jpeg`, `webp`, `svg` | Single chart, high-res + overlays |
-| `stack.exportImage()` / `stack.snapshot()` | `png`, `jpeg`, `webp` | Full stack layout (all panes) |
+| `stack.exportImage()` / `stack.snapshot()` | `png`, `jpeg`, `webp`, `svg` | Full stack layout (all panes) |
+| `stack.exportSVG()` | SVG string | Full stack vector composite |
 
 ---
 
@@ -44,7 +48,13 @@ Use when you need a fast WYSIWYG capture without loading a plugin.
 Export series as vector paths with axis tick labels (not a raster embedded in SVG):
 
 ```typescript
-const svgString = chart.exportSVG();
+const svgString = chart.exportSVG({
+  includeOverlays: true,
+  includeLegend: true,
+  includeAnnotations: true,
+  includeCursor: false,
+  ariaLabel: 'Electrochemical CV',
+});
 
 // Download in browser
 const blob = new Blob([svgString], { type: 'image/svg+xml' });
@@ -57,6 +67,43 @@ URL.revokeObjectURL(url);
 ```
 
 SVG is ideal for publications, LaTeX documents, and lossless scaling.
+
+[Interactive SVG examples for every series type →](/examples/svg/)
+
+---
+
+## Live SVG renderer {#live-svg-renderer}
+
+Use `renderer: 'svg'` to draw the chart as a **live vector layer** instead of WebGL. Pan, zoom, plugins, and interactions work the same; each frame rebuilds SVG from the shared export pipeline.
+
+```typescript
+import { createChart } from 'velo-plot/trading'
+
+const chart = createChart({
+  container: document.getElementById('chart')!,
+  renderer: 'svg',
+  showLegend: true, // interactive DOM legend (vector frame skips duplicate markup)
+})
+
+chart.addSeries({
+  id: 'cv',
+  type: 'line',
+  data: { x, y },
+  style: { color: '#00f2ff', width: 2 },
+})
+
+console.log(chart.getActiveRenderer()) // 'svg'
+```
+
+| Topic | Notes |
+|-------|-------|
+| Bundle | Extended entry only (`trading`, `scientific`, `full`) — patches `exportSVG` used internally |
+| 3D | Not supported — use `renderer: 'webgl'` or `'webgpu'` |
+| Stack | Per-pane: `chart: { renderer: 'svg' }` in `createStackedChart` |
+| Performance | Best for publication UIs and moderate point counts; use WebGL for millions of points |
+| Export | `chart.exportSVG()` works on SVG and WebGL charts |
+
+See [createChart `renderer`](/api/chart#renderer-backend) and the [SVG examples gallery](/examples/svg/).
 
 ---
 
@@ -147,7 +194,7 @@ await stack.snapshot({
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `format` | `'png' \| 'jpeg' \| 'webp'` | `'png'` | Output format |
+| `format` | `'png' \| 'jpeg' \| 'webp' \| 'svg'` | `'png'` | Output format |
 | `resolution` | `'standard' \| '2k' \| '4k' \| '8k' \| number` | `'standard'` | DPR scale multiplier |
 | `quality` | `number` | `0.92` | JPEG/WebP quality |
 | `includeBackground` | `boolean` | `true` | Theme background fill |
@@ -156,9 +203,15 @@ await stack.snapshot({
 | `download` | `boolean` | `false` | Auto-download |
 | `fileName` | `string` | `'velo-plot-stack'` | Download filename |
 
-::: info Stack SVG (Stage 6)
-Full-stack **SVG** export is planned for **v4.0.0** ([Stage 6 roadmap](/roadmap/06-svg-vector-parity)). Until then, export each pane with `chart.exportSVG()` or use raster stack export for WYSIWYG layouts.
+::: info Stack SVG
+Use `stack.exportSVG()` for a single vector document with all panes, or `stack.snapshot({ format: 'svg' })` for the same output with optional download.
 :::
+
+```typescript
+const svg = stack.exportSVG({ includeDividers: true, includeAnnotations: true });
+
+await stack.snapshot({ format: 'svg', download: true, fileName: 'market-stack' });
+```
 
 Works for **vertical** and **horizontal** (`direction: 'horizontal'`) stacks.
 
@@ -172,7 +225,7 @@ Works for **vertical** and **horizontal** (`direction: 'horizontal'`) stacks.
 | JPEG | Raster | Photos, smaller file size | Built-in or Snapshot |
 | WebP | Raster | Modern browsers, good compression | Snapshot |
 | SVG | Vector | Papers, Inkscape, infinite zoom | Built-in or Snapshot |
-| Stack PNG/JPEG/WebP | Raster | TradingView-style multi-pane figures | Built-in on `StackedChart` |
+| Stack PNG/JPEG/WebP/SVG | Raster / Vector | TradingView-style multi-pane figures | Built-in on `StackedChart` |
 
 ---
 

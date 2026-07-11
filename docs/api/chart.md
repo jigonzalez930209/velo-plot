@@ -19,7 +19,7 @@ function createChart(options: ChartOptions): Chart
 |----------|------|---------|-------------|
 | `container` | `HTMLElement` | **required** | Container element for the chart |
 | `id` | `string` | auto-generated | Stable chart id for sync groups (`chart.getId()`) |
-| `renderer` | `'webgl' \| 'webgpu'` | `'webgl'` | Chart renderer backend (see [Renderer backend](#renderer-backend)) |
+| `renderer` | `'webgl' \| 'webgpu' \| 'svg'` | `'webgl'` | Chart renderer backend (see [Renderer backend](#renderer-backend)) |
 | `xAxis` | `AxisOptions` | `{ auto: true }` | X-axis configuration |
 | `yAxis` | `AxisOptions` | `{ auto: true }` | Y-axis configuration |
 | `theme` | `string \| ChartTheme` | `'dark'` | Theme name or custom theme object |
@@ -96,6 +96,8 @@ Velo Plot renders series with **WebGL2** by default (`NativeWebGLRenderer`).
 
 **WebGPU** (`renderer: 'webgpu'`) requires an **extended bundle** import (`velo-plot/trading`, `velo-plot/scientific`, or `velo-plot/full`). On core-only imports, `'webgpu'` is **silently ignored** — the chart stays on WebGL2.
 
+**SVG** (`renderer: 'svg'`) renders the chart as a live vector layer (same `createChart` API, pan/zoom, plugins, interactions). Requires an **extended bundle** entry so `exportSVG` is patched. Canvases are hidden; each frame rebuilds the SVG from the same export pipeline used by `chart.exportSVG()`. **3D series are not supported** in SVG mode. Use `showLegend: true` for the interactive DOM legend (vector frame skips duplicate legend markup).
+
 ```typescript
 import { createChart } from 'velo-plot/trading'
 
@@ -109,13 +111,20 @@ const webgpuChart = createChart({
   renderer: 'webgpu', // WebGPU when available, else WebGL2 fallback
 });
 
+const svgChart = createChart({
+  container: document.getElementById('chart')!,
+  renderer: 'svg', // live vector — extended bundle only
+});
+
 console.log(webgpuChart.getActiveRenderer()); // 'webgpu' | 'webgl'
+console.log(svgChart.getActiveRenderer()); // 'svg'
 ```
 
 | Value | Behavior |
 |-------|----------|
 | `'webgl'` | Native WebGL2 renderer (default). All series types **for your bundle entry**. |
 | `'webgpu'` | `GpuChartRenderer` when extended entry loaded. WebGL2 fallback if unavailable ([ADR 001](/adr/001-webgpu-renderer-strategy.md)). |
+| `'svg'` | Live SVG vector renderer. Same chart API; no WebGL draw path. Extended bundle required. No 3D. |
 
 For WebGPU **compute** experiments (not chart rendering), use `PluginGpu` from `velo-plot/plugins/gpu`.
 

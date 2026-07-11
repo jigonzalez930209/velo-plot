@@ -329,7 +329,7 @@ See [`useStackedPlot`](/api/react-hook#usestackedplot-hook) for the React bindin
 
 ## Known limitations
 
-- **SVG stack export** is not yet available — use PNG/JPEG/WebP via `exportImage()`. See [Image & Vector Export](/api/image-export).
+- **`stack.exportSVG()`** — vector export for full stack layout (extended bundle). See [SVG examples](/examples/svg/).
 - **Legend DOM** is not included in stack export (per-pane legends are rasterized only via each chart’s `exportImage` path when visible on canvas).
 - **Horizontal layout** sync defaults to Y-axis; override with `sync: { axis: 'x' }` if needed.
 - **Max 5 panes** per stack (`STACKED_MAX_PANES`).
