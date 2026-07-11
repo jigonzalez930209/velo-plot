@@ -6,6 +6,9 @@
 import type { ChartPlugin, InteractionEvent, PluginContext, PluginManifest } from "../types";
 import type { Annotation } from "../../core/annotations/types";
 import type { Series } from "../../core/Series";
+import type { SVGExportPluginContext } from "../../core/chart/exporter/svg/plugins/types";
+import { fmt } from "../../core/chart/exporter/svg/SVGDocumentBuilder";
+import { primaryYScale } from "../../core/chart/exporter/svg/tickUtils";
 import { snapToCandle } from "./snapToCandle";
 import { computeMeasurement, formatMeasurement, formatPrice } from "./measure";
 
@@ -423,6 +426,91 @@ export function PluginDrawingTools(
     c2d.fillText(label, midX, boxY + boxH / 2);
   }
 
+  /**
+   * SVG mirror of {@link drawPreview}. Emits the in-progress stroke only —
+   * committed annotations are owned/exported by the annotations plugin, so
+   * re-exporting them here would double-render in live SVG snapshots.
+   */
+  function previewToSVG(svgCtx: SVGExportPluginContext): string[] {
+    const mode = state.mode;
+    if (!isDrawingMode(mode) || !state.cursor) return [];
+
+    const yScale =
+      primaryYScale(svgCtx.yScales) ?? [...svgCtx.yScales.values()][0];
+    if (!yScale) return [];
+
+    const plotArea = svgCtx.plotArea;
+    const cursor = state.cursor;
+    const anchor = state.pending ?? state.start;
+    const toPx = (x: number, y: number) => ({
+      px: svgCtx.xScale.transform(x),
+      py: yScale.transform(y),
+    });
+    const dash = `stroke-dasharray="6,4"`;
+    const els: string[] = [];
+
+    if (mode === "horizontal") {
+      const { py } = toPx(0, cursor.y);
+      els.push(
+        `<line x1="${fmt(plotArea.x)}" y1="${fmt(py)}" x2="${fmt(plotArea.x + plotArea.width)}" y2="${fmt(py)}" stroke="${stroke}" stroke-width="1.5" ${dash}/>`,
+      );
+    } else if (mode === "vertical") {
+      const { px } = toPx(cursor.x, 0);
+      els.push(
+        `<line x1="${fmt(px)}" y1="${fmt(plotArea.y)}" x2="${fmt(px)}" y2="${fmt(plotArea.y + plotArea.height)}" stroke="${stroke}" stroke-width="1.5" ${dash}/>`,
+      );
+    } else if (anchor) {
+      const a = toPx(anchor.x, anchor.y);
+      const b = toPx(cursor.x, cursor.y);
+
+      if (mode === "trendline") {
+        els.push(
+          `<line x1="${fmt(a.px)}" y1="${fmt(a.py)}" x2="${fmt(b.px)}" y2="${fmt(b.py)}" stroke="${stroke}" stroke-width="1.5" ${dash}/>`,
+        );
+      } else if (mode === "rectangle") {
+        const x = Math.min(a.px, b.px);
+        const y = Math.min(a.py, b.py);
+        const w = Math.abs(b.px - a.px);
+        const h = Math.abs(b.py - a.py);
+        els.push(
+          `<rect x="${fmt(x)}" y="${fmt(y)}" width="${fmt(w)}" height="${fmt(h)}" fill="${stroke}22" stroke="${stroke}" stroke-width="1.5" ${dash}/>`,
+        );
+      } else if (mode === "fibonacci") {
+        const yMin = Math.min(anchor.y, cursor.y);
+        const yMax = Math.max(anchor.y, cursor.y);
+        for (const level of FIB_LEVELS) {
+          const fy = yMax - (yMax - yMin) * level;
+          const { py } = toPx(0, fy);
+          els.push(
+            `<line x1="${fmt(plotArea.x)}" y1="${fmt(py)}" x2="${fmt(plotArea.x + plotArea.width)}" y2="${fmt(py)}" stroke="${stroke}" stroke-width="1.5" ${dash}/>`,
+          );
+          els.push(
+            `<text x="${fmt(plotArea.x + 4)}" y="${fmt(py - 2)}" fill="${stroke}" font-size="11" font-family="sans-serif">${(level * 100).toFixed(1)}%  ${formatPrice(fy)}</text>`,
+          );
+        }
+      } else if (mode === "measure") {
+        const m = computeMeasurement(anchor, cursor);
+        const color = m.up ? measureUp : measureDown;
+        const x = Math.min(a.px, b.px);
+        const y = Math.min(a.py, b.py);
+        const w = Math.abs(b.px - a.px);
+        const h = Math.abs(b.py - a.py);
+        const midX = (a.px + b.px) / 2;
+        els.push(
+          `<rect x="${fmt(x)}" y="${fmt(y)}" width="${fmt(w)}" height="${fmt(h)}" fill="${withAlpha(color, "33")}" stroke="${color}" stroke-width="1.5"/>`,
+        );
+        els.push(
+          `<line x1="${fmt(midX)}" y1="${fmt(a.py)}" x2="${fmt(midX)}" y2="${fmt(b.py)}" stroke="${color}" stroke-width="1.5"/>`,
+        );
+        els.push(
+          `<text x="${fmt(midX)}" y="${fmt(m.up ? b.py - 12 : b.py + 16)}" fill="${color}" font-size="12" font-family="sans-serif" text-anchor="middle">${formatMeasurement(m)}</text>`,
+        );
+      }
+    }
+
+    return els;
+  }
+
   function handleMouseDown(pluginCtx: PluginContext, event: InteractionEvent): void {
     if (!event.inPlotArea) return;
 
@@ -559,6 +647,13 @@ export function PluginDrawingTools(
       const c2d = pluginCtx.render.ctx2d;
       if (!c2d) return;
       drawPreview(c2d, pluginCtx.render.plotArea, pluginCtx.coords);
+    },
+    onExportSVG(svgCtx) {
+      if (!svgCtx.builder) return;
+      if (svgCtx.exportContext?.options.includeOverlays === false) return;
+      for (const el of previewToSVG(svgCtx)) {
+        svgCtx.builder.push("plugins", el);
+      }
     },
   };
 }

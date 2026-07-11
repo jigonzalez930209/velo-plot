@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
+import { LinearScale } from "../../scales";
 import { PluginDrawingTools, type DrawingToolsAPI } from "./index";
 import type { InteractionEvent, PluginContext } from "../types";
+import type { SVGExportPluginContext } from "../../core/chart/exporter/svg/plugins/types";
 
 function createInteractionEvent(
   type: InteractionEvent["type"],
@@ -329,5 +331,89 @@ describe("PluginDrawingTools", () => {
     plugin.onInit!(ctx);
     (plugin.api as DrawingToolsAPI).setMode("rectangle");
     expect(onModeChange).toHaveBeenCalledWith("rectangle");
+  });
+
+  it("onExportSVG emits the in-progress preview stroke", () => {
+    const plugin = PluginDrawingTools();
+    const { ctx, interact } = createContext();
+    plugin.onInit!(ctx);
+
+    (plugin.api as DrawingToolsAPI).setMode("trendline");
+    interact(
+      plugin,
+      createInteractionEvent("mousedown", 10, 20),
+      createInteractionEvent("mousemove", 40, 50),
+    );
+
+    const pushed: string[] = [];
+    const builder = {
+      push: (_layer: string, el: string) => {
+        pushed.push(el);
+      },
+      registerClipPath: vi.fn(),
+    };
+
+    const xScale = new LinearScale();
+    xScale.setDomain(0, 100);
+    xScale.setRange(60, 460);
+    const yScale = new LinearScale();
+    yScale.setDomain(0, 100);
+    yScale.setRange(280, 40);
+
+    const svgCtx = {
+      builder,
+      plotArea: { x: 60, y: 40, width: 400, height: 240 },
+      viewBounds: { xMin: 0, xMax: 100, yMin: 0, yMax: 100 },
+      xScale,
+      yScales: new Map([["default", yScale]]),
+      series: [],
+      theme: {} as SVGExportPluginContext["theme"],
+      width: 520,
+      height: 320,
+      exportContext: { options: {} },
+    } as unknown as SVGExportPluginContext;
+
+    plugin.onExportSVG!(svgCtx);
+    expect(pushed.some((el) => el.includes("<line"))).toBe(true);
+  });
+
+  it("onExportSVG does not re-export committed annotations (owned by annotations plugin)", () => {
+    const plugin = PluginDrawingTools();
+    const { ctx } = createContext();
+    plugin.onInit!(ctx);
+    ctx.chart.addAnnotation({ id: "h1", type: "horizontal-line", y: 10, color: "#fff" });
+
+    const pushed: string[] = [];
+    const builder = {
+      push: (_layer: string, el: string) => {
+        pushed.push(el);
+      },
+      registerClipPath: vi.fn(),
+    };
+
+    const xScale = new LinearScale();
+    xScale.setDomain(0, 100);
+    xScale.setRange(60, 460);
+    const yScale = new LinearScale();
+    yScale.setDomain(0, 100);
+    yScale.setRange(280, 40);
+
+    const svgCtx = {
+      builder,
+      plotArea: { x: 60, y: 40, width: 400, height: 240 },
+      viewBounds: { xMin: 0, xMax: 100, yMin: 0, yMax: 100 },
+      xScale,
+      yScales: new Map([["default", yScale]]),
+      series: [],
+      theme: {} as SVGExportPluginContext["theme"],
+      width: 520,
+      height: 320,
+      exportContext: { options: { includeAnnotations: true } },
+    } as unknown as SVGExportPluginContext;
+
+    // No active drawing → nothing to emit (committed annotations are exported
+    // by the annotations plugin, not here, to avoid double-rendering).
+    plugin.onExportSVG!(svgCtx);
+    expect(pushed).toHaveLength(0);
   });
 });
