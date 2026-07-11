@@ -81,6 +81,17 @@ export const FRAMEWORK_SCENARIOS = [
   "framework-astro-wrapper",
 ] as const;
 
+export const SVG_EXPORT_SCENARIOS = [
+  "svg-export-line",
+  "svg-export-candlestick",
+  "svg-export-replay-at",
+  "svg-snapshot-parity",
+  "stacked-export-svg",
+  "svg-visual-diff-line",
+  "svg-live-renderer-overlay",
+  "svg-mirror-smoke",
+] as const;
+
 export const ALL_E2E_SCENARIOS = [
   ...CORE_SCENARIOS,
   ...STACKED_SCENARIOS,
@@ -88,6 +99,7 @@ export const ALL_E2E_SCENARIOS = [
   ...PLUGIN_SCENARIOS,
   ...UTILITY_SCENARIOS,
   ...FRAMEWORK_SCENARIOS,
+  ...SVG_EXPORT_SCENARIOS,
 ] as const;
 
 export type E2EScenarioId = (typeof ALL_E2E_SCENARIOS)[number];
