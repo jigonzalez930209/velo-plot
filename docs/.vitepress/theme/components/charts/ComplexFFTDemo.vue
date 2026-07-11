@@ -3,14 +3,17 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { createChart } from '@src/index'
 import { analyzeComplexSpectrum, arraysToComplex, fftFromComplexInput, getPositiveFrequencies, ifftComplex } from '@src/plugins/analysis'
+import { useDemoRenderer } from '../../demos/svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
 const chartContainer = ref<HTMLElement | null>(null)
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 let chart: any = null
 
 // State
@@ -33,11 +36,11 @@ onMounted(async () => {
   
   try {
     
-    chart = createChart({
-      container: chartContainer.value,
+    chart = createChart({container: chartContainer.value,
       theme: chartTheme.value,
       showControls: true,
       showStatistics: false,
+      renderer: activeRenderer.value,
     })
 
     updateChart()

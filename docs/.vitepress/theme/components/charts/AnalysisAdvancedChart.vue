@@ -3,14 +3,17 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { createChart } from '@src/index'
 import { analyzeSpectrum, powerSpectrum } from '@src/plugins/analysis'
+import { useDemoRenderer } from '../../demos/svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
 const chartContainer = ref<HTMLElement | null>(null)
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 let chart: any = null
 
 // State
@@ -37,6 +40,7 @@ onMounted(async () => {
       theme: chartTheme.value,
       showControls: true,
       showStatistics: false,
+      renderer: activeRenderer.value,
     })
 
     chart.on('render', (e: any) => { fps.value = Math.round(e.fps) })
