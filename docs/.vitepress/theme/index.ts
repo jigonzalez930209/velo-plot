@@ -42,6 +42,9 @@ import TradingMarkersPositionsDemo from "./demos/trading/TradingMarkersPositions
 import TradingAlertsDemo from "./demos/trading/TradingAlertsDemo.vue";
 import TradingReplayDemo from "./demos/trading/TradingReplayDemo.vue";
 import TradingDatafeedDemo from "./demos/trading/TradingDatafeedDemo.vue";
+import SVGChartsGallery from "./demos/svg/SVGChartsGallery.vue";
+import SVGTypeDemo from "./demos/svg/SVGTypeDemo.vue";
+import SVGFullMirror from "./demos/svg/SVGFullMirror.vue";
 // import ContextMenu from "./components/ContextMenu.vue";
 import './custom.css'
 
@@ -92,6 +95,9 @@ export default {
     app.component('TradingAlertsDemo', TradingAlertsDemo)
     app.component('TradingReplayDemo', TradingReplayDemo)
     app.component('TradingDatafeedDemo', TradingDatafeedDemo)
+    app.component('SVGChartsGallery', SVGChartsGallery)
+    app.component('SVGTypeDemo', SVGTypeDemo)
+    app.component('SVGFullMirror', SVGFullMirror)
     // app.component('ContextMenu', ContextMenu)
   }
 }
