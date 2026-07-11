@@ -67,6 +67,15 @@ vi.mock("./stackExport", () => ({
   exportStackImage: vi.fn(async () => PNG_1X1),
   stackResolutionScale: (r: string) => (r === "2k" ? 2 : 1),
 }));
+vi.mock("./StackSVGComposer", () => ({
+  exportStackSVG: vi.fn(
+    () => '<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#111"/></svg>',
+  ),
+  buildStackPaneLayouts: vi.fn(() => []),
+  composeStackSVG: vi.fn(
+    () => '<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#111"/></svg>',
+  ),
+}));
 vi.mock("../indicator/addIndicator", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../indicator/addIndicator")>();
   return {
@@ -240,6 +249,33 @@ describe("createStackedChart (DOM)", () => {
     const url = await stack.snapshot({ format: "png", fileName: "test-stack" });
     expect(url).toBe(PNG_1X1);
     expect(exportStackImage).toHaveBeenCalled();
+
+    stack.destroy();
+    document.body.removeChild(container);
+  });
+
+  it("exports SVG via exportSVG and exportImage", async () => {
+    const createStackedChart = await loadStack();
+    const { exportStackSVG } = await import("./StackSVGComposer");
+    const container = document.createElement("div");
+    container.style.height = "300px";
+    document.body.appendChild(container);
+
+    const stack = createStackedChart({
+      container,
+      panes: [{ id: "solo", height: 1 }],
+    });
+
+    const svg = stack.exportSVG({ fileName: "stack-test" });
+    expect(svg).toContain("<svg");
+    expect(exportStackSVG).toHaveBeenCalled();
+
+    const dataUrl = await stack.exportImage({
+      format: "svg",
+      download: true,
+      fileName: "stack-svg",
+    });
+    expect(dataUrl).toContain("data:image/svg+xml");
 
     stack.destroy();
     document.body.removeChild(container);

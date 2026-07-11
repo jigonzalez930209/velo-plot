@@ -3,7 +3,7 @@ import type { Chart } from "../chart/types";
 import { MARGINS } from "../chart/types";
 import { createChartGroup } from "../sync";
 import type { SyncOptions } from "../sync";
-import type { AxisOptions, SeriesOptions } from "../../types";
+import type { AxisOptions, ChartOptions, SeriesOptions } from "../../types";
 import { mergeLayoutOptions } from "../layout";
 import { buildIndicatorSeries } from "../indicator/buildIndicatorSeries";
 import type { IndicatorSeriesOptions } from "../indicator/types";
@@ -20,7 +20,8 @@ import {
   STACKED_COMPACT_MARGIN,
   STACKED_FULL_X_MARGIN,
 } from "./types";
-import { exportStackImage } from "./stackExport";
+import { exportStackImage, type StackExportOptions } from "./stackExport";
+import { exportStackSVG } from "./StackSVGComposer";
 import { getInitQueueStatus } from "../ChartInitQueue";
 import {
   addIndicatorToChart,
@@ -114,6 +115,8 @@ function buildPaneChartOptions(
   showXAxis: boolean,
   showYAxis: boolean,
   direction: StackDirection,
+  stackRenderer?: ChartOptions["renderer"],
+  sharedTimeXAxis?: AxisOptions,
 ): Parameters<typeof createChart>[0] {
   const isFirst = index === 0;
   const isLast = index === total - 1;
@@ -144,6 +147,7 @@ function buildPaneChartOptions(
       };
 
   const baseX = {
+    ...(sharedTimeXAxis && pane.chart?.xAxis?.type !== "time" ? sharedTimeXAxis : {}),
     ...(stack.xAxis ?? {}),
     ...(pane.chart?.xAxis ?? {}),
   };
@@ -169,8 +173,14 @@ function buildPaneChartOptions(
     chartContainer.style.pointerEvents = "none";
   }
 
+  const paneChart = pane.chart ?? {};
+  const chartOpts =
+    stackRenderer && !paneChart.renderer
+      ? { ...paneChart, renderer: stackRenderer }
+      : paneChart;
+
   return {
-    ...pane.chart,
+    ...chartOpts,
     id: pane.id,
     container: chartContainer,
     showLegend: pane.chart?.showLegend ?? stack.showLegend ?? false,
@@ -247,6 +257,12 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
   const resizable = !!resizableOpt;
   const resizeDividerSize =
     typeof resizableOpt === "object" ? (resizableOpt.dividerSize ?? 6) : 6;
+  const stackRenderer = panes.find((p) => p.chart?.renderer)?.chart?.renderer;
+  const masterPaneConfig = panes.find((p) => p.id === masterPaneId) ?? panes[0];
+  const sharedTimeXAxis =
+    masterPaneConfig?.chart?.xAxis?.type === "time"
+      ? masterPaneConfig.chart.xAxis
+      : undefined;
 
   const baseLayout = mergeLayoutOptions(options.layout);
   const baseLeft = baseLayout.margins?.left ?? MARGINS.left;
@@ -493,6 +509,8 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
         showXAxis,
         showYAxis,
         direction,
+        stackRenderer,
+        sharedTimeXAxis,
       ),
     );
     // createChart may touch container styles — keep the absolute fill for flex panes.
@@ -611,6 +629,27 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
   };
 
   const runStackExport = async (opts: StackSnapshotOptions = {}): Promise<string> => {
+    if (opts.format === "svg") {
+      for (const c of paneCharts.values()) c.render();
+      const svg = exportStackSVG(
+        container,
+        paneWrappers,
+        Array.from(paneCharts.values()),
+        paneResizeCtrl?.dividers ?? [],
+        getBackgroundColor(),
+        opts,
+      );
+      if (opts.download) {
+        const link = document.createElement("a");
+        link.download = `${opts.fileName ?? "velo-plot-stack"}.svg`;
+        link.href = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    }
+
     await waitForStackReady();
     for (const c of paneCharts.values()) c.render();
     await new Promise((r) => requestAnimationFrame(r));
@@ -621,7 +660,7 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
       Array.from(paneCharts.values()),
       paneResizeCtrl?.dividers ?? [],
       getBackgroundColor(),
-      opts,
+      opts as StackExportOptions,
     );
 
     if (opts.download) {
@@ -712,6 +751,8 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
         showXAxis,
         showYAxis,
         direction,
+        stackRenderer,
+        sharedTimeXAxis,
       ),
     );
     chartDiv.style.cssText = paneChartDivStyle();
@@ -793,6 +834,17 @@ export function createStackedChart(options: StackedChartOptions): StackedChart {
     },
     exportImage(opts) {
       return runStackExport(opts);
+    },
+    exportSVG(opts) {
+      for (const c of paneCharts.values()) c.render();
+      return exportStackSVG(
+        container,
+        paneWrappers,
+        Array.from(paneCharts.values()),
+        paneResizeCtrl?.dividers ?? [],
+        getBackgroundColor(),
+        opts,
+      );
     },
     snapshot(opts) {
       return runStackExport(opts);
