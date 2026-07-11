@@ -19,20 +19,24 @@ function decodeDataUrlPng(dataUrl: string): Buffer {
 test.describe("SVG visual diff @ 1x", () => {
   test("bar chart raster vs canvas export within tolerance", async ({ page }) => {
     const result = await runE2EScenario(page, "svg-visual-diff-line");
-    const { svg, raster, width } = result.data as {
+    const { svg, raster } = result.data as {
       svg: string;
       raster: string;
       width: number;
       height: number;
     };
 
-    const svgPng = rasterizeSvg(svg, width);
+    // The canvas raster may be emitted at the renderer's backing-store size
+    // (e.g. DPR scaling), which differs from the SVG's viewBox width. Rasterize
+    // the SVG at the canvas pixel width so both images share dimensions and the
+    // pixel comparison stays row-aligned instead of cropping the top-left corner.
     const canvasPng = decodeDataUrlPng(raster);
-
-    const imgA = PNG.sync.read(svgPng);
     const imgB = PNG.sync.read(canvasPng);
+    const svgPng = rasterizeSvg(svg, imgB.width);
+    const imgA = PNG.sync.read(svgPng);
 
-    // Resize to common dimensions for comparison (canvas may include DPR scaling).
+    // Both images now share the same width (stride); clamp to the shorter height
+    // to absorb ±1px rounding from aspect-ratio differences.
     const w = Math.min(imgA.width, imgB.width);
     const h = Math.min(imgA.height, imgB.height);
     const aData = imgA.data.subarray(0, w * h * 4);
