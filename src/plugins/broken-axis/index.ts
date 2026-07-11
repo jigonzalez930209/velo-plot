@@ -14,6 +14,7 @@ import type {
   PluginManifest,
 } from '../types';
 import { BrokenAxisScale } from './BrokenAxisScale';
+import { exportBrokenAxisFromConfig } from '../../core/chart/exporter/svg/plugins/brokenAxis';
 
 const manifest: PluginManifest = {
   name: 'velo-plot-broken-axis',
@@ -293,6 +294,10 @@ export function PluginBrokenAxis(
     },
     onRenderOverlay(pCtx) {
         if (config.enabled) drawBreakSymbols(pCtx);
+    },
+    onExportSVG(svgCtx) {
+        if (!config.enabled || !svgCtx.builder || svgCtx.exportContext?.options.includeOverlays === false) return;
+        exportBrokenAxisFromConfig(svgCtx, config.axes);
     },
     onViewChange() {
         // Data is warped once against the fixed data-domain; a user zoom/pan is

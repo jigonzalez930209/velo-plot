@@ -4,6 +4,7 @@ import type {
     AfterRenderEvent,
 } from "../../types";
 import { definePlugin } from "../../PluginRegistry";
+import { exportGridHighlight } from "../../../core/chart/exporter/svg/plugins/watermark";
 
 export interface GridHighlightConfig {
     /** Highlight intervals on X axis */
@@ -74,6 +75,17 @@ export const GridHighlightPlugin = definePlugin<GridHighlightConfig>(
                 }
 
                 ctx2d.restore();
+            },
+            onExportSVG(svgCtx) {
+                if (!svgCtx.builder || svgCtx.exportContext?.options.includeOverlays === false) return;
+                const bands: Array<{ axis: "x" | "y"; min: number; max: number; color?: string }> = [];
+                for (const interval of xIntervals) {
+                    bands.push({ axis: "x", min: interval.start, max: interval.end, color: interval.color });
+                }
+                for (const interval of yIntervals) {
+                    bands.push({ axis: "y", min: interval.start, max: interval.end, color: interval.color });
+                }
+                exportGridHighlight(svgCtx, bands);
             },
         };
     }

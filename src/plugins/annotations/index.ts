@@ -46,6 +46,8 @@ export function PluginAnnotations(_config: PluginAnnotationsConfig = {}): ChartP
         },
 
         onRenderOverlay(ctx) {
+            if (ctx.chart.getActiveRenderer() === "svg") return;
+
             const plotArea = ctx.render.plotArea;
             const viewBounds = ctx.data.getViewBounds();
 
