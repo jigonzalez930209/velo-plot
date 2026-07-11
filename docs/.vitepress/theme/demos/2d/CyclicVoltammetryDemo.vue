@@ -3,9 +3,11 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { createChart } from '@src/index'
 import { DirectionIndicatorPlugin, PluginTools } from '@src/plugins'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
@@ -44,6 +46,7 @@ const smoothingWindow = ref(20)
 const arrowTimeout = ref(5000)
 
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 onMounted(async () => {
   if (typeof window === 'undefined' || !chartContainer.value) return
@@ -60,7 +63,9 @@ onMounted(async () => {
     },
     theme: chartTheme.value,
     showControls: true,
-    loading: false
+    loading: false,
+  
+    renderer: activeRenderer.value,
   })
 
   await chart.use(PluginTools({ useEnhancedTooltips: true }))

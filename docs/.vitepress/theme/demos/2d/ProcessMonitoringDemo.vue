@@ -3,9 +3,11 @@ import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { createChart } from '@src/index'
 import { PluginDataTransform } from '@src/plugins'
+import { useDemoRenderer } from '../svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
@@ -23,6 +25,7 @@ let gaugeChart: any = null
 let sankeyChart: any = null
 
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 // Initial Signal Data
 function generateSignalData(points = 100) {
@@ -53,7 +56,8 @@ onMounted(async () => {
     signalChart = createChart({
       container: signalContainer.value!,
       theme: chartTheme.value,
-      showControls: true
+      showControls: true,
+      renderer: activeRenderer.value,
     })
     await signalChart.use(PluginDataTransform())
     
@@ -71,8 +75,9 @@ onMounted(async () => {
       container: gaugeContainer.value!,
       theme: chartTheme.value,
       showControls: false,
-      showLegend: false, // Cleaner for small KPIs
-      loading: false     // Disable overlay for small nested charts
+      showLegend: false,
+      loading: false,
+      renderer: activeRenderer.value,
     })
     gaugeChart.addSeries({
       id: 'efficiency',
@@ -95,7 +100,8 @@ onMounted(async () => {
       theme: chartTheme.value,
       showControls: false,
       showLegend: false,
-      loading: false
+      loading: false,
+      renderer: activeRenderer.value,
     })
     sankeyChart.addSeries({
       id: 'resource-flow',
