@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref , computed } from 'vue';
 import { createChart } from '@src/index';
+import { useDemoRenderer } from './svg/demoChartOptions'
+
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const chartContainer = ref<HTMLDivElement | null>(null);
 let chart: any = null;
@@ -57,6 +61,7 @@ const initChart = () => {
       xAxisLayout: { titleGap: 48 },
       yAxisLayout: { titleGap: 50 },
     },
+    renderer: activeRenderer.value,
   });
 
   chart.addSeries({

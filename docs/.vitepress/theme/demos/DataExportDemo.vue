@@ -1,6 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted , computed } from 'vue';
 import { PluginDataExport, PluginTools, createChart } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
+
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const chartContainer = ref<HTMLDivElement | null>(null);
 let chart: any = null;
@@ -138,7 +142,9 @@ onMounted(async () => {
     showLegend: true,
     showControls: true,
     plugins: [
-      PluginTools({ useEnhancedTooltips: true }),
+      PluginTools({ useEnhancedTooltips: true ,
+    renderer: activeRenderer.value,
+  }),
       PluginDataExport({ defaultFormat: 'csv' })
     ]
   });

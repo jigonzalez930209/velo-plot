@@ -2,9 +2,11 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { PluginMLIntegration, PluginTools, createChart } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
 
 const props = defineProps<{
   height?: string
+  renderer?: 'svg' | 'webgl'
 }>()
 
 const { isDark } = useData()
@@ -17,6 +19,7 @@ let chart: any = null
 let mlApi: any = null
 
 const chartTheme = computed(() => isDark.value ? 'midnight' : 'light')
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 onMounted(async () => {
   if (typeof window === 'undefined') return
@@ -33,8 +36,10 @@ onMounted(async () => {
     chart = createChart({
       container: chartContainer.value!,
       theme: chartTheme.value,
-      showControls: true
-    })
+      showControls: true,
+    
+    renderer: activeRenderer.value,
+  })
 
     await chart.use(PluginTools())
     

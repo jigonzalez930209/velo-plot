@@ -2,8 +2,12 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useData } from 'vitepress'
 import { PluginAnnotations, PluginPatternRecognition, createChart } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
 
-const props = defineProps<{ height?: string }>()
+const props = defineProps<{
+  height?: string
+  renderer?: 'svg' | 'webgl'
+}>()
 
 const { isDark } = useData()
 const chartContainer = ref<HTMLElement | null>(null)
@@ -23,6 +27,7 @@ const annotationIds: string[] = []
 let armed: { direction: 'above' | 'below'; level: number } | null = null
 
 const chartTheme = computed(() => (isDark.value ? 'midnight' : 'light'))
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const PATTERN_COLORS: Record<string, string> = {
   'head-shoulders': '#ff6b6b',
@@ -78,7 +83,8 @@ onMounted(async () => {
       theme: chartTheme.value,
       showControls: true,
       showLegend: false,
-    })
+    renderer: activeRenderer.value,
+  })
 
     await chart.use(PluginAnnotations())
     await chart.use(

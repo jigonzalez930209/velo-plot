@@ -59,8 +59,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, reactive } from 'vue'
+import { ref, onMounted, onUnmounted, reactive , computed } from 'vue'
 import { createChart } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
+
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const chartContainer = ref<HTMLDivElement | null>(null)
 let chart: any = null
@@ -169,6 +173,7 @@ onMounted(async () => {
     yAxis: { label: 'Value' },
     theme: 'midnight',
     showControls: true,
+    renderer: activeRenderer.value,
   })
   
   const wave1 = generateWave(200, 0.5, 0)

@@ -25,6 +25,13 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import * as module from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
+
+const props = defineProps<{
+  renderer?: 'svg' | 'webgl'
+}>()
+
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const chartContainer = ref<HTMLDivElement | null>(null)
 const chartSecondary = ref<HTMLDivElement | null>(null)
@@ -188,8 +195,9 @@ async function setupSecondaryChart(data: Float32Array, name: string, color: stri
     yAxis: { label: name },
     theme: 'midnight',
     showControls: false,
+    renderer: activeRenderer.value,
   })
-  
+
   secondaryChart.addSeries({
     id: name.toLowerCase(),
     type: 'line',
@@ -235,8 +243,9 @@ async function setupMacdChart(result: { values: Float32Array; signal?: Float32Ar
     yAxis: { label: 'MACD' },
     theme: 'midnight',
     showControls: false,
+    renderer: activeRenderer.value,
   })
-  
+
   secondaryChart.addSeries({
     id: 'macd-line',
     type: 'line',
@@ -277,8 +286,9 @@ onMounted(async () => {
     yAxis: { label: 'Price' },
     theme: 'midnight',
     showControls: true,
+    renderer: activeRenderer.value,
   })
-  
+
   await updateChart()
 })
 

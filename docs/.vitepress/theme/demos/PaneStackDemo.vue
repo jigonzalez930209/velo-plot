@@ -46,6 +46,9 @@
       <button class="btn export-btn" :disabled="!stack || isExporting" @click="exportStack('webp')">
         WebP
       </button>
+      <button class="btn export-btn" :disabled="!stack || isExporting" @click="exportStack('svg')">
+        SVG
+      </button>
     </div>
 
     <div
@@ -61,6 +64,11 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useData } from 'vitepress'
 import { buildIndicatorPane, detectIndicatorMarkers } from '@src/core/indicator'
 import { createStackedChart } from '@src/core/stacked'
+import { useDemoRenderer, applyRendererToStackPanes } from './svg/demoChartOptions'
+
+const props = defineProps<{
+  renderer?: 'svg' | 'webgl'
+}>()
 
 type PresetId =
   | 'tradingview'
@@ -74,6 +82,7 @@ type PresetId =
 const { isDark } = useData()
 const containerRef = ref<HTMLDivElement | null>(null)
 const chartTheme = computed(() => (isDark.value ? 'midnight' : 'light'))
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 const activePreset = ref<PresetId>('tradingview')
 const runtimeSyncAxis = ref<'x' | 'y' | 'xy' | 'none'>('x')
 const runtimeCursor = ref(true)
@@ -252,7 +261,12 @@ function generateLinePair(n: number) {
 }
 
 function chartBase() {
-  return { animations: false, loading: false }
+  return { animations: false, loading: false, showLegend: false }
+}
+
+const STACK_TIME_X = {
+  type: 'time' as const,
+  timeScale: { calendar: 'continuous' as const },
 }
 
 function buildTradingViewPanes(data: ReturnType<typeof generateMarketData>, indicatorPane: any) {
@@ -262,7 +276,7 @@ function buildTradingViewPanes(data: ReturnType<typeof generateMarketData>, indi
       height: 0.42,
       chart: {
         ...chartBase(),
-        xAxis: { type: 'time', showLabels: false, showTicks: false, showLine: false },
+        xAxis: { ...STACK_TIME_X, showLabels: false, showTicks: false, showLine: false },
         yAxis: { label: 'Price', scientific: false, tickCount: 5 },
       },
       series: [
@@ -305,7 +319,7 @@ function buildTradingViewPanes(data: ReturnType<typeof generateMarketData>, indi
       chart: {
         ...chartBase(),
         yAxis: { label: 'RSI', min: 0, max: 100, auto: false, tickCount: 5 },
-        xAxis: { type: 'time', label: 'Date', showLabels: true, showTicks: true, tickCount: 6 },
+        xAxis: { ...STACK_TIME_X, label: 'Date', showLabels: true, showTicks: true, tickCount: 6 },
       },
       series: [
         {
@@ -326,7 +340,7 @@ function buildCompactPanes(data: ReturnType<typeof generateMarketData>) {
       height: 0.62,
       chart: {
         ...chartBase(),
-        xAxis: { type: 'time', showLabels: false, showTicks: false, showLine: false },
+        xAxis: { ...STACK_TIME_X, showLabels: false, showTicks: false, showLine: false },
         yAxis: { label: 'Price', tickCount: 5 },
       },
       series: [
@@ -442,13 +456,13 @@ function resetAll() {
   stack?.resetAll()
 }
 
-async function exportStack(format: 'png' | 'jpeg' | 'webp') {
+async function exportStack(format: 'png' | 'jpeg' | 'webp' | 'svg') {
   if (!stack || isExporting.value) return
   isExporting.value = true
   try {
-    await stack.exportImage({
+    await stack.snapshot({
       format,
-      resolution: '2k',
+      resolution: format === 'svg' ? 'standard' : '2k',
       download: true,
       fileName: `velo-stack-${activePreset.value}`,
       includeDividers: true,
@@ -558,7 +572,7 @@ async function initStack() {
       theme: chartTheme.value,
       devicePixelRatio: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
       sync: syncOpt,
-      panes,
+      panes: applyRendererToStackPanes(panes, activeRenderer.value),
     })
 
     await stack.whenReady()

@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { createChart } from '@src/index'
+import { useDemoRenderer } from './svg/demoChartOptions'
+
+const props = defineProps<{ renderer?: 'svg' | 'webgl' }>()
+const activeRenderer = computed(() => props.renderer ?? useDemoRenderer())
 
 const chartContainer = ref<HTMLDivElement | null>(null);
 let chart: any = null;
@@ -174,6 +178,7 @@ onMounted(async () => {
     theme: 'midnight',
     showLegend: true,
     showControls: true,
+    renderer: activeRenderer.value,
   });
   
   const data = getPatternData(selectedPattern.value);
