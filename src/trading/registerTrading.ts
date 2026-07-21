@@ -181,5 +181,7 @@ export function registerTradingBundle(): void {
   patchExportSVG();
 }
 
-// Auto-register when trading entry is imported
+// Auto-register on import as a side effect. The trading entry's createChart /
+// createStackedChart wrappers also invoke this synchronously, so registration is
+// guaranteed on the used code path even if a bundler drops this side effect.
 registerTradingBundle();
