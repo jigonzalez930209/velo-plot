@@ -1,15 +1,27 @@
 /**
  * Velo Plot - High-Performance Scientific Charting
  */
-import "./scientific/registerScientific";
+import { createChart as createChartCore } from "./core/Chart";
+import { createStackedChart as createStackedChartCore } from "./core/stacked";
+import { registerScientificBundle } from "./scientific/registerScientific";
 import { registerTradingBundle } from "./trading/registerTrading";
-
-registerTradingBundle();
 
 // ============================================
 // Core exports
 // ============================================
-export { createChart } from "./core/Chart";
+
+// Full bundle: register both the scientific and trading extensions on the code
+// path consumers actually invoke, so the registration side effect survives any
+// downstream tree-shaking (no reliance on side-effect-only imports).
+
+/** Create a chart with the full bundle (all series + SVG export) registered. */
+export function createChart(
+  options: import("./core/Chart").ChartOptions,
+): import("./core/Chart").Chart {
+  registerScientificBundle();
+  registerTradingBundle();
+  return createChartCore(options);
+}
 export { Series } from "./core/Series";
 export { EventEmitter } from "./core/EventEmitter";
 export type { Chart, ChartOptions, ExportOptions } from "./core/Chart";
@@ -561,8 +573,15 @@ export {
 // ============================================
 // Stacked multi-pane charts
 // ============================================
+/** Create a stacked chart with the full bundle registered. */
+export function createStackedChart(
+  options: import("./core/stacked").StackedChartOptions,
+): import("./core/stacked").StackedChart {
+  registerScientificBundle();
+  registerTradingBundle();
+  return createStackedChartCore(options);
+}
 export {
-  createStackedChart,
   STACKED_MAX_PANES,
   STACKED_DEFAULT_MIN_PANE_RATIO,
   type StackedChart,
