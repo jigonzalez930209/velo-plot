@@ -32,6 +32,22 @@ export default defineConfig({
       insertTypesEntry: true,
     }),
   ],
+  // Emit worker chunks as ESM (matches `new Worker(url, { type: "module" })`).
+  worker: {
+    format: "es",
+  },
+  // Emit all built asset URLs (including workers referenced via
+  // `new URL("./x.worker", import.meta.url)`) as paths relative to the importing
+  // chunk instead of an absolute `/assets/...` origin path. This makes the
+  // published package portable: it works from any subpath, inside a worker, in
+  // Electron, and lets a consumer's bundler (Vite/webpack) re-resolve and
+  // re-emit the worker. Removes the need for consumers to patch dist worker
+  // URLs or copy assets into their public/ folder.
+  experimental: {
+    renderBuiltUrl() {
+      return { relative: true };
+    },
+  },
   build: {
     lib: {
       entry: {
