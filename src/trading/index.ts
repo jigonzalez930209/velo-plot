@@ -2,11 +2,32 @@
  * velo-plot/trading — focused trading dashboard bundle (Stage 2).
  * Tree-shakes scientific/3D plugins; includes stacked charts, indicators, drawings, replay.
  */
-import "./registerTrading";
+import { createChart as createChartCore } from "../core/Chart";
+import { createStackedChart as createStackedChartCore } from "../core/stacked/createStackedChart";
+import { registerTradingBundle } from "./registerTrading";
 
-// Core chart + stacked layout
-export { createChart } from "../core/Chart";
-export { createStackedChart } from "../core/stacked/createStackedChart";
+// Core chart + stacked layout.
+// These wrappers call registerTradingBundle() on the code path that consumers
+// actually use, so trading series (candlestick, bar, …), indicators, alerts and
+// SVG export are guaranteed to be registered regardless of how the downstream
+// bundler tree-shakes side-effect-only imports.
+
+/** Create a chart with the trading bundle registered. */
+export function createChart(
+  options: import("../core/Chart").ChartOptions,
+): import("../core/Chart").Chart {
+  registerTradingBundle();
+  return createChartCore(options);
+}
+
+/** Create a stacked chart with the trading bundle registered. */
+export function createStackedChart(
+  options: import("../core/stacked/types").StackedChartOptions,
+): import("../core/stacked/types").StackedChart {
+  registerTradingBundle();
+  return createStackedChartCore(options);
+}
+
 export type { Chart, ChartOptions } from "../core/Chart";
 export type {
   StackedChart,
