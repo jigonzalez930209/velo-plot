@@ -3,16 +3,32 @@
  * Tree-shakes trading-only plugins; includes analysis, FFT, regression,
  * forecasting, LaTeX, 3D, and related scientific tooling.
  */
-import "./registerScientific";
+import { createChart as createChartCore } from "../core/Chart";
+import { createStackedChart as createStackedChartCore } from "../core/stacked/createStackedChart";
+import { registerScientificBundle } from "./registerScientific";
 
-// Core chart
-export { createChart } from "../core/Chart";
+// Core chart. Wrappers register extended series + SVG export on the used code
+// path so downstream tree-shaking can never drop the registration side effect.
+
+/** Create a chart with the scientific bundle registered. */
+export function createChart(
+  options: import("../core/Chart").ChartOptions,
+): import("../core/Chart").Chart {
+  registerScientificBundle();
+  return createChartCore(options);
+}
 export type { Chart, ChartOptions, ExportOptions } from "../core/Chart";
 export { Series } from "../core/Series";
 export { EventEmitter } from "../core/EventEmitter";
 
 // Stacked layouts (multi-pane scientific dashboards)
-export { createStackedChart } from "../core/stacked/createStackedChart";
+/** Create a stacked chart with the scientific bundle registered. */
+export function createStackedChart(
+  options: import("../core/stacked/types").StackedChartOptions,
+): import("../core/stacked/types").StackedChart {
+  registerScientificBundle();
+  return createStackedChartCore(options);
+}
 export type {
   StackedChart,
   StackedChartOptions,
