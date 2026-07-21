@@ -49,7 +49,14 @@ export class WorkerPool<TMessage extends { id: string }, TResult = unknown> {
 
     if (typeof Worker !== "undefined") {
       for (let i = 0; i < this.poolSize; i++) {
-        this.spawnWorker();
+        try {
+          this.spawnWorker();
+        } catch {
+          // Worker construction can fail (bad URL, CSP, unsupported env). Leave
+          // the pool empty so run() transparently uses the sync fallback instead
+          // of throwing during construction.
+          break;
+        }
       }
     }
   }
