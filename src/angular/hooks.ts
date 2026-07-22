@@ -10,13 +10,13 @@ import { ChartGroup } from "../core/sync";
 import {
   createChartLifecycle,
   createChartSync,
+  createRegisteredStackedChart,
   addIndicatorToHost,
   type ChartBindingOptions,
   type IndicatorHost,
 } from "../bindings/shared";
 import type { AddIndicatorOptions, AddIndicatorResult } from "../core/indicator/addIndicator";
 import type { IndicatorPresetName } from "../core/indicator/indicatorPresets";
-import { createStackedChart } from "../core/stacked";
 
 @Injectable()
 export class VeloPlotHost implements OnDestroy {
@@ -44,7 +44,7 @@ export function useStackedPlotAngular(
   container: HTMLDivElement,
   options: Omit<StackedChartOptions, "container">,
 ): { stack: StackedChart; destroy: () => void } {
-  const stack = createStackedChart({ ...options, container });
+  const stack = createRegisteredStackedChart({ ...options, container });
   return { stack, destroy: () => stack.destroy() };
 }
 

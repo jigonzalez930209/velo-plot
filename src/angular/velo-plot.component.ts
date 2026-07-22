@@ -8,12 +8,12 @@ import {
   AfterViewInit,
   effect,
 } from "@angular/core";
-import { createStackedChart } from "../core/stacked";
 import type { StackedChart, StackedPaneConfig, StackedChartOptions } from "../core/stacked";
 import type { Chart } from "../core/Chart";
 import type { Bounds, CursorOptions } from "../types";
 import {
   createChartLifecycle,
+  createRegisteredStackedChart,
   diffSeries,
   type VeloPlotSeries,
   type ChartBindingOptions,
@@ -143,7 +143,7 @@ export class StackedPlotComponent implements OnDestroy, AfterViewInit {
 
   mountStack(container: HTMLDivElement): void {
     if (this.stack) return;
-    const created = createStackedChart({
+    const created = createRegisteredStackedChart({
       ...this.stackOptions(),
       panes: this.panes(),
       container,
