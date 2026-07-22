@@ -3,10 +3,10 @@
  */
 
 import { ref, shallowRef, onMounted, onUnmounted, watch } from "vue";
-import { createStackedChart } from "../core/stacked";
 import type { StackedChart, StackedChartOptions } from "../core/stacked";
 import type { Range } from "../types";
 import {
+  createRegisteredStackedChart,
   stackedStructureKey,
   syncStackedOptions,
   syncStackedPaneSeries,
@@ -29,7 +29,7 @@ export function useStackedPlot(options: UseStackedPlotOptions) {
     const el = containerRef.value;
     if (!el) return;
     destroy?.();
-    const created = createStackedChart({ ...options, container: el });
+    const created = createRegisteredStackedChart({ ...options, container: el });
     stack.value = created;
     destroy = () => created.destroy();
     structureKey = stackedStructureKey(options.panes);
