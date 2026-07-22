@@ -1,8 +1,7 @@
 import { createSignal, onCleanup } from "solid-js";
-import { createStackedChart } from "../core/stacked";
 import type { StackedChart, StackedChartOptions } from "../core/stacked";
 import type { Range } from "../types";
-import { stackedStructureKey, syncStackedOptions, syncStackedPaneSeries } from "../bindings/shared";
+import { createRegisteredStackedChart, stackedStructureKey, syncStackedOptions, syncStackedPaneSeries } from "../bindings/shared";
 import type { VeloPlotSeries } from "../bindings/shared";
 
 export function useStackedPlot(getOptions: () => Omit<StackedChartOptions, "container">) {
@@ -15,7 +14,7 @@ export function useStackedPlot(getOptions: () => Omit<StackedChartOptions, "cont
   const mount = (el: HTMLDivElement) => {
     destroy?.();
     const opts = getOptions();
-    const created = createStackedChart({ ...opts, container: el });
+    const created = createRegisteredStackedChart({ ...opts, container: el });
     setStack(created);
     destroy = () => created.destroy();
     structureKey = stackedStructureKey(opts.panes);
