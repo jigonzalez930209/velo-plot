@@ -1,8 +1,7 @@
 import { writable, get } from "svelte/store";
-import { createStackedChart } from "../core/stacked";
 import type { StackedChart, StackedChartOptions } from "../core/stacked";
 import type { Range } from "../types";
-import { stackedStructureKey, syncStackedOptions, syncStackedPaneSeries } from "../bindings/shared";
+import { createRegisteredStackedChart, stackedStructureKey, syncStackedOptions, syncStackedPaneSeries } from "../bindings/shared";
 import type { VeloPlotSeries } from "../bindings/shared";
 
 export function createStackedPlot(options: Omit<StackedChartOptions, "container">) {
@@ -14,7 +13,7 @@ export function createStackedPlot(options: Omit<StackedChartOptions, "container"
 
   const mount = (container: HTMLDivElement) => {
     destroy?.();
-    const created = createStackedChart({ ...options, container });
+    const created = createRegisteredStackedChart({ ...options, container });
     stack.set(created);
     destroy = () => created.destroy();
     structureKey = stackedStructureKey(options.panes);
