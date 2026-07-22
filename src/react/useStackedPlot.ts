@@ -9,10 +9,10 @@ import {
   useCallback,
   type RefObject,
 } from "react";
-import { createStackedChart } from "../core/stacked";
 import type { StackedChart, StackedChartOptions } from "../core/stacked";
 import type { Range } from "../types";
 import {
+  createRegisteredStackedChart,
   stackedStructureKey,
   syncStackedOptions,
   syncStackedPaneSeries,
@@ -49,7 +49,7 @@ export function useStackedPlot(
     if (!el) return;
 
     destroyRef.current?.();
-    const created = createStackedChart({
+    const created = createRegisteredStackedChart({
       ...optionsRef.current,
       container: el,
     });
